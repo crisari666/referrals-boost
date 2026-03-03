@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, User } from "lucide-react";
+import { LayoutDashboard, Building2, Users, User, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { path: "/", label: "Inicio", icon: LayoutDashboard },
   { path: "/projects", label: "Proyectos", icon: Building2 },
   { path: "/clients", label: "Clientes", icon: Users },
+  { path: "/assistant", label: "Asistente", icon: Sparkles },
   { path: "/profile", label: "Perfil", icon: User },
 ];
 
