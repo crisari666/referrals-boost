@@ -1,11 +1,17 @@
 import { useParams, Link } from "react-router-dom";
-import { clients, projects, statusLabels, statusColors } from "@/data/mockData";
-import { ArrowLeft, Phone, MessageCircle, Send, StickyNote } from "lucide-react";
-import { motion } from "framer-motion";
+import { clients, projects, statusLabels, statusColors, type ClientStatus } from "@/data/mockData";
+import { ArrowLeft, Phone, MessageCircle, Send, StickyNote, ChevronDown, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { toast } from "sonner";
+
+const statusOrder: ClientStatus[] = ["nuevo", "interesado", "agendo_cita", "pago_reserva", "cerrado"];
 
 const ClientDetail = () => {
   const { id } = useParams();
   const client = clients.find((c) => c.id === id);
+  const [currentStatus, setCurrentStatus] = useState<ClientStatus>(client?.status ?? "nuevo");
+  const [statusOpen, setStatusOpen] = useState(false);
 
   if (!client) {
     return (
@@ -20,6 +26,12 @@ const ClientDetail = () => {
 
   const project = projects.find((p) => p.id === client.projectInterest);
   const initials = client.name.split(" ").map((n) => n[0]).slice(0, 2).join("");
+
+  const handleStatusChange = (newStatus: ClientStatus) => {
+    setCurrentStatus(newStatus);
+    setStatusOpen(false);
+    toast.success(`Estado actualizado a "${statusLabels[newStatus]}"`);
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-4">
@@ -47,10 +59,48 @@ const ClientDetail = () => {
           <div className="flex-1">
             <h2 className="font-bold text-foreground text-lg">{client.name}</h2>
             <p className="text-sm text-muted-foreground">{project?.title}</p>
-            <span className={`inline-block mt-1 text-[10px] font-bold px-2.5 py-1 rounded-full ${statusColors[client.status]}`}>
-              {statusLabels[client.status]}
-            </span>
           </div>
+        </div>
+
+        {/* Status selector */}
+        <div className="mt-4 relative">
+          <button
+            onClick={() => setStatusOpen(!statusOpen)}
+            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-secondary/30 transition-colors hover:bg-secondary/50`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium">Estado:</span>
+              <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusColors[currentStatus]}`}>
+                {statusLabels[currentStatus]}
+              </span>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${statusOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          <AnimatePresence>
+            {statusOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="absolute z-10 top-full mt-1 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+              >
+                {statusOrder.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => handleStatusChange(s)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/40 transition-colors"
+                  >
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusColors[s]}`}>
+                      {statusLabels[s]}
+                    </span>
+                    {currentStatus === s && <Check className="w-4 h-4 text-accent" />}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Quick actions */}
