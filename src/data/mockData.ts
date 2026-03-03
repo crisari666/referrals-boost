@@ -93,11 +93,16 @@ export const projects: Project[] = [
 
 export type ClientStatus = "nuevo" | "interesado" | "agendo_cita" | "pago_reserva" | "cerrado";
 
+export type DocumentType = "INE" | "Pasaporte" | "CURP" | "RFC" | "Otro";
+
 export interface Client {
   id: string;
   name: string;
-  phone: string;
+  email?: string;
+  phone?: string;
   whatsapp: string;
+  documentType?: DocumentType;
+  document?: string;
   projectInterest: string;
   status: ClientStatus;
   createdAt: string;
