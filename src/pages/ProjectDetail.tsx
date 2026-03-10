@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { projects } from "@/data/mockData";
-import { ArrowLeft, MapPin, Layers, Share2, Download, CheckCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Layers, Share2, Download, CheckCircle, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -49,7 +49,7 @@ const ProjectDetail = () => {
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">{project.description}</p>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="bg-secondary rounded-xl p-3 text-center">
               <p className="text-xs text-muted-foreground">Desde</p>
               <p className="font-extrabold text-foreground text-sm">${project.priceFrom.toLocaleString()}</p>
@@ -57,6 +57,12 @@ const ProjectDetail = () => {
             <div className="bg-primary/10 rounded-xl p-3 text-center">
               <p className="text-xs text-muted-foreground">Comisión</p>
               <p className="font-extrabold text-primary text-sm">{project.commission}%</p>
+            </div>
+            <div className="bg-accent/10 rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground">Valor Total COP</p>
+              <p className="font-extrabold text-foreground text-sm">
+                ${(project.priceFrom * project.commission / 100).toLocaleString("es-CO")}
+              </p>
             </div>
             <div className="bg-secondary rounded-xl p-3 text-center">
               <p className="text-xs text-muted-foreground">Lotes</p>
@@ -91,6 +97,9 @@ const ProjectDetail = () => {
             <Share2 className="w-4 h-4" /> Compartir por WhatsApp
           </a>
           <Button variant="outline" className="rounded-xl py-3 h-auto">
+            <Video className="w-4 h-4 mr-2" /> Descargar Video
+          </Button>
+          <Button variant="outline" className="rounded-xl py-3 h-auto col-span-2">
             <Download className="w-4 h-4 mr-2" /> Descargar PDF
           </Button>
         </div>
