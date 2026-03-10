@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { projects } from "@/data/mockData";
-import { ArrowLeft, MapPin, Layers, Share2, Download, CheckCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Layers, Share2, Download, CheckCircle, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
