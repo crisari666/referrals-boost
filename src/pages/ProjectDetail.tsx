@@ -97,6 +97,9 @@ const ProjectDetail = () => {
             <Share2 className="w-4 h-4" /> Compartir por WhatsApp
           </a>
           <Button variant="outline" className="rounded-xl py-3 h-auto">
+            <Video className="w-4 h-4 mr-2" /> Descargar Video
+          </Button>
+          <Button variant="outline" className="rounded-xl py-3 h-auto col-span-2">
             <Download className="w-4 h-4 mr-2" /> Descargar PDF
           </Button>
         </div>
