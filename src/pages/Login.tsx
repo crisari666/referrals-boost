@@ -100,7 +100,8 @@ const Login = () => {
 
         {/* Demo hint */}
         <div className="text-center text-xs text-muted-foreground space-y-1">
-          <p>Demo: <span className="font-medium text-foreground">vendedor@lotelink.com</span> / <span className="font-medium text-foreground">vendedor123</span></p>
+          <p>Demo Referido: <span className="font-medium text-foreground">referido@lotelink.com</span> / <span className="font-medium text-foreground">referido123</span></p>
+          <p>Demo Físico: <span className="font-medium text-foreground">fisico@lotelink.com</span> / <span className="font-medium text-foreground">fisico123</span></p>
         </div>
       </motion.div>
     </div>
