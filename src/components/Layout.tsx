@@ -7,6 +7,7 @@ const navItems = [
   { path: "/projects", label: "Proyectos", icon: Building2 },
   { path: "/clients", label: "Clientes", icon: Users },
   { path: "/assistant", label: "Asistente", icon: Sparkles },
+  { path: "/whatsapp", label: "WhatsApp", icon: MessageSquare },
   { path: "/profile", label: "Perfil", icon: User },
 ];
 
