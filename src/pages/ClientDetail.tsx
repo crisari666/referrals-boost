@@ -1,9 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { clients, projects, statusLabels, statusColors, type ClientStatus } from "@/data/mockData";
-import { ArrowLeft, Phone, MessageCircle, Send, StickyNote, ChevronDown, Check } from "lucide-react";
+import { ArrowLeft, Phone, MessageCircle, Send, StickyNote, ChevronDown, Check, CalendarPlus, PhoneCall } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAppSelector } from "@/store";
+import ScheduleDialog from "@/components/schedule/ScheduleDialog";
 
 const statusOrder: ClientStatus[] = ["nuevo", "interesado", "agendo_cita", "pago_reserva", "cerrado"];
 
