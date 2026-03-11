@@ -15,21 +15,31 @@ interface AuthState {
   error: string | null;
 }
 
+export type UserRole = "asesor_referido" | "asesor_fisico" | "admin";
+
 const MOCK_USERS = [
   {
     id: "1",
-    email: "vendedor@lotelink.com",
-    password: "vendedor123",
+    email: "referido@lotelink.com",
+    password: "referido123",
     name: "Carlos Mendoza",
-    role: "vendedor",
+    role: "asesor_referido" as UserRole,
     avatar: undefined,
   },
   {
     id: "2",
+    email: "fisico@lotelink.com",
+    password: "fisico123",
+    name: "Ana García",
+    role: "asesor_fisico" as UserRole,
+    avatar: undefined,
+  },
+  {
+    id: "3",
     email: "admin@lotelink.com",
     password: "admin123",
-    name: "Ana García",
-    role: "admin",
+    name: "Luis Torres",
+    role: "admin" as UserRole,
     avatar: undefined,
   },
 ];

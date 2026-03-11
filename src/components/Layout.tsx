@@ -31,6 +31,11 @@ const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
+  const userRole = user?.role as UserRole | undefined;
+
+  const navItems = allNavItems.filter(
+    (item) => !item.roles || (userRole && item.roles.includes(userRole))
+  );
 
   const handleLogout = () => {
     dispatch(logout());
