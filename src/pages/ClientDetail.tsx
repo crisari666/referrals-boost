@@ -14,6 +14,8 @@ const ClientDetail = () => {
   const client = clients.find((c) => c.id === id);
   const [currentStatus, setCurrentStatus] = useState<ClientStatus>(client?.status ?? "nuevo");
   const [statusOpen, setStatusOpen] = useState(false);
+  const user = useAppSelector((s) => s.auth.user);
+  const isPhysical = user?.role === "asesor_fisico" || user?.role === "admin";
 
   if (!client) {
     return (
