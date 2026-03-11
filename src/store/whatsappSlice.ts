@@ -1,0 +1,267 @@
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import * as whatsappService from "@/services/whatsappService";
+
+// ─── Types ───────────────────────────────────────────────────────────
+export type ConnectionStatus = "disconnected" | "qr_loading" | "qr_ready" | "scanning" | "connecting" | "connected" | "error";
+
+export interface MessageEdit {
+  content: string;
+  editedAt: string;
+}
+
+export interface WhatsAppMessage {
+  id: string;
+  chatId: string;
+  sender: "me" | "them";
+  senderName?: string;
+  content: string;
+  type: "text" | "image" | "video" | "audio" | "voice" | "document";
+  mediaUrl?: string;
+  mediaName?: string;
+  timestamp: string;
+  status: "sending" | "sent" | "delivered" | "read";
+  isEdited: boolean;
+  editHistory: MessageEdit[];
+  isDeleted: boolean;
+  deletedAt?: string;
+  originalContent?: string;
+}
+
+export interface WhatsAppChat {
+  id: string;
+  contactName: string;
+  contactPhone: string;
+  contactAvatar?: string;
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+}
+
+export interface WhatsAppState {
+  connectionStatus: ConnectionStatus;
+  qrCode: string | null;
+  errorMessage: string | null;
+  chats: WhatsAppChat[];
+  chatsLoading: boolean;
+  activeChat: string | null;
+  messages: Record<string, WhatsAppMessage[]>;
+  messagesLoading: boolean;
+  sendingMessage: boolean;
+}
+
+const initialState: WhatsAppState = {
+  connectionStatus: "disconnected",
+  qrCode: null,
+  errorMessage: null,
+  chats: [],
+  chatsLoading: false,
+  activeChat: null,
+  messages: {},
+  messagesLoading: false,
+  sendingMessage: false,
+};
+
+// ─── Async Thunks (Events) ──────────────────────────────────────────
+
+/** EVENT: REQUEST_QR_CODE — Ask backend for a new QR code */
+export const requestQrCode = createAsyncThunk(
+  "whatsapp/requestQrCode",
+  async () => {
+    const result = await whatsappService.requestQrCode();
+    return result;
+  }
+);
+
+/** EVENT: SYNC_CONNECTION — Trigger manual sync after scanning */
+export const syncConnection = createAsyncThunk(
+  "whatsapp/syncConnection",
+  async () => {
+    const result = await whatsappService.syncConnection();
+    return result;
+  }
+);
+
+/** EVENT: FETCH_CHATS — Load chat list after connection */
+export const fetchChats = createAsyncThunk(
+  "whatsapp/fetchChats",
+  async () => {
+    const result = await whatsappService.fetchChats();
+    return result;
+  }
+);
+
+/** EVENT: FETCH_MESSAGES — Load messages for a specific chat */
+export const fetchMessages = createAsyncThunk(
+  "whatsapp/fetchMessages",
+  async (chatId: string) => {
+    const messages = await whatsappService.fetchMessages(chatId);
+    return { chatId, messages };
+  }
+);
+
+/** EVENT: SEND_MESSAGE — Send a text or media message */
+export const sendMessage = createAsyncThunk(
+  "whatsapp/sendMessage",
+  async (payload: { chatId: string; content: string; type: WhatsAppMessage["type"]; mediaFile?: File }) => {
+    const message = await whatsappService.sendMessage(payload);
+    return message;
+  }
+);
+
+/** EVENT: DISCONNECT — Disconnect WhatsApp session */
+export const disconnect = createAsyncThunk(
+  "whatsapp/disconnect",
+  async () => {
+    await whatsappService.disconnect();
+  }
+);
+
+// ─── Slice ───────────────────────────────────────────────────────────
+const whatsappSlice = createSlice({
+  name: "whatsapp",
+  initialState,
+  reducers: {
+    /** EVENT: SET_ACTIVE_CHAT */
+    setActiveChat(state, action: PayloadAction<string | null>) {
+      state.activeChat = action.payload;
+    },
+    /** EVENT: SET_SCANNING — User started scanning QR */
+    setScanning(state) {
+      state.connectionStatus = "scanning";
+    },
+    /** EVENT: CLEAR_ERROR */
+    clearError(state) {
+      state.errorMessage = null;
+    },
+    /** EVENT: MESSAGE_UPDATED — Real-time: a message was edited */
+    messageUpdated(state, action: PayloadAction<{ chatId: string; messageId: string; newContent: string; editedAt: string }>) {
+      const { chatId, messageId, newContent, editedAt } = action.payload;
+      const msgs = state.messages[chatId];
+      if (msgs) {
+        const msg = msgs.find((m) => m.id === messageId);
+        if (msg) {
+          msg.editHistory.push({ content: msg.content, editedAt });
+          msg.content = newContent;
+          msg.isEdited = true;
+        }
+      }
+    },
+    /** EVENT: MESSAGE_DELETED — Real-time: a message was deleted */
+    messageDeleted(state, action: PayloadAction<{ chatId: string; messageId: string; deletedAt: string }>) {
+      const { chatId, messageId, deletedAt } = action.payload;
+      const msgs = state.messages[chatId];
+      if (msgs) {
+        const msg = msgs.find((m) => m.id === messageId);
+        if (msg) {
+          msg.originalContent = msg.content;
+          msg.isDeleted = true;
+          msg.deletedAt = deletedAt;
+          msg.content = "Este mensaje fue eliminado";
+        }
+      }
+    },
+    /** EVENT: NEW_INCOMING_MESSAGE — Real-time: new message received */
+    newIncomingMessage(state, action: PayloadAction<WhatsAppMessage>) {
+      const msg = action.payload;
+      if (!state.messages[msg.chatId]) {
+        state.messages[msg.chatId] = [];
+      }
+      state.messages[msg.chatId].push(msg);
+      // Update chat preview
+      const chat = state.chats.find((c) => c.id === msg.chatId);
+      if (chat) {
+        chat.lastMessage = msg.content;
+        chat.lastMessageTime = msg.timestamp;
+        if (state.activeChat !== msg.chatId) {
+          chat.unreadCount += 1;
+        }
+      }
+    },
+  },
+  extraReducers: (builder) => {
+    // REQUEST QR
+    builder.addCase(requestQrCode.pending, (state) => {
+      state.connectionStatus = "qr_loading";
+      state.errorMessage = null;
+    });
+    builder.addCase(requestQrCode.fulfilled, (state, action) => {
+      state.qrCode = action.payload.qrCode;
+      state.connectionStatus = "qr_ready";
+    });
+    builder.addCase(requestQrCode.rejected, (state, action) => {
+      state.connectionStatus = "error";
+      state.errorMessage = action.error.message || "Error al solicitar código QR";
+    });
+
+    // SYNC CONNECTION
+    builder.addCase(syncConnection.pending, (state) => {
+      state.connectionStatus = "connecting";
+    });
+    builder.addCase(syncConnection.fulfilled, (state, action) => {
+      if (action.payload.connected) {
+        state.connectionStatus = "connected";
+      } else {
+        state.connectionStatus = "error";
+        state.errorMessage = "No se pudo sincronizar. Intente escanear de nuevo.";
+      }
+    });
+    builder.addCase(syncConnection.rejected, (state, action) => {
+      state.connectionStatus = "error";
+      state.errorMessage = action.error.message || "Error de sincronización";
+    });
+
+    // FETCH CHATS
+    builder.addCase(fetchChats.pending, (state) => {
+      state.chatsLoading = true;
+    });
+    builder.addCase(fetchChats.fulfilled, (state, action) => {
+      state.chats = action.payload;
+      state.chatsLoading = false;
+    });
+    builder.addCase(fetchChats.rejected, (state) => {
+      state.chatsLoading = false;
+    });
+
+    // FETCH MESSAGES
+    builder.addCase(fetchMessages.pending, (state) => {
+      state.messagesLoading = true;
+    });
+    builder.addCase(fetchMessages.fulfilled, (state, action) => {
+      state.messages[action.payload.chatId] = action.payload.messages;
+      state.messagesLoading = false;
+    });
+    builder.addCase(fetchMessages.rejected, (state) => {
+      state.messagesLoading = false;
+    });
+
+    // SEND MESSAGE
+    builder.addCase(sendMessage.pending, (state) => {
+      state.sendingMessage = true;
+    });
+    builder.addCase(sendMessage.fulfilled, (state, action) => {
+      const msg = action.payload;
+      if (!state.messages[msg.chatId]) {
+        state.messages[msg.chatId] = [];
+      }
+      state.messages[msg.chatId].push(msg);
+      state.sendingMessage = false;
+    });
+    builder.addCase(sendMessage.rejected, (state) => {
+      state.sendingMessage = false;
+    });
+
+    // DISCONNECT
+    builder.addCase(disconnect.fulfilled, () => initialState);
+  },
+});
+
+export const {
+  setActiveChat,
+  setScanning,
+  clearError,
+  messageUpdated,
+  messageDeleted,
+  newIncomingMessage,
+} = whatsappSlice.actions;
+
+export default whatsappSlice.reducer;

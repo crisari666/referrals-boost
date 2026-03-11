@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, User, Sparkles } from "lucide-react";
+import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { path: "/projects", label: "Proyectos", icon: Building2 },
   { path: "/clients", label: "Clientes", icon: Users },
   { path: "/assistant", label: "Asistente", icon: Sparkles },
+  { path: "/whatsapp", label: "WhatsApp", icon: MessageSquare },
   { path: "/profile", label: "Perfil", icon: User },
 ];
 
