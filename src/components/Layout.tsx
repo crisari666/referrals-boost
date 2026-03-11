@@ -19,6 +19,14 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0 md:pl-64">
