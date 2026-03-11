@@ -57,6 +57,21 @@ const Layout = ({ children }: LayoutProps) => {
             );
           })}
         </nav>
+        <div className="p-4 border-t border-border space-y-3">
+          {user && (
+            <div className="px-3">
+              <p className="text-sm font-semibold text-foreground truncate">{user.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full"
+          >
+            <LogOut className="w-4 h-4" />
+            Cerrar sesión
+          </button>
+        </div>
       </aside>
 
       {/* Mobile bottom nav */}
