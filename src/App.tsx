@@ -15,6 +15,7 @@ import ClientDetail from "./pages/ClientDetail";
 import Profile from "./pages/Profile";
 import Assistant from "./pages/Assistant";
 import WhatsAppSync from "./pages/WhatsAppSync";
+import Schedule from "./pages/Schedule";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
