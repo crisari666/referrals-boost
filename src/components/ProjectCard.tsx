@@ -51,7 +51,10 @@ const ProjectCard = ({ project, index = 0 }: ProjectCardProps) => {
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Comisión</p>
               <p className="font-extrabold text-primary">
-                {project.commissionType === "%" ? `${project.commission}%` : `$${project.commission.toLocaleString()}`}
+                COP {(project.commissionType === "%" 
+                  ? Math.round(project.priceFrom * project.commission / 100) 
+                  : project.commission
+                ).toLocaleString("es-CO")}
               </p>
             </div>
           </div>
