@@ -1,5 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare, LogOut } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { logout } from "@/store/authSlice";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -17,6 +19,14 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0 md:pl-64">
@@ -47,6 +57,21 @@ const Layout = ({ children }: LayoutProps) => {
             );
           })}
         </nav>
+        <div className="p-4 border-t border-border space-y-3">
+          {user && (
+            <div className="px-3">
+              <p className="text-sm font-semibold text-foreground truncate">{user.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full"
+          >
+            <LogOut className="w-4 h-4" />
+            Cerrar sesión
+          </button>
+        </div>
       </aside>
 
       {/* Mobile bottom nav */}
