@@ -108,7 +108,7 @@ const ClientDetail = () => {
         </div>
 
         {/* Quick actions */}
-        <div className="grid grid-cols-3 gap-2 mt-5">
+        <div className={`grid ${isPhysical ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"} gap-2 mt-5`}>
           <a
             href={`https://wa.me/${client.whatsapp.replace(/\D/g, "")}`}
             target="_blank"
@@ -119,16 +119,38 @@ const ClientDetail = () => {
             <span className="text-[10px] font-medium text-accent">WhatsApp</span>
           </a>
           <a
-            href={`tel:${client.phone.replace(/\D/g, "")}`}
+            href={`tel:${client.phone?.replace(/\D/g, "")}`}
             className="flex flex-col items-center gap-1 bg-info/10 rounded-xl py-3"
           >
             <Phone className="w-5 h-5 text-info" />
             <span className="text-[10px] font-medium text-info">Llamar</span>
           </a>
-          <button className="flex flex-col items-center gap-1 bg-primary/10 rounded-xl py-3">
-            <Send className="w-5 h-5 text-primary" />
-            <span className="text-[10px] font-medium text-primary">Enviar Info</span>
-          </button>
+          {isPhysical && (
+            <>
+              <button
+                onClick={() => toast.info("Iniciando llamada VoIP...")}
+                className="flex flex-col items-center gap-1 bg-success/10 rounded-xl py-3"
+              >
+                <PhoneCall className="w-5 h-5 text-success" />
+                <span className="text-[10px] font-medium text-success">VoIP</span>
+              </button>
+              <ScheduleDialog
+                clientId={client.id}
+                trigger={
+                  <button className="flex flex-col items-center gap-1 bg-primary/10 rounded-xl py-3 w-full">
+                    <CalendarPlus className="w-5 h-5 text-primary" />
+                    <span className="text-[10px] font-medium text-primary">Agendar</span>
+                  </button>
+                }
+              />
+            </>
+          )}
+          {!isPhysical && (
+            <button className="flex flex-col items-center gap-1 bg-primary/10 rounded-xl py-3">
+              <Send className="w-5 h-5 text-primary" />
+              <span className="text-[10px] font-medium text-primary">Enviar Info</span>
+            </button>
+          )}
         </div>
       </motion.div>
 

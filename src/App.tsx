@@ -43,6 +43,7 @@ const App = () => (
             <Route path="/clients/:id" element={<Protected><ClientDetail /></Protected>} />
             <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
             <Route path="/whatsapp" element={<Protected><WhatsAppSync /></Protected>} />
+            <Route path="/schedule" element={<Protected><Schedule /></Protected>} />
             <Route path="/profile" element={<Protected><Profile /></Protected>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
