@@ -1,13 +1,22 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare, LogOut } from "lucide-react";
+import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare, CalendarDays, LogOut } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logout } from "@/store/authSlice";
+import type { UserRole } from "@/store/authSlice";
 import { motion } from "framer-motion";
 
-const navItems = [
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: UserRole[]; // undefined = all roles
+}
+
+const allNavItems: NavItem[] = [
   { path: "/", label: "Inicio", icon: LayoutDashboard },
   { path: "/projects", label: "Proyectos", icon: Building2 },
   { path: "/clients", label: "Clientes", icon: Users },
+  { path: "/schedule", label: "Agenda", icon: CalendarDays, roles: ["asesor_fisico", "admin"] },
   { path: "/assistant", label: "Asistente", icon: Sparkles },
   { path: "/whatsapp", label: "WhatsApp", icon: MessageSquare },
   { path: "/profile", label: "Perfil", icon: User },
