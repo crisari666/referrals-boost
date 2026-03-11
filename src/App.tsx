@@ -15,6 +15,7 @@ import ClientDetail from "./pages/ClientDetail";
 import Profile from "./pages/Profile";
 import Assistant from "./pages/Assistant";
 import WhatsAppSync from "./pages/WhatsAppSync";
+import Schedule from "./pages/Schedule";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/clients/:id" element={<Protected><ClientDetail /></Protected>} />
             <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
             <Route path="/whatsapp" element={<Protected><WhatsAppSync /></Protected>} />
+            <Route path="/schedule" element={<Protected><Schedule /></Protected>} />
             <Route path="/profile" element={<Protected><Profile /></Protected>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

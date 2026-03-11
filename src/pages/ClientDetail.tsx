@@ -1,9 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { clients, projects, statusLabels, statusColors, type ClientStatus } from "@/data/mockData";
-import { ArrowLeft, Phone, MessageCircle, Send, StickyNote, ChevronDown, Check } from "lucide-react";
+import { ArrowLeft, Phone, MessageCircle, Send, StickyNote, ChevronDown, Check, CalendarPlus, PhoneCall } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAppSelector } from "@/store";
+import ScheduleDialog from "@/components/schedule/ScheduleDialog";
 
 const statusOrder: ClientStatus[] = ["nuevo", "interesado", "agendo_cita", "pago_reserva", "cerrado"];
 
@@ -12,6 +14,8 @@ const ClientDetail = () => {
   const client = clients.find((c) => c.id === id);
   const [currentStatus, setCurrentStatus] = useState<ClientStatus>(client?.status ?? "nuevo");
   const [statusOpen, setStatusOpen] = useState(false);
+  const user = useAppSelector((s) => s.auth.user);
+  const isPhysical = user?.role === "asesor_fisico" || user?.role === "admin";
 
   if (!client) {
     return (
@@ -104,7 +108,7 @@ const ClientDetail = () => {
         </div>
 
         {/* Quick actions */}
-        <div className="grid grid-cols-3 gap-2 mt-5">
+        <div className={`grid ${isPhysical ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"} gap-2 mt-5`}>
           <a
             href={`https://wa.me/${client.whatsapp.replace(/\D/g, "")}`}
             target="_blank"
@@ -115,16 +119,38 @@ const ClientDetail = () => {
             <span className="text-[10px] font-medium text-accent">WhatsApp</span>
           </a>
           <a
-            href={`tel:${client.phone.replace(/\D/g, "")}`}
+            href={`tel:${client.phone?.replace(/\D/g, "")}`}
             className="flex flex-col items-center gap-1 bg-info/10 rounded-xl py-3"
           >
             <Phone className="w-5 h-5 text-info" />
             <span className="text-[10px] font-medium text-info">Llamar</span>
           </a>
-          <button className="flex flex-col items-center gap-1 bg-primary/10 rounded-xl py-3">
-            <Send className="w-5 h-5 text-primary" />
-            <span className="text-[10px] font-medium text-primary">Enviar Info</span>
-          </button>
+          {isPhysical && (
+            <>
+              <button
+                onClick={() => toast.info("Iniciando llamada VoIP...")}
+                className="flex flex-col items-center gap-1 bg-success/10 rounded-xl py-3"
+              >
+                <PhoneCall className="w-5 h-5 text-success" />
+                <span className="text-[10px] font-medium text-success">VoIP</span>
+              </button>
+              <ScheduleDialog
+                clientId={client.id}
+                trigger={
+                  <button className="flex flex-col items-center gap-1 bg-primary/10 rounded-xl py-3 w-full">
+                    <CalendarPlus className="w-5 h-5 text-primary" />
+                    <span className="text-[10px] font-medium text-primary">Agendar</span>
+                  </button>
+                }
+              />
+            </>
+          )}
+          {!isPhysical && (
+            <button className="flex flex-col items-center gap-1 bg-primary/10 rounded-xl py-3">
+              <Send className="w-5 h-5 text-primary" />
+              <span className="text-[10px] font-medium text-primary">Enviar Info</span>
+            </button>
+          )}
         </div>
       </motion.div>
 
