@@ -1,5 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare, LogOut } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { logout } from "@/store/authSlice";
 import { motion } from "framer-motion";
 
 const navItems = [
