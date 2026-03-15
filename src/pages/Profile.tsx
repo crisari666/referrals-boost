@@ -1,5 +1,5 @@
-import { currentSeller } from "@/data/mockData";
-import { Link2, Copy, Medal, Award, TrendingUp } from "lucide-react";
+import { useAppSelector } from "@/store";
+import { Link2, Copy, Award, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,10 +11,11 @@ const levelConfig = {
 
 const Profile = () => {
   const { toast } = useToast();
-  const level = levelConfig[currentSeller.level as keyof typeof levelConfig];
+  const seller = useAppSelector((state) => state.profile.seller);
+  const level = levelConfig[seller.level as keyof typeof levelConfig];
 
   const copyLink = () => {
-    navigator.clipboard.writeText(currentSeller.referralLink);
+    navigator.clipboard.writeText(seller.referralLink);
     toast({ title: "¡Enlace copiado!", description: "Compártelo con tus clientes potenciales" });
   };
 
@@ -29,29 +30,29 @@ const Profile = () => {
         className="bg-card rounded-2xl p-6 border border-border shadow-sm text-center"
       >
         <div className="w-20 h-20 gradient-commission rounded-full mx-auto flex items-center justify-center text-primary-foreground text-2xl font-extrabold">
-          {currentSeller.name.split(" ").map((n) => n[0]).join("")}
+          {seller.name.split(" ").map((n) => n[0]).join("")}
         </div>
-        <h2 className="font-bold text-foreground text-lg mt-3">{currentSeller.name}</h2>
+        <h2 className="font-bold text-foreground text-lg mt-3">{seller.name}</h2>
         <div className="flex items-center justify-center gap-2 mt-2">
           <span className={`w-3 h-3 rounded-full ${level.color}`} />
-          <span className="text-sm font-semibold text-foreground">Nivel {currentSeller.level}</span>
+          <span className="text-sm font-semibold text-foreground">Nivel {seller.level}</span>
         </div>
 
         {/* Level progress */}
         <div className="mt-4 max-w-xs mx-auto">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
-            <span>{currentSeller.level}</span>
+            <span>{seller.level}</span>
             <span>{level.next}</span>
           </div>
           <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
             <motion.div
               className="h-full gradient-commission rounded-full"
               initial={{ width: 0 }}
-              animate={{ width: `${currentSeller.levelProgress}%` }}
+              animate={{ width: `${seller.levelProgress}%` }}
               transition={{ duration: 1, delay: 0.3 }}
             />
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{currentSeller.levelProgress}% para {level.next}</p>
+          <p className="text-xs text-muted-foreground mt-1">{seller.levelProgress}% para {level.next}</p>
         </div>
       </motion.div>
 
@@ -68,7 +69,7 @@ const Profile = () => {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-1 bg-secondary rounded-xl px-4 py-3 text-sm text-foreground truncate font-mono">
-            {currentSeller.referralLink}
+            {seller.referralLink}
           </div>
           <button
             onClick={copyLink}
@@ -95,19 +96,19 @@ const Profile = () => {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-secondary/50 rounded-xl p-4 text-center">
-            <p className="text-2xl font-extrabold text-foreground">{currentSeller.clientsTracking}</p>
+            <p className="text-2xl font-extrabold text-foreground">{seller.clientsTracking}</p>
             <p className="text-xs text-muted-foreground mt-1">Clientes activos</p>
           </div>
           <div className="bg-secondary/50 rounded-xl p-4 text-center">
-            <p className="text-2xl font-extrabold text-foreground">{currentSeller.clientsConverted}</p>
+            <p className="text-2xl font-extrabold text-foreground">{seller.clientsConverted}</p>
             <p className="text-xs text-muted-foreground mt-1">Conversiones</p>
           </div>
           <div className="bg-primary/5 rounded-xl p-4 text-center">
-            <p className="text-2xl font-extrabold text-primary">${currentSeller.monthCommissions.toLocaleString()}</p>
+            <p className="text-2xl font-extrabold text-primary">${seller.monthCommissions.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground mt-1">Comisiones del mes</p>
           </div>
           <div className="bg-accent/5 rounded-xl p-4 text-center">
-            <p className="text-2xl font-extrabold text-accent">${currentSeller.totalCommissions.toLocaleString()}</p>
+            <p className="text-2xl font-extrabold text-accent">${seller.totalCommissions.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground mt-1">Total histórico</p>
           </div>
         </div>
@@ -125,7 +126,7 @@ const Profile = () => {
           <h3 className="font-bold text-foreground">Logros</h3>
         </div>
         <div className="grid grid-cols-4 gap-3">
-          {currentSeller.achievements.map((ach) => (
+          {seller.achievements.map((ach) => (
             <div
               key={ach.id}
               className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center ${
