@@ -1,7 +1,9 @@
-import { projects } from "@/data/mockData";
+import { useAppSelector } from "@/store";
 import ProjectCard from "@/components/ProjectCard";
 
 const Projects = () => {
+  const projects = useAppSelector((state) => state.projects.list);
+
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       <div>

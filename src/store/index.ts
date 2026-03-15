@@ -4,6 +4,9 @@ import whatsappReducer from "./whatsappSlice";
 import assistantReducer from "./assistantSlice";
 import authReducer from "./authSlice";
 import scheduleReducer from "./scheduleSlice";
+import clientsReducer from "./clientsSlice";
+import projectsReducer from "./projectsSlice";
+import profileReducer from "./profileSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +14,9 @@ export const store = configureStore({
     assistant: assistantReducer,
     auth: authReducer,
     schedule: scheduleReducer,
+    clients: clientsReducer,
+    projects: projectsReducer,
+    profile: profileReducer,
   },
 });
 

@@ -1,4 +1,6 @@
-import { clients as initialClients, projects, type Client, type DocumentType } from "@/data/mockData";
+import { useAppSelector, useAppDispatch } from "@/store";
+import { addClient, setSearch } from "@/store/clientsSlice";
+import { projects, type Client, type DocumentType } from "@/data/mockData";
 import ClientRow from "@/components/ClientRow";
 import { Plus, Search, X } from "lucide-react";
 import { useState } from "react";
@@ -29,11 +31,14 @@ const emptyForm = {
 };
 
 const Clients = () => {
-  const [search, setSearch] = useState("");
+  const dispatch = useAppDispatch();
+  const clientList = useAppSelector((state) => state.clients.list);
+  const search = useAppSelector((state) => state.clients.search);
+  const projectList = useAppSelector((state) => state.projects.list);
+
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [clientList, setClientList] = useState<Client[]>(initialClients);
 
   const filtered = clientList.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
@@ -72,7 +77,7 @@ const Clients = () => {
       ],
     };
 
-    setClientList((prev) => [newClient, ...prev]);
+    dispatch(addClient(newClient));
     setShowModal(false);
     setForm(emptyForm);
     setErrors({});
@@ -101,7 +106,7 @@ const Clients = () => {
           type="text"
           placeholder="Buscar cliente..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => dispatch(setSearch(e.target.value))}
           className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
       </div>
@@ -179,7 +184,7 @@ const Clients = () => {
               <Field label="Proyecto de interés *" error={errors.projectInterest}>
                 <select value={form.projectInterest} onChange={(e) => updateField("projectInterest", e.target.value)} className="form-input">
                   <option value="">Seleccionar proyecto</option>
-                  {projects.map((p) => (
+                  {projectList.map((p) => (
                     <option key={p.id} value={p.id}>{p.title}</option>
                   ))}
                 </select>
