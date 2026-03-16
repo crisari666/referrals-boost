@@ -1,10 +1,16 @@
 import { DollarSign, Users, Target, TrendingUp, Trophy, Medal } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
-import { currentSeller, motivationalPhrases, topSellers, clients, statusLabels, statusColors } from "@/data/mockData";
+import { currentSeller, motivationalPhrases, topSellers, clients } from "@/data/mockData";
 import { motion } from "framer-motion";
 import { useMemo } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+
+const displayName = (name: string, lastName: string) =>
+  [name, lastName].filter(Boolean).join(" ").trim() || "Usuario";
 
 const Dashboard = () => {
+  const user = useSelector((s: RootState) => s.auth.user);
   const phrase = useMemo(
     () => motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)],
     []
@@ -16,6 +22,8 @@ const Dashboard = () => {
     .filter((c) => c.status === "pago_reserva" || c.status === "cerrado")
     .slice(0, 3);
 
+  const userName = user ? displayName(user.name, user.lastName) : currentSeller.name;
+
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -25,7 +33,7 @@ const Dashboard = () => {
         className="space-y-1"
       >
         <p className="text-sm text-muted-foreground">👋 Bienvenido de vuelta</p>
-        <h1 className="text-2xl font-extrabold text-foreground">{currentSeller.name}</h1>
+        <h1 className="text-2xl font-extrabold text-foreground">{userName}</h1>
         <p className="text-sm text-primary font-medium">{phrase}</p>
       </motion.div>
 
@@ -108,14 +116,14 @@ const Dashboard = () => {
             <div
               key={i}
               className={`flex items-center gap-3 p-3 rounded-xl ${
-                seller.name === currentSeller.name ? "bg-primary/10 border border-primary/20" : "bg-secondary/50"
+                seller.name === userName ? "bg-primary/10 border border-primary/20" : "bg-secondary/50"
               }`}
             >
               <span className="text-lg font-extrabold text-muted-foreground w-6">
                 {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
               </span>
               <div className="flex-1">
-                <p className={`text-sm font-semibold ${seller.name === currentSeller.name ? "text-primary" : "text-foreground"}`}>
+                <p className={`text-sm font-semibold ${seller.name === userName ? "text-primary" : "text-foreground"}`}>
                   {seller.name}
                 </p>
                 <p className="text-xs text-muted-foreground">Nivel {seller.level}</p>

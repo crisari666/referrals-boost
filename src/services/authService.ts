@@ -3,11 +3,11 @@
  */
 
 import * as http from "@/lib/http";
-import type { AuthUser } from "@/store/authSlice";
+import type { ApiUser, LoginPayload, LoginResponse } from "@/types/auth";
 
 /** POST /api/auth/login */
-export function login(email: string, password: string) {
-  return http.post<AuthUser>("/api/auth/login", { email, password });
+export function login(payload: LoginPayload) {
+  return http.post<LoginResponse>("login/signin", payload);
 }
 
 /** POST /api/auth/logout */
@@ -17,5 +17,5 @@ export function logout() {
 
 /** GET /api/auth/me */
 export function getMe() {
-  return http.get<AuthUser>("/api/auth/me");
+  return http.get<ApiUser>("/api/auth/me");
 }

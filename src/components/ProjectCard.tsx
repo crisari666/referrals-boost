@@ -12,21 +12,14 @@ const statusBadge: Record<string, { label: string; className: string }> = {
 interface ProjectCardProps {
   project: Project;
   index?: number;
+  onSelect?: (project: Project) => void;
 }
 
-const ProjectCard = ({ project, index = 0 }: ProjectCardProps) => {
+const ProjectCard = ({ project, index = 0, onSelect }: ProjectCardProps) => {
   const badge = statusBadge[project.status];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-    >
-      <Link
-        to={`/projects/${project.id}`}
-        className="block bg-card rounded-2xl overflow-hidden shadow-sm border border-border hover:shadow-lg transition-shadow group"
-      >
+  
+  const content = (
+    <>
         <div className="relative h-44 overflow-hidden">
           <img
             src={project.image}
@@ -63,7 +56,31 @@ const ProjectCard = ({ project, index = 0 }: ProjectCardProps) => {
             {project.lotsAvailable} de {project.totalLots} lotes disponibles
           </div>
         </div>
-      </Link>
+    </>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+    >
+      {onSelect ? (
+        <button
+          type="button"
+          onClick={() => onSelect(project)}
+          className="w-full text-left block bg-card rounded-2xl overflow-hidden shadow-sm border border-border hover:shadow-lg transition-shadow group"
+        >
+          {content}
+        </button>
+      ) : (
+        <Link
+          to={`/projects/${project.id}`}
+          className="block bg-card rounded-2xl overflow-hidden shadow-sm border border-border hover:shadow-lg transition-shadow group"
+        >
+          {content}
+        </Link>
+      )}
     </motion.div>
   );
 };

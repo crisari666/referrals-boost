@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { LogIn, AlertCircle, Loader2 } from "lucide-react";
@@ -8,9 +8,13 @@ import { Label } from "@/components/ui/label";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { loginUser, clearError } from "@/store/authSlice";
 
+const DEFAULT_LAT = 40;
+const DEFAULT_LNG = 40;
+
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [userOrEmail, setUserOrEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [coords, setCoords] = useState({ lat: DEFAULT_LAT, lng: DEFAULT_LNG });
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isLoading, error, isAuthenticated } = useAppSelector((s) => s.auth);
@@ -23,10 +27,31 @@ const Login = () => {
     return () => { dispatch(clearError()); };
   }, [dispatch]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch(loginUser({ email, password }));
-  };
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+    );
+  }, []);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const value = userOrEmail.trim();
+      dispatch(
+        loginUser({
+          user: value,
+          email: value,
+          password,
+          lat: coords.lat,
+          lng: coords.lng,
+        })
+      );
+    },
+    [dispatch, userOrEmail, password, coords.lat, coords.lng]
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -48,15 +73,15 @@ const Login = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="userOrEmail">Usuario o correo</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="vendedor@lotelink.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="userOrEmail"
+              type="text"
+              placeholder="Usuario o correo electrónico"
+              value={userOrEmail}
+              onChange={(e) => setUserOrEmail(e.target.value)}
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
 
@@ -98,10 +123,9 @@ const Login = () => {
           </Button>
         </form>
 
-        {/* Demo hint */}
-        <div className="text-center text-xs text-muted-foreground space-y-1">
-          <p>Demo Referido: <span className="font-medium text-foreground">referido@lotelink.com</span> / <span className="font-medium text-foreground">referido123</span></p>
-          <p>Demo Físico: <span className="font-medium text-foreground">fisico@lotelink.com</span> / <span className="font-medium text-foreground">fisico123</span></p>
+        {/* Hint */}
+        <div className="text-center text-xs text-muted-foreground">
+          <p>Ingresa usuario o correo y contraseña para acceder</p>
         </div>
       </motion.div>
     </div>

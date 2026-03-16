@@ -1,12 +1,21 @@
 import { useParams, Link } from "react-router-dom";
-import { projects } from "@/data/mockData";
+import { useAppSelector } from "@/store";
 import { ArrowLeft, MapPin, Layers, Share2, Download, CheckCircle, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
+function decodeHtml(html: string): string {
+  if (!html) return "";
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.innerHTML;
+}
+
 const ProjectDetail = () => {
   const { id } = useParams();
-  const project = projects.find((p) => p.id === id);
+  const project = useAppSelector((state) =>
+    state.projects.list.find((p) => p.id === id)
+  );
 
   if (!project) {
     return (
@@ -47,7 +56,10 @@ const ProjectDetail = () => {
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <MapPin className="w-4 h-4" /> {project.location}
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">{project.description}</p>
+          <div
+            className="text-sm text-muted-foreground leading-relaxed prose prose-sm prose-invert max-w-none [&_a]:text-primary [&_a]:underline"
+            dangerouslySetInnerHTML={{ __html: decodeHtml(project.description ?? "") }}
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-secondary rounded-xl p-3 text-center">
@@ -56,12 +68,16 @@ const ProjectDetail = () => {
             </div>
             <div className="bg-primary/10 rounded-xl p-3 text-center">
               <p className="text-xs text-muted-foreground">Comisión</p>
-              <p className="font-extrabold text-primary text-sm">{project.commission}%</p>
+              <p className="font-extrabold text-primary text-sm">
+                {project.commissionType === "%" ? `${project.commission}%` : `$${project.commission.toLocaleString()}`}
+              </p>
             </div>
             <div className="bg-accent/10 rounded-xl p-3 text-center">
               <p className="text-xs text-muted-foreground">Valor Total COP</p>
               <p className="font-extrabold text-foreground text-sm">
-                ${(project.priceFrom * project.commission / 100).toLocaleString("es-CO")}
+                {project.commissionType === "%"
+                  ? (project.priceFrom * project.commission / 100).toLocaleString("es-CO")
+                  : project.commission.toLocaleString("es-CO")}
               </p>
             </div>
             <div className="bg-secondary rounded-xl p-3 text-center">

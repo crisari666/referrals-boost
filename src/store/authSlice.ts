@@ -1,11 +1,30 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { APP_CONSTANTS } from "@/constants/app-constants";
+import * as authService from "@/services/authService";
+import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
 
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
+export type { AuthUser, UserRole } from "@/types/auth";
+
+function mapApiUserToAuthUser(api: ApiUser): AuthUser {
+  const role: UserRole = api.root ? "admin" : api.physical ? "asesor_fisico" : "asesor_referido";
+  return {
+    id: api._id,
+    user: api.user,
+    name: api.name,
+    lastName: api.lastName,
+    email: api.email,
+    phone: api.phone,
+    token: api.token,
+    level: api.level,
+    percentage: api.percentage,
+    connected: api.connected,
+    enable: api.enable,
+    root: api.root,
+    link: api.link,
+    createdAt: api.createdAt,
+    updatedAt: api.updatedAt,
+    role,
+  };
 }
 
 interface AuthState {
@@ -15,67 +34,47 @@ interface AuthState {
   error: string | null;
 }
 
-export type UserRole = "asesor_referido" | "asesor_fisico" | "admin";
-
-const MOCK_USERS = [
-  {
-    id: "1",
-    email: "referido@lotelink.com",
-    password: "referido123",
-    name: "Carlos Mendoza",
-    role: "asesor_referido" as UserRole,
-    avatar: undefined,
-  },
-  {
-    id: "2",
-    email: "fisico@lotelink.com",
-    password: "fisico123",
-    name: "Ana García",
-    role: "asesor_fisico" as UserRole,
-    avatar: undefined,
-  },
-  {
-    id: "3",
-    email: "admin@lotelink.com",
-    password: "admin123",
-    name: "Luis Torres",
-    role: "admin" as UserRole,
-    avatar: undefined,
-  },
-];
+function getInitialAuthState(): AuthState {
+  const base = { isLoading: false, error: null };
+  try {
+    const raw = localStorage.getItem(APP_CONSTANTS.AUTH_USER_STORAGE_KEY);
+    if (!raw) return { ...base, user: null, isAuthenticated: false };
+    const user = JSON.parse(raw) as AuthUser;
+    if (!user?.token) return { ...base, user: null, isAuthenticated: false };
+    return { ...base, user, isAuthenticated: true };
+  } catch {
+    return { ...base, user: null, isAuthenticated: false };
+  }
+}
 
 export const loginUser = createAsyncThunk<
   AuthUser,
-  { email: string; password: string },
+  { user: string; email: string; password: string; lat: number; lng: number },
   { rejectValue: string }
->("auth/login", async ({ email, password }, { rejectWithValue }) => {
-  // Simulate network delay
-  await new Promise((r) => setTimeout(r, 1200));
-
-  const found = MOCK_USERS.find(
-    (u) => u.email === email && u.password === password
-  );
-
-  if (!found) {
-    return rejectWithValue("Credenciales incorrectas. Verifica tu email y contraseña.");
+>("auth/login", async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authService.login(payload);
+    if (response.error) {
+      return rejectWithValue(response.error);
+    }
+    return mapApiUserToAuthUser(response.result);
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "Error de conexión. Intenta de nuevo.";
+    return rejectWithValue(message);
   }
-
-  const { password: _, ...user } = found;
-  return user;
 });
 
-const initialState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
-  error: null,
-};
+const initialState: AuthState = getInitialAuthState();
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     logout(state) {
+      localStorage.removeItem(APP_CONSTANTS.AUTH_USER_STORAGE_KEY);
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
@@ -94,6 +93,10 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        localStorage.setItem(
+          APP_CONSTANTS.AUTH_USER_STORAGE_KEY,
+          JSON.stringify(action.payload)
+        );
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;

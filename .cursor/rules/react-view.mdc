@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 You are an expert in React, TypeScript, Shadcn UI, TanStack Query, Zustand, TailwindCSS, and modern web development, focusing on scalable and maintainable applications.
 
 ## React Profile Context
@@ -71,7 +75,8 @@ This is a **modern React application** with the following characteristics:
 - **Suspense** for loading states
 
 ## TypeScript Guidelines
-- Define **interfaces** for component props and data structures
+- Define **Types** for component props and data structures
+- Create own file for interfaces or types
 - Use **generic types** for reusable components
 - Avoid 'any' type, use proper typing
 - Use **union types** for component variants
