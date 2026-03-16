@@ -23,7 +23,6 @@ const Profile = () => {
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-4">
       <h1 className="text-2xl font-extrabold text-foreground">Mi Perfil</h1>
 
-      {/* Profile card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -38,7 +37,6 @@ const Profile = () => {
           <span className="text-sm font-semibold text-foreground">Nivel {seller.level}</span>
         </div>
 
-        {/* Level progress */}
         <div className="mt-4 max-w-xs mx-auto">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span>{seller.level}</span>
@@ -56,7 +54,6 @@ const Profile = () => {
         </div>
       </motion.div>
 
-      {/* Referral link */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -83,7 +80,6 @@ const Profile = () => {
         </p>
       </motion.div>
 
-      {/* Stats summary */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -114,7 +110,6 @@ const Profile = () => {
         </div>
       </motion.div>
 
-      {/* Achievements */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

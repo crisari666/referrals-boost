@@ -39,7 +39,6 @@ const ClientDetail = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Link
           to="/clients"
@@ -50,7 +49,6 @@ const ClientDetail = () => {
         <h1 className="font-bold text-foreground">Detalle del Cliente</h1>
       </div>
 
-      {/* Profile card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -66,7 +64,6 @@ const ClientDetail = () => {
           </div>
         </div>
 
-        {/* Status selector */}
         <div className="mt-4 relative">
           <button
             onClick={() => setStatusOpen(!statusOpen)}
@@ -107,7 +104,6 @@ const ClientDetail = () => {
           </AnimatePresence>
         </div>
 
-        {/* Quick actions */}
         <div className={`grid ${isPhysical ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"} gap-2 mt-5`}>
           <a
             href={`https://wa.me/${client.whatsapp.replace(/\D/g, "")}`}
@@ -154,7 +150,6 @@ const ClientDetail = () => {
         </div>
       </motion.div>
 
-      {/* Interaction timeline */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -180,7 +175,6 @@ const ClientDetail = () => {
         </div>
       </motion.div>
 
-      {/* Notes */}
       {client.notes.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

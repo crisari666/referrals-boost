@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Field from "@/components/Field";
+import Field from "./Field";
 import type { DocumentType } from "@/data/mockData";
 import type { Project } from "@/data/mockData";
 

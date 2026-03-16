@@ -17,7 +17,7 @@ interface ProjectCardProps {
 
 const ProjectCard = ({ project, index = 0, onSelect }: ProjectCardProps) => {
   const badge = statusBadge[project.status];
-  
+
   const content = (
     <>
         <div className="relative h-44 overflow-hidden">
@@ -44,8 +44,8 @@ const ProjectCard = ({ project, index = 0, onSelect }: ProjectCardProps) => {
             <div className="text-right">
               <p className="text-xs text-muted-foreground">Comisión</p>
               <p className="font-extrabold text-primary">
-                COP {(project.commissionType === "%" 
-                  ? Math.round(project.priceFrom * project.commission / 100) 
+                COP {(project.commissionType === "%"
+                  ? Math.round(project.priceFrom * project.commission / 100)
                   : project.commission
                 ).toLocaleString("es-CO")}
               </p>

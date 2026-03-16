@@ -1,8 +1,8 @@
 import { useAppSelector, useAppDispatch } from "@/store";
 import { addClient, setSearch } from "@/store/clientsSlice";
 import type { Client, DocumentType } from "@/data/mockData";
-import ClientRow from "@/components/ClientRow";
-import AddClientModal, { type AddClientFormState } from "@/components/AddClientModal";
+import ClientRow from "./ClientRow";
+import AddClientModal, { type AddClientFormState } from "./AddClientModal";
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -97,7 +97,6 @@ const Clients = () => {
         </button>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input

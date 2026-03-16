@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import ProjectCard from "@/components/ProjectCard";
-import ProjectDetailModal from "@/components/ProjectDetailModal";
+import ProjectCard from "./ProjectCard";
+import ProjectDetailModal from "./ProjectDetailModal";
 import type { Project } from "@/data/mockData";
 import { fetchProjects } from "@/store/projectsSlice";
 

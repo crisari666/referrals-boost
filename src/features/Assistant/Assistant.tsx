@@ -3,11 +3,11 @@ import { AnimatePresence } from "framer-motion";
 import { ArrowDown } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { sendPrompt } from "@/store/assistantSlice";
-import AssistantHeader from "@/components/assistant/AssistantHeader";
-import AssistantMessageBubble from "@/components/assistant/MessageBubble";
-import TypingIndicator from "@/components/assistant/TypingIndicator";
-import SuggestedQuestions from "@/components/assistant/SuggestedQuestions";
-import ChatInput from "@/components/assistant/ChatInput";
+import AssistantHeader from "./AssistantHeader";
+import AssistantMessageBubble from "./MessageBubble";
+import TypingIndicator from "./TypingIndicator";
+import SuggestedQuestions from "./SuggestedQuestions";
+import ChatInput from "./ChatInput";
 
 const Assistant = () => {
   const dispatch = useAppDispatch();

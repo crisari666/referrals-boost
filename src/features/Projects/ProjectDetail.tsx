@@ -34,7 +34,6 @@ const ProjectDetail = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Hero */}
       <div className="relative h-56 md:h-72">
         <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
@@ -89,7 +88,6 @@ const ProjectDetail = () => {
           </div>
         </div>
 
-        {/* Amenities */}
         <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
           <h2 className="font-bold text-foreground mb-3">Amenidades</h2>
           <div className="grid grid-cols-2 gap-2">
@@ -102,7 +100,6 @@ const ProjectDetail = () => {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="grid grid-cols-2 gap-3">
           <a
             href={`https://wa.me/?text=${whatsappMsg}`}
