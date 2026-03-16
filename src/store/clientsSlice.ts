@@ -40,8 +40,11 @@ const clientsSlice = createSlice({
     setSearch(state, action: PayloadAction<string>) {
       state.search = action.payload;
     },
+    setClientList(state, action: PayloadAction<Client[]>) {
+      state.list = action.payload;
+    },
   },
 });
 
-export const { addClient, updateClient, removeClient, updateClientStatus, addClientNote, addClientInteraction, setSearch } = clientsSlice.actions;
+export const { addClient, updateClient, removeClient, updateClientStatus, addClientNote, addClientInteraction, setSearch, setClientList } = clientsSlice.actions;
 export default clientsSlice.reducer;

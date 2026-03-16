@@ -14,6 +14,7 @@ export interface AddClientFormState {
   documentType: string;
   document: string;
   projectInterest: string;
+  description: string;
 }
 
 interface AddClientModalProps {
@@ -67,7 +68,7 @@ const AddClientModal = ({
             <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} placeholder="correo@ejemplo.com" className="form-input" />
           </Field>
 
-          <Field label="WhatsApp *" error={errors.whatsapp}>
+          <Field label="WhatsApp" error={errors.whatsapp}>
             <input type="tel" value={form.whatsapp} onChange={(e) => updateField("whatsapp", e.target.value)} placeholder="+52 999 123 4567" className="form-input" />
           </Field>
 
@@ -89,13 +90,22 @@ const AddClientModal = ({
             </Field>
           </div>
 
-          <Field label="Proyecto de interés *" error={errors.projectInterest}>
+          <Field label="Proyecto de interés" error={errors.projectInterest}>
             <select value={form.projectInterest} onChange={(e) => updateField("projectInterest", e.target.value)} className="form-input">
-              <option value="">Seleccionar proyecto</option>
+              <option value="">Sin proyecto asignado</option>
               {projectList.map((p) => (
                 <option key={p.id} value={p.id}>{p.title}</option>
               ))}
             </select>
+          </Field>
+
+          <Field label="Descripción del cliente *" error={errors.description}>
+            <textarea
+              value={form.description}
+              onChange={(e) => updateField("description", e.target.value)}
+              placeholder="Describe la situación o notas iniciales del cliente"
+              className="form-input min-h-[96px] resize-y"
+            />
           </Field>
 
           <button
