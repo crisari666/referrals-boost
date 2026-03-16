@@ -1,0 +1,91 @@
+import axios, { type AxiosRequestConfig } from "axios";
+
+const BASE_URL = import.meta.env.VITE_BASE_URL ?? "";
+
+export interface HttpOptions {
+  /** Query params (e.g. ?foo=bar) */
+  params?: Record<string, unknown>;
+  /** Custom request headers */
+  headers?: Record<string, string>;
+  /** Override: use this absolute URL instead of BASE_URL + path */
+  url?: string;
+}
+
+function resolveUrl(path: string, options?: HttpOptions): string {
+  if (options?.url) {
+    return options.url;
+  }
+  const base = BASE_URL.replace(/\/$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalizedPath}`;
+}
+
+function buildConfig(path: string, options?: HttpOptions): AxiosRequestConfig {
+  const url = resolveUrl(path, options);
+  const config: AxiosRequestConfig = { url };
+  if (options?.params) {
+    config.params = options.params;
+  }
+  if (options?.headers) {
+    config.headers = options.headers as AxiosRequestConfig["headers"];
+  }
+  return config;
+}
+
+/**
+ * GET request. Use path (relative to BASE_URL) or pass options.url for absolute URL.
+ */
+export async function get<T = unknown>(
+  path: string,
+  options?: HttpOptions
+): Promise<T> {
+  const config = buildConfig(path, options);
+  config.method = "GET";
+  const { data } = await axios.request<T>(config);
+  return data;
+}
+
+/**
+ * POST request. Use path (relative to BASE_URL) or pass options.url for absolute URL.
+ */
+export async function post<T = unknown>(
+  path: string,
+  body?: unknown,
+  options?: HttpOptions
+): Promise<T> {
+  const config = buildConfig(path, options);
+  config.method = "POST";
+  config.data = body;
+  const { data } = await axios.request<T>(config);
+  return data;
+}
+
+/**
+ * PATCH request. Use path (relative to BASE_URL) or pass options.url for absolute URL.
+ */
+export async function patch<T = unknown>(
+  path: string,
+  body?: unknown,
+  options?: HttpOptions
+): Promise<T> {
+  const config = buildConfig(path, options);
+  config.method = "PATCH";
+  config.data = body;
+  const { data } = await axios.request<T>(config);
+  return data;
+}
+
+/**
+ * DELETE request. Use path (relative to BASE_URL) or pass options.url for absolute URL.
+ */
+export async function del<T = unknown>(
+  path: string,
+  options?: HttpOptions
+): Promise<T> {
+  const config = buildConfig(path, options);
+  config.method = "DELETE";
+  const { data } = await axios.request<T>(config);
+  return data;
+}
+
+export const http = { get, post, patch, delete: del, del };
