@@ -66,8 +66,8 @@ const initialState: WhatsAppState = {
 /** EVENT: REQUEST_QR_CODE — Ask backend for a new QR code */
 export const requestQrCode = createAsyncThunk(
   "whatsapp/requestQrCode",
-  async () => {
-    const result = await whatsappService.requestQrCode();
+  async (phone: string) => {
+    const result = await whatsappService.requestQrCode(phone);
     return result;
   }
 );
@@ -129,6 +129,23 @@ const whatsappSlice = createSlice({
     setScanning(state) {
       state.connectionStatus = "scanning";
     },
+    /** EVENT: QR_RECEIVED — WebSocket: new QR for this session */
+    qrReceived(state, action: PayloadAction<{ qr: string }>) {
+      state.qrCode = action.payload.qr;
+      state.connectionStatus = "qr_ready";
+      state.errorMessage = null;
+    },
+    /** EVENT: SESSION_READY — WebSocket: WhatsApp session is ready */
+    sessionReady(state) {
+      state.connectionStatus = "connected";
+      state.qrCode = null;
+      state.errorMessage = null;
+    },
+    /** EVENT: SESSION_ERROR — WebSocket: auth failure / closed */
+    sessionError(state, action: PayloadAction<{ message: string }>) {
+      state.connectionStatus = "error";
+      state.errorMessage = action.payload.message;
+    },
     /** EVENT: CLEAR_ERROR */
     clearError(state) {
       state.errorMessage = null;
@@ -185,8 +202,10 @@ const whatsappSlice = createSlice({
       state.errorMessage = null;
     });
     builder.addCase(requestQrCode.fulfilled, (state, action) => {
-      state.qrCode = action.payload.qrCode;
-      state.connectionStatus = "qr_ready";
+      // Backend now emits QR over WebSocket; keep loading state until WS event arrives.
+      if (!state.qrCode) {
+        state.connectionStatus = "qr_loading";
+      }
     });
     builder.addCase(requestQrCode.rejected, (state, action) => {
       state.connectionStatus = "error";
@@ -262,6 +281,9 @@ export const {
   messageUpdated,
   messageDeleted,
   newIncomingMessage,
+  qrReceived,
+  sessionReady,
+  sessionError,
 } = whatsappSlice.actions;
 
 export default whatsappSlice.reducer;

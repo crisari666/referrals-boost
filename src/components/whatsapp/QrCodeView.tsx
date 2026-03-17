@@ -5,16 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, RefreshCw, Smartphone, CheckCircle2, XCircle, Wifi } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import WhatsappSocketListener from "@/components/whatsapp/WhatsappSocketListener";
+import QRCode from "react-qr-code"
 
 const QrCodeView = () => {
   const dispatch = useAppDispatch();
   const { connectionStatus, qrCode, errorMessage } = useAppSelector((s) => s.whatsapp);
+  const phone = useAppSelector((s) => s.auth.user?.phone);
 
   useEffect(() => {
     if (connectionStatus === "disconnected") {
-      dispatch(requestQrCode());
+      dispatch(requestQrCode(phone));
     }
-  }, [dispatch, connectionStatus]);
+  }, [dispatch, connectionStatus, phone]);
 
   const handleScanStarted = () => {
     dispatch(setScanning());
@@ -25,11 +28,12 @@ const QrCodeView = () => {
   };
 
   const handleRetry = () => {
-    dispatch(requestQrCode());
+    dispatch(requestQrCode(phone));
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 p-6">
+      <WhatsappSocketListener sessionId={phone ?? null} />
       <AnimatePresence mode="wait">
         {/* LOADING QR */}
         {connectionStatus === "qr_loading" && (
@@ -50,7 +54,7 @@ const QrCodeView = () => {
               Abre WhatsApp en tu teléfono → Dispositivos vinculados → Vincular un dispositivo
             </p>
             <Card className="p-4 bg-card border-2 border-primary/20">
-              <img src={qrCode} alt="Código QR de WhatsApp" className="w-64 h-64 rounded-lg" />
+              <QRCode value={qrCode} size={220} color="red" bgColor="GrayText" fgColor="white" />
             </Card>
             <Button onClick={handleScanStarted} className="gap-2">
               <CheckCircle2 className="w-4 h-4" />

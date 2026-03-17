@@ -5,38 +5,52 @@
 import * as http from "@/lib/http";
 import type { WhatsAppChat, WhatsAppMessage } from "@/store/whatsappSlice";
 
-const BASE = "/api/whatsapp";
+const WHATSAPP_BASE = (import.meta.env.VITE_URL_WHATSAPP_MS ?? "").replace(/\/$/, "");
 
-// ─── QR & connection ───────────────────────────────────────────────────
+// ─── Session, QR & connection ──────────────────────────────────────────
 
-/** POST /api/whatsapp/qr */
-export function requestQrCode() {
-  return http.post<{ qrCode: string }>(`${BASE}/qr`);
+/** POST /session/:id — create session for given phone */
+export function requestQrCode(phone: string) {
+  return http.post<{
+    success: boolean;
+    sessionId: string;
+    message: string;
+  }>("/session", undefined, {
+    url: `${WHATSAPP_BASE}/whatsapp-web/session/${phone}`,
+  });
 }
 
-/** POST /api/whatsapp/sync */
+/** POST /sync */
 export function syncConnection() {
-  return http.post<{ connected: boolean }>(`${BASE}/sync`);
+  return http.post<{ connected: boolean }>("/sync", undefined, {
+    url: `${WHATSAPP_BASE}/sync`,
+  });
 }
 
-/** POST /api/whatsapp/disconnect */
+/** POST /disconnect */
 export function disconnect() {
-  return http.post<void>(`${BASE}/disconnect`);
+  return http.post<void>("/disconnect", undefined, {
+    url: `${WHATSAPP_BASE}/disconnect`,
+  });
 }
 
 // ─── Chats ─────────────────────────────────────────────────────────────
 
-/** GET /api/whatsapp/chats */
+/** GET /chats */
 export function fetchChats() {
-  return http.get<WhatsAppChat[]>(`${BASE}/chats`);
+  return http.get<WhatsAppChat[]>("/chats", {
+    url: `${WHATSAPP_BASE}/chats`,
+  });
 }
 
-/** GET /api/whatsapp/chats/:chatId/messages */
+/** GET /chats/:chatId/messages */
 export function fetchMessages(chatId: string) {
-  return http.get<WhatsAppMessage[]>(`${BASE}/chats/${chatId}/messages`);
+  return http.get<WhatsAppMessage[]>("/chats/messages", {
+    url: `${WHATSAPP_BASE}/chats/${chatId}/messages`,
+  });
 }
 
-/** POST /api/whatsapp/chats/:chatId/messages */
+/** POST /chats/:chatId/messages */
 export function sendMessage(payload: {
   chatId: string;
   content: string;
@@ -53,5 +67,7 @@ export function sendMessage(payload: {
         return form;
       })()
     : { content, type };
-  return http.post<WhatsAppMessage>(`${BASE}/chats/${chatId}/messages`, body);
+  return http.post<WhatsAppMessage>("/chats/messages", body, {
+    url: `${WHATSAPP_BASE}/chats/${chatId}/messages`,
+  });
 }
