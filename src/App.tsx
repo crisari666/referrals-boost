@@ -1,29 +1,14 @@
-import { Provider } from "react-redux";
-import { store } from "@/store";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Layout from "@/components/Layout";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import { Projects, ProjectDetail } from "@/features/Projects";
-import { Clients, ClientDetail } from "@/features/Clients";
-import { Profile } from "@/features/Profile";
-import { Assistant } from "@/features/Assistant";
-import WhatsAppSync from "./pages/WhatsAppSync";
-import Schedule from "./pages/Schedule";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import AppRouter from '@/router/app-router';
+import { store } from '@/store';
 
 const queryClient = new QueryClient();
-
-const Protected = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute>
-    <Layout>{children}</Layout>
-  </ProtectedRoute>
-);
 
 const App = () => (
   <Provider store={store}>
@@ -32,19 +17,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Protected><Index /></Protected>} />
-            <Route path="/projects" element={<Protected><Projects /></Protected>} />
-            <Route path="/projects/:id" element={<Protected><ProjectDetail /></Protected>} />
-            <Route path="/clients" element={<Protected><Clients /></Protected>} />
-            <Route path="/clients/:id" element={<Protected><ClientDetail /></Protected>} />
-            <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
-            <Route path="/whatsapp" element={<Protected><WhatsAppSync /></Protected>} />
-            <Route path="/schedule" element={<Protected><Schedule /></Protected>} />
-            <Route path="/profile" element={<Protected><Profile /></Protected>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRouter />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

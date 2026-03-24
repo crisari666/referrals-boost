@@ -58,12 +58,12 @@ const ProjectDetailModal = ({ project, open, onOpenChange }: ProjectDetailModalP
             <MapPin className="w-4 h-4 shrink-0" />
             <span>{LABELS.ubicacion}: {project.location}</span>
           </div>
-          {project.description && (
+          {/* {project.description && (
             <>
               <p className="text-xs font-medium text-muted-foreground">{LABELS.descripcion}</p>
               <p className="text-sm text-foreground leading-relaxed">{project.description}</p>
             </>
-          )}
+          )} */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-secondary rounded-xl p-3 text-center">
               <p className="text-xs text-muted-foreground">{LABELS.desde}</p>
