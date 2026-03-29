@@ -1,7 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import whatsappReducer from "./whatsappSlice";
-import assistantReducer from "./assistantSlice";
 import authReducer from "./authSlice";
 import scheduleReducer from "./scheduleSlice";
 import clientsReducer from "./clientsSlice";
@@ -11,7 +10,6 @@ import profileReducer from "./profileSlice";
 export const store = configureStore({
   reducer: {
     whatsapp: whatsappReducer,
-    assistant: assistantReducer,
     auth: authReducer,
     schedule: scheduleReducer,
     clients: clientsReducer,
