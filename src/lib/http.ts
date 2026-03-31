@@ -1,6 +1,23 @@
-import axios, { type AxiosRequestConfig } from "axios";
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from "axios";
+import { getStoredAuthToken } from "@/lib/auth-token";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL ?? "";
+
+const httpClient = axios.create();
+
+function shouldSkipAuthHeader(url: string): boolean {
+  return /signin/i.test(url) || /\/login(\/|$)/i.test(url);
+}
+
+httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const url = config.url ?? "";
+  if (shouldSkipAuthHeader(url)) return config;
+  const token = getStoredAuthToken();
+  if (token) {
+    config.headers.set("token", token);
+  }
+  return config;
+});
 
 export interface HttpOptions {
   /** Query params (e.g. ?foo=bar) */
@@ -41,7 +58,7 @@ export async function get<T = unknown>(
 ): Promise<T> {
   const config = buildConfig(path, options);
   config.method = "GET";
-  const { data } = await axios.request<T>(config);
+  const { data } = await httpClient.request<T>(config);
   return data;
 }
 
@@ -56,7 +73,7 @@ export async function post<T = unknown>(
   const config = buildConfig(path, options);
   config.method = "POST";
   config.data = body;
-  const { data } = await axios.request<T>(config);
+  const { data } = await httpClient.request<T>(config);
   return data;
 }
 
@@ -71,7 +88,7 @@ export async function patch<T = unknown>(
   const config = buildConfig(path, options);
   config.method = "PATCH";
   config.data = body;
-  const { data } = await axios.request<T>(config);
+  const { data } = await httpClient.request<T>(config);
   return data;
 }
 
@@ -84,7 +101,7 @@ export async function del<T = unknown>(
 ): Promise<T> {
   const config = buildConfig(path, options);
   config.method = "DELETE";
-  const { data } = await axios.request<T>(config);
+  const { data } = await httpClient.request<T>(config);
   return data;
 }
 
