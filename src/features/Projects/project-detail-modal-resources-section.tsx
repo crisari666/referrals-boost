@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, FileText, Images, Share2, Video } from 'lucide-react';
+import { Download, FileText, Images, Loader2, Share2, Video } from 'lucide-react';
 import { WhatsappShareButton } from 'react-share';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ const getMimeTypeFromFilename = (filename: string) => {
 
 const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResourcesSectionProps) => {
   const [imageDialogMode, setImageDialogMode] = useState<'download' | 'share' | null>(null);
+  const [sharingResourceKey, setSharingResourceKey] = useState<string | null>(null);
   const { toast } = useToast();
 
   const imageUrls = (project.images ?? []).map((name) => getProjectResourceUrl(name)).filter(Boolean);
@@ -137,10 +138,11 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
     }
   };
 
-  const handleNativeShare = async (url: string, fallbackName: string) => {
+  const handleNativeShare = async (url: string, fallbackName: string, resourceKey: string) => {
     if (!url || !canUseNativeShare) return;
 
     const filename = getFilenameFromUrl(url, fallbackName);
+    setSharingResourceKey(resourceKey);
     try {
       const response = await fetch(url, { mode: 'cors', headers: authHeaders });
       if (!response.ok) throw new Error('Share request failed');
@@ -167,8 +169,14 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
         title: 'Share error',
         description: 'Could not prepare the file to share. Please try again.',
       });
+    } finally {
+      setSharingResourceKey(null);
     }
   };
+
+  const shareBusy = sharingResourceKey !== null;
+  const shareIcon = (key: string) =>
+    sharingResourceKey === key ? <Loader2 className='h-4 w-4 animate-spin' aria-hidden /> : <Share2 className='h-4 w-4' />;
 
   return (
     <>
@@ -194,9 +202,11 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => void handleNativeShare(reelVideoUrl, `${project.title}-video.mp4`)}
+                  disabled={shareBusy}
+                  aria-busy={sharingResourceKey === 'reelVideo'}
+                  onClick={() => void handleNativeShare(reelVideoUrl, `${project.title}-video.mp4`, 'reelVideo')}
                 >
-                  <Share2 className='h-4 w-4' /> {LABELS.compartir}
+                  {shareIcon('reelVideo')} {LABELS.compartir}
                 </Button>
               ) : (
                 <WhatsappShareButton url={reelVideoUrl} title={shareMessage} className={shareButtonClassName}>
@@ -225,7 +235,12 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
             >
               <Download className='h-4 w-4' /> {LABELS.descargar}
             </Button>
-            <Button variant='outline' size='sm' disabled={imageUrls.length === 0} onClick={() => setImageDialogMode('share')}>
+            <Button
+              variant='outline'
+              size='sm'
+              disabled={imageUrls.length === 0 || shareBusy}
+              onClick={() => setImageDialogMode('share')}
+            >
               <Share2 className='h-4 w-4' /> {LABELS.compartir}
             </Button>
           </div>
@@ -250,9 +265,11 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => void handleNativeShare(brochureUrl, `${project.title}-brochure.pdf`)}
+                  disabled={shareBusy}
+                  aria-busy={sharingResourceKey === 'brochure'}
+                  onClick={() => void handleNativeShare(brochureUrl, `${project.title}-brochure.pdf`, 'brochure')}
                 >
-                  <Share2 className='h-4 w-4' /> {LABELS.compartir}
+                  {shareIcon('brochure')} {LABELS.compartir}
                 </Button>
               ) : (
                 <WhatsappShareButton url={brochureUrl} title={shareMessage} className={shareButtonClassName}>
@@ -286,9 +303,11 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => void handleNativeShare(planeUrl, `${project.title}-plano.pdf`)}
+                  disabled={shareBusy}
+                  aria-busy={sharingResourceKey === 'plane'}
+                  onClick={() => void handleNativeShare(planeUrl, `${project.title}-plano.pdf`, 'plane')}
                 >
-                  <Share2 className='h-4 w-4' /> {LABELS.compartir}
+                  {shareIcon('plane')} {LABELS.compartir}
                 </Button>
               ) : (
                 <WhatsappShareButton url={planeUrl} title={shareMessage} className={shareButtonClassName}>
@@ -327,9 +346,11 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
                   <Button
                     size='sm'
                     variant='outline'
-                    onClick={() => void handleNativeShare(url, `${project.title}-imagen-${index + 1}.jpg`)}
+                    disabled={shareBusy}
+                    aria-busy={sharingResourceKey === `image:${url}`}
+                    onClick={() => void handleNativeShare(url, `${project.title}-imagen-${index + 1}.jpg`, `image:${url}`)}
                   >
-                    <Share2 className='h-4 w-4' />
+                    {shareIcon(`image:${url}`)}
                   </Button>
                 ) : (
                   <WhatsappShareButton url={url} title={shareMessage} className={shareButtonClassName}>
