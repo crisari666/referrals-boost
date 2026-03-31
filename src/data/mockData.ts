@@ -7,9 +7,9 @@ export const currentSeller = {
   name: "Carlos Mendoza",
   level: "Plata" as const,
   levelProgress: 72,
-  totalCommissions: 48500,
-  monthCommissions: 12300,
-  monthGoal: 20000,
+  totalCommissions: 8350000,
+  monthCommissions: 5600000,
+  monthGoal: 7000000,
   clientsTracking: 14,
   clientsConverted: 6,
   referralLink: "https://milote.link/carlos-m",
@@ -46,6 +46,7 @@ export interface Project {
   amenities: string[];
   amenitiesGroups?: { icon?: string; title: string; amenities: string[] }[];
   images?: string[];
+  cardProject?: string;
   reelVideo?: string;
   brochure?: string;
   plane?: string;
@@ -70,7 +71,8 @@ export const projects: Project[] = [
     id: "p2",
     title: "Costa Esmeralda",
     location: "Cancún, Quintana Roo",
-    priceFrom: 520000,
+    priceFrom: 25000000
+    ,
     commission: 4,
     commissionType: "%",
     lotsAvailable: 18,
@@ -209,7 +211,7 @@ export const statusColors: Record<ClientStatus, string> = {
 };
 
 export const topSellers = [
-  { name: "Ana Torres", commissions: 52000, level: "Oro" },
-  { name: "Miguel Ruiz", commissions: 50200, level: "Oro" },
-  { name: "Carlos Mendoza", commissions: 48500, level: "Plata" },
+  { name: "Ana Torres", commissions: 25000000, level: "Oro" },
+  { name: "Miguel Ruiz", commissions: 20000000, level: "Oro" },
+  { name: "Carlos Mendoza", commissions: 18000000, level: "Plata" },
 ];

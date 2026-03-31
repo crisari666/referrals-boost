@@ -20,6 +20,25 @@ export function getProjectResourceUrl(fileName: string): string {
   return getProjectImageUrl(fileName);
 }
 
+export type ProjectResourceDownloadAttribute =
+  | "brochure"
+  | "plane"
+  | "reelVideo"
+  | "cardProject"
+  | "verticalVideos";
+
+export function buildProjectResourceDownloadUrl(params: {
+  projectId: string;
+  attribute: ProjectResourceDownloadAttribute;
+  fileName?: string;
+}): string {
+  const { projectId, attribute, fileName } = params;
+  const baseUrl = buildRagUrl(`projects/${projectId}/resources/${attribute}/download`);
+  if (attribute !== "verticalVideos") return baseUrl;
+  if (!fileName) throw new Error("fileName is required when attribute is verticalVideos");
+  return `${baseUrl}?fileName=${encodeURIComponent(fileName)}`;
+}
+
 export function getProjects() {
   return http.get<ApiProject[]>("", { url: buildRagUrl("projects") });
 }

@@ -17,12 +17,13 @@ interface ProjectCardProps {
 
 const ProjectCard = ({ project, index = 0, onSelect }: ProjectCardProps) => {
   const badge = statusBadge[project.status];
+  const projectCardImage = project.cardProject || project.image;
 
   const content = (
     <>
         <div className="relative h-44 overflow-hidden">
           <img
-            src={project.image}
+            src={projectCardImage}
             alt={project.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

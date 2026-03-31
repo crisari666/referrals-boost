@@ -9,6 +9,7 @@ function mapApiProjectToProject(api: ApiProject): Project {
   
   const imageName = api.images?.at(-1);
   const imageUrl = imageName ? projectsService.getProjectImageUrl(imageName) : "";
+  const cardProjectUrl = api.cardProject ? projectsService.getProjectImageUrl(api.cardProject) : "";
   return {
     id: api._id,
     title: api.title,
@@ -24,6 +25,7 @@ function mapApiProjectToProject(api: ApiProject): Project {
     amenities: api.amenities?.map((a) => a.title) ?? [],
     amenitiesGroups: api.amenitiesGroups ?? [],
     images: api.images ?? [],
+    cardProject: cardProjectUrl,
     reelVideo: api.reelVideo ?? "",
     brochure: api.brochure ?? "",
     plane: api.plane ?? "",
