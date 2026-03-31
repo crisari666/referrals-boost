@@ -22,6 +22,11 @@ function mapApiProjectToProject(api: ApiProject): Project {
     status: "available",
     description: api.description ?? "",
     amenities: api.amenities?.map((a) => a.title) ?? [],
+    amenitiesGroups: api.amenitiesGroups ?? [],
+    images: api.images ?? [],
+    reelVideo: api.reelVideo ?? "",
+    brochure: api.brochure ?? "",
+    plane: api.plane ?? "",
   };
 }
 

@@ -1,0 +1,16 @@
+export const PROJECT_DETAIL_MODAL_LABELS = {
+  ubicacion: 'Ubicación',
+  desde: 'Desde',
+  comision: 'Comisión',
+  valorComision: 'Valor comisión',
+  lotes: 'Lotes disponibles',
+  recursos: 'Recursos',
+  videos: 'Videos',
+  imagenes: 'Imágenes',
+  brochure: 'Brochure',
+  planoPdf: 'PDF',
+  compartir: 'Share',
+  descargar: 'Descargar',
+  seleccionarImagen: 'Seleccionar imagen',
+  compartirWhatsApp: 'Compartir por WhatsApp',
+} as const;

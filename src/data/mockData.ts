@@ -44,6 +44,11 @@ export interface Project {
   status: ProjectStatus;
   description: string;
   amenities: string[];
+  amenitiesGroups?: { icon?: string; title: string; amenities: string[] }[];
+  images?: string[];
+  reelVideo?: string;
+  brochure?: string;
+  plane?: string;
 }
 
 export const projects: Project[] = [

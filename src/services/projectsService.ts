@@ -16,6 +16,10 @@ export function getProjectImageUrl(imageName: string): string {
   return `${UPLOADS_BASE}/projects/${name}`;
 }
 
+export function getProjectResourceUrl(fileName: string): string {
+  return getProjectImageUrl(fileName);
+}
+
 export function getProjects() {
   return http.get<ApiProject[]>("", { url: buildRagUrl("projects") });
 }

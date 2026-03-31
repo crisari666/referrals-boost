@@ -3,6 +3,8 @@ import { getStoredAuthToken } from "@/lib/auth-token";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL ?? "";
 
+console.log("BASE_URL", BASE_URL);
+
 const httpClient = axios.create();
 
 function shouldSkipAuthHeader(url: string): boolean {
