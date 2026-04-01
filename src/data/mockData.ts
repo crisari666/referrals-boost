@@ -160,7 +160,7 @@ export const clients: Client[] = [
       { date: "2026-01-10", type: "WhatsApp", detail: "Contacto inicial" },
       { date: "2026-01-15", type: "Llamada", detail: "Explicación de financiamiento" },
       { date: "2026-01-20", type: "Visita", detail: "Visitó la oficina de ventas" },
-      { date: "2026-01-28", type: "Pago", detail: "Pagó reserva - $5,000" },
+      { date: "2026-01-28", type: "Pago", detail: "Pagó reserva - $5,000,000" },
     ],
   },
   {
