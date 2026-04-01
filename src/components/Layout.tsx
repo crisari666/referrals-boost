@@ -48,7 +48,7 @@ const Layout = ({ children }: LayoutProps) => {
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 flex-col bg-card border-r border-border z-40">
         <div className="p-6">
           <h1 className="text-xl font-extrabold text-foreground">
-            Lote<span className="text-primary">Link</span>
+            La<span className="text-primary">Ceiba</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-1">Panel de Vendedores</p>
         </div>
