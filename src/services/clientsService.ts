@@ -18,7 +18,11 @@ function getAuthHeaders(): Record<string, string> {
     if (!raw) return {};
     const user = JSON.parse(raw) as AuthUser | null;
     if (!user?.token) return {};
-    return { Token: user.token };
+    return {
+      Token: user.token,
+      userId: user.id,
+      level: String(user.level),
+    };
   } catch {
     return {};
   }
@@ -40,7 +44,21 @@ function withAuth(options?: http.HttpOptions): WithTokenHeaders<typeof options> 
 
 const CUSTOMERS_BASE = "customers";
 const CUSTOMERS_BY_CREATOR_PATH = "customers/by-creator";
+const CUSTOMERS_VENDOR_PATH = "customers/vendor";
 const CUSTOMER_LOG_SITUATION_PATH = "customer-logs/log-situation";
+
+export type InterestProyectItem = { proyect: string; date: string };
+
+export type CreateVendorCustomerPayload = {
+  name: string;
+  email: string;
+  whatsapp: string;
+  phone: string;
+  documentType?: string;
+  document?: string;
+  interestProyect?: InterestProyectItem[];
+  notes?: string[];
+};
 
 export type CreateCustomerPayload = {
   name: string;
@@ -85,6 +103,19 @@ export type ApiResponse<T> = {
 
 export type CreateCustomerResponse = ApiResponse<Customer>;
 
+export type VendorCustomer = {
+  _id: string;
+  name: string;
+  lastName?: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  document?: string;
+  documentType?: string;
+};
+
+export type CreateVendorCustomerResponse = ApiResponse<VendorCustomer>;
+
 export type CreateCustomerLogPayload = {
   customer: string;
   note: string;
@@ -116,6 +147,15 @@ export type CreateCustomerLogResponse = ApiResponse<CustomerLog>;
 /** GET {{BASE_URL}}customers/by-creator */
 export function getCustomersByCreator() {
   return http.get<CustomersByCreatorResponse>(CUSTOMERS_BY_CREATOR_PATH, withAuth());
+}
+
+/** POST {{BASE_URL}}customers/vendor — vendor (level 4) creates customer; notes → CustomerNote rows */
+export function createVendorCustomer(payload: CreateVendorCustomerPayload) {
+  return http.post<CreateVendorCustomerResponse>(
+    CUSTOMERS_VENDOR_PATH,
+    payload,
+    withAuth()
+  );
 }
 
 /** POST {{BASE_URL}}customers */
