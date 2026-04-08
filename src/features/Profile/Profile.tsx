@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { ACHIEVEMENTS_GOALS_USERNAME } from '@/constants/app-constants';
 import { useToast } from '@/hooks/use-toast';
 import { displayUserName, profileInitials } from '@/lib/display-user-name';
 import { fetchVendorDashboard } from '@/store/vendorDashboardSlice';
@@ -34,6 +35,8 @@ const Profile = () => {
   const monthCommissions = isVendor && api ? api.monthCommissions : seller.monthCommissions;
   const totalCommissions = isVendor && api ? api.totalHistoryCommissions : seller.totalCommissions;
 
+  const showGoalsAchievements = user?.user === ACHIEVEMENTS_GOALS_USERNAME;
+
   const copyLink = () => {
     navigator.clipboard.writeText(seller.referralLink);
     toast({ title: '¡Enlace copiado!', description: 'Compártelo con tus clientes potenciales' });
@@ -59,7 +62,9 @@ const Profile = () => {
         totalCommissions={totalCommissions}
       />
 
-      <ProfileAchievementsSection achievements={seller.achievements} />
+      {showGoalsAchievements ? (
+        <ProfileAchievementsSection achievements={seller.achievements} />
+      ) : null}
     </div>
   );
 };

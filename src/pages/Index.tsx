@@ -4,6 +4,7 @@ import { currentSeller, motivationalPhrases, topSellers, clients } from "@/data/
 import { motion } from "framer-motion";
 import { useEffect, useMemo } from "react";
 import { fetchVendorDashboard } from "@/store/vendorDashboardSlice";
+import { ACHIEVEMENTS_GOALS_USERNAME } from "@/constants/app-constants";
 import { displayUserName } from "@/lib/display-user-name";
 import { useAppDispatch, useAppSelector, type RootState } from "@/store";
 
@@ -43,6 +44,7 @@ const Dashboard = () => {
     .slice(0, 3);
 
   const userName = user ? displayUserName(user.name, user.lastName) : currentSeller.name;
+  const showGoalsAchievements = user?.user === ACHIEVEMENTS_GOALS_USERNAME;
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -154,38 +156,39 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* Recent achievements */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-card rounded-2xl p-5 border border-border shadow-sm"
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <Medal className="w-5 h-5 text-primary" />
-          <h2 className="font-bold text-foreground">Logros</h2>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {currentSeller.achievements.map((ach) => (
-            <div
-              key={ach.id}
-              className={`flex items-center gap-3 p-3 rounded-xl border ${
-                ach.unlocked
-                  ? "bg-primary/5 border-primary/20"
-                  : "bg-secondary/30 border-border opacity-50"
-              }`}
-            >
-              <span className="text-2xl">{ach.icon}</span>
-              <div>
-                <p className="text-xs font-semibold text-foreground">{ach.title}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  {ach.unlocked ? "✅ Desbloqueado" : "🔒 Bloqueado"}
-                </p>
+      {showGoalsAchievements ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-card rounded-2xl p-5 border border-border shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Medal className="w-5 h-5 text-primary" />
+            <h2 className="font-bold text-foreground">Logros</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {currentSeller.achievements.map((ach) => (
+              <div
+                key={ach.id}
+                className={`flex items-center gap-3 p-3 rounded-xl border ${
+                  ach.unlocked
+                    ? "bg-primary/5 border-primary/20"
+                    : "bg-secondary/30 border-border opacity-50"
+                }`}
+              >
+                <span className="text-2xl">{ach.icon}</span>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">{ach.title}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {ach.unlocked ? "✅ Desbloqueado" : "🔒 Bloqueado"}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      ) : null}
     </div>
   );
 };
