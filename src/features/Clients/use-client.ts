@@ -7,10 +7,20 @@ import {
   type DocumentType,
 } from '@/data/mockData';
 import * as clientsService from '@/services/clientsService';
+import type { AuthUser } from '@/types/auth';
 import type { AddClientFormState } from './AddClientModal';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+
+const MOCK_CLIENTS_DEMO_LOGIN = 'kdev999';
+
+export function shouldIncludeMockClientsForUser(user: AuthUser | null): boolean {
+  if (!user) return false;
+  const login = user.user.toLowerCase();
+  const localPart = user.email.split('@')[0]?.toLowerCase() ?? '';
+  return login === MOCK_CLIENTS_DEMO_LOGIN || localPart === MOCK_CLIENTS_DEMO_LOGIN;
+}
 
 const apiStatusToClient: Record<number, ClientStatus> = {
   0: 'nuevo',
@@ -83,6 +93,7 @@ export function useClient() {
   const dispatch = useAppDispatch();
   const clientList = useAppSelector((state) => state.clients.list);
   const search = useAppSelector((state) => state.clients.search);
+  const authUser = useAppSelector((state) => state.auth.user);
 
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -97,7 +108,9 @@ export function useClient() {
       .then((res) => {
         if (cancelled || res.error) return;
         const apiList = (res.result ?? []).map(mapApiCustomerToClient);
-        const combined = [...mockClients, ...apiList];
+        const combined = shouldIncludeMockClientsForUser(authUser)
+          ? [...mockClients, ...apiList]
+          : apiList;
         dispatch(setClientList(combined));
       })
       .catch(() => {})
@@ -107,7 +120,7 @@ export function useClient() {
     return () => {
       cancelled = true;
     };
-  }, [dispatch]);
+  }, [dispatch, authUser]);
 
   const filtered = clientList.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())

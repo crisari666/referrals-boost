@@ -4,7 +4,10 @@ import { useState, useEffect, useMemo, useLayoutEffect } from 'react';
 import { toast } from 'sonner';
 import { useAppSelector } from '@/store';
 import * as clientsService from '@/services/clientsService';
-import { mapCreationCustomerToClient } from './use-client';
+import {
+  mapCreationCustomerToClient,
+  shouldIncludeMockClientsForUser,
+} from './use-client';
 import { ClientDetailHeader } from './client-detail-header';
 import { ClientDetailProfileCard } from './client-detail-profile-card';
 import { ClientDetailNotesSection } from './client-detail-notes-section';
@@ -12,9 +15,11 @@ import { ClientDetailTimelineSection } from './client-detail-timeline-section';
 
 const ClientDetail = () => {
   const { id } = useParams();
+  const authUser = useAppSelector((s) => s.auth.user);
+  const mocksAllowed = shouldIncludeMockClientsForUser(authUser);
   const mockClient = useMemo(
-    () => (id ? clients.find((c) => c.id === id) ?? null : null),
-    [id]
+    () => (id && mocksAllowed ? clients.find((c) => c.id === id) ?? null : null),
+    [id, mocksAllowed]
   );
   const [remoteClient, setRemoteClient] = useState<Client | null>(null);
   const [creationDetail, setCreationDetail] =
@@ -22,8 +27,7 @@ const ClientDetail = () => {
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<ClientStatus>('nuevo');
   const [statusOpen, setStatusOpen] = useState(false);
-  const user = useAppSelector((s) => s.auth.user);
-  const isPhysical = user?.physical === true;
+  const isPhysical = authUser?.physical === true;
 
   const client = mockClient ?? remoteClient;
   const loading = Boolean(id) && !mockClient && remoteLoading;
