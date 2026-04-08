@@ -95,6 +95,68 @@ export type CustomerByCreator = {
 
 export type CustomersByCreatorResponse = ApiResponse<CustomerByCreator[]>;
 
+export type CustomerByIdResponse = ApiResponse<CustomerByCreator>;
+
+export type CreationDetailPopulatedUser = {
+  name?: string;
+  lastName?: string;
+  email?: string;
+};
+
+export type CreationDetailCustomer = {
+  name: string;
+  lastName?: string;
+  email?: string;
+  whatsapp?: string;
+  phone?: string;
+  document?: string;
+  documentType?: string;
+  interestProyect?: InterestProyectItem[];
+  createdAt?: string;
+  userCreator?: string;
+  address?: string;
+  status: number;
+};
+
+export type CreationDetailNote = {
+  _id: string;
+  customerId: string;
+  note: string;
+  user: string | CreationDetailPopulatedUser;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreationDetailSituationMeta = {
+  _id?: string;
+  description?: string;
+  title?: string;
+};
+
+export type CreationDetailLogSituation = {
+  _id: string;
+  user: string | CreationDetailPopulatedUser;
+  customer: string;
+  note: string;
+  image?: string;
+  confirmed: boolean;
+  situation: CreationDetailSituationMeta | string;
+  date: string;
+  status: number;
+  checked: boolean;
+  dateChecked: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type CustomerCreationDetailPayload = {
+  customer: CreationDetailCustomer | null;
+  notes: CreationDetailNote[];
+  customerLogSituations: CreationDetailLogSituation[];
+};
+
+export type CustomerCreationDetailResponse = ApiResponse<CustomerCreationDetailPayload | null>;
+
 export type ApiResponse<T> = {
   error: string | null;
   result: T;
@@ -147,6 +209,22 @@ export type CreateCustomerLogResponse = ApiResponse<CustomerLog>;
 /** GET {{BASE_URL}}customers/by-creator */
 export function getCustomersByCreator() {
   return http.get<CustomersByCreatorResponse>(CUSTOMERS_BY_CREATOR_PATH, withAuth());
+}
+
+/** GET {{BASE_URL}}customers/:customerId */
+export function getCustomerById(customerId: string) {
+  return http.get<CustomerByIdResponse>(
+    `${CUSTOMERS_BASE}/${encodeURIComponent(customerId)}`,
+    withAuth()
+  );
+}
+
+/** GET {{BASE_URL}}customers/:customerId/creation-detail — vendor summary, notes, situation logs */
+export function getCustomerCreationDetail(customerId: string) {
+  return http.get<CustomerCreationDetailResponse>(
+    `${CUSTOMERS_BASE}/${encodeURIComponent(customerId)}/creation-detail`,
+    withAuth()
+  );
 }
 
 /** POST {{BASE_URL}}customers/vendor — vendor (level 4) creates customer; notes → CustomerNote rows */

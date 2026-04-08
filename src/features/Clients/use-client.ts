@@ -12,14 +12,15 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Client {
-  const statusMap: Record<number, ClientStatus> = {
-    0: 'nuevo',
-    1: 'interesado',
-    2: 'agendo_cita',
-    3: 'pago_reserva',
-    4: 'cerrado',
-  };
+const apiStatusToClient: Record<number, ClientStatus> = {
+  0: 'nuevo',
+  1: 'interesado',
+  2: 'agendo_cita',
+  3: 'pago_reserva',
+  4: 'cerrado',
+};
+
+export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Client {
   const name = [c.name, c.lastName].filter(Boolean).join(' ').trim() || c.name;
   return {
     id: c._id,
@@ -28,7 +29,28 @@ function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Client {
     phone: c.phone || undefined,
     whatsapp: c.whatsapp ?? '',
     projectInterest: '',
-    status: statusMap[c.status] ?? 'nuevo',
+    status: apiStatusToClient[c.status] ?? 'nuevo',
+    createdAt: c.createdAt?.split('T')[0] ?? '',
+    notes: [],
+    interactions: [],
+  };
+}
+
+export function mapCreationCustomerToClient(
+  customerId: string,
+  c: clientsService.CreationDetailCustomer
+): Client {
+  const name = [c.name, c.lastName].filter(Boolean).join(' ').trim() || c.name;
+  const firstProyect =
+    c.interestProyect?.find((x) => x.proyect?.trim())?.proyect?.trim() ?? '';
+  return {
+    id: customerId,
+    name,
+    email: c.email || undefined,
+    phone: c.phone || undefined,
+    whatsapp: c.whatsapp ?? '',
+    projectInterest: firstProyect,
+    status: apiStatusToClient[c.status] ?? 'nuevo',
     createdAt: c.createdAt?.split('T')[0] ?? '',
     notes: [],
     interactions: [],

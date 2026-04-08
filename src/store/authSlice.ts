@@ -23,6 +23,7 @@ function mapApiUserToAuthUser(api: ApiUser): AuthUser {
     link: api.link,
     createdAt: api.createdAt,
     updatedAt: api.updatedAt,
+    physical: Boolean(api.physical),
     role,
   };
 }
@@ -41,7 +42,11 @@ function getInitialAuthState(): AuthState {
     if (!raw) return { ...base, user: null, isAuthenticated: false };
     const user = JSON.parse(raw) as AuthUser;
     if (!user?.token) return { ...base, user: null, isAuthenticated: false };
-    return { ...base, user, isAuthenticated: true };
+    const normalized: AuthUser = {
+      ...user,
+      physical: typeof user.physical === "boolean" ? user.physical : user.role === "asesor_fisico",
+    };
+    return { ...base, user: normalized, isAuthenticated: true };
   } catch {
     return { ...base, user: null, isAuthenticated: false };
   }

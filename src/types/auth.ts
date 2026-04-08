@@ -66,6 +66,8 @@ export type AuthUser = {
   link: string;
   createdAt: string;
   updatedAt: string;
+  /** From API login; physical sellers get VoIP/agenda/status edit and WhatsApp nav */
+  physical: boolean;
   /** Derived from API: root → admin, physical → asesor_fisico, else asesor_referido */
   role: UserRole;
 };

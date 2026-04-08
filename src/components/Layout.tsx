@@ -9,7 +9,8 @@ interface NavItem {
   path: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  roles?: UserRole[]; // undefined = all roles
+  roles?: UserRole[];
+  physicalOnly?: boolean;
 }
 
 const allNavItems: NavItem[] = [
@@ -18,7 +19,7 @@ const allNavItems: NavItem[] = [
   { path: "/clients", label: "Clientes", icon: Users },
   { path: "/schedule", label: "Agenda", icon: CalendarDays, roles: ["asesor_fisico", "admin"] },
   { path: "/assistant", label: "Asistente", icon: Sparkles },
-  { path: "/whatsapp", label: "WhatsApp", icon: MessageSquare },
+  { path: "/whatsapp", label: "WhatsApp", icon: MessageSquare, physicalOnly: true },
   { path: "/profile", label: "Perfil", icon: User },
 ];
 
@@ -33,9 +34,11 @@ const Layout = ({ children }: LayoutProps) => {
   const user = useAppSelector((s) => s.auth.user);
   const userRole = user?.role as UserRole | undefined;
 
-  const navItems = allNavItems.filter(
-    (item) => !item.roles || (userRole && item.roles.includes(userRole))
-  );
+  const navItems = allNavItems.filter((item) => {
+    if (item.physicalOnly && !user?.physical) return false;
+    if (item.roles && (!userRole || !item.roles.includes(userRole))) return false;
+    return true;
+  });
 
   const handleLogout = () => {
     dispatch(logout());
