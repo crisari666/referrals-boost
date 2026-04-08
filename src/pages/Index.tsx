@@ -2,27 +2,47 @@ import { DollarSign, Users, Target, TrendingUp, Trophy, Medal } from "lucide-rea
 import StatsCard from "@/components/StatsCard";
 import { currentSeller, motivationalPhrases, topSellers, clients } from "@/data/mockData";
 import { motion } from "framer-motion";
-import { useMemo } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/store";
+import { useEffect, useMemo } from "react";
+import { fetchVendorDashboard } from "@/store/vendorDashboardSlice";
+import { displayUserName } from "@/lib/display-user-name";
+import { useAppDispatch, useAppSelector, type RootState } from "@/store";
 
-const displayName = (name: string, lastName: string) =>
-  [name, lastName].filter(Boolean).join(" ").trim() || "Usuario";
+const VENDOR_LEVEL = 4;
 
 const Dashboard = () => {
-  const user = useSelector((s: RootState) => s.auth.user);
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s: RootState) => s.auth.user);
+  const vendorDashboard = useAppSelector((s: RootState) => s.vendorDashboard);
+
   const phrase = useMemo(
     () => motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)],
     []
   );
 
-  const goalPercent = Math.round((currentSeller.monthCommissions / currentSeller.monthGoal) * 100);
+  const isVendor = user?.level === VENDOR_LEVEL;
+  const api = vendorDashboard.data;
+
+  useEffect(() => {
+    if (isVendor) {
+      void dispatch(fetchVendorDashboard());
+    }
+  }, [dispatch, isVendor]);
+
+  const monthCommissions = isVendor && api ? api.monthCommissions : currentSeller.monthCommissions;
+  const totalCommissions =
+    isVendor && api ? api.totalHistoryCommissions : currentSeller.totalCommissions;
+  const clientsTracking = isVendor && api ? api.customersActives : currentSeller.clientsTracking;
+  const clientsConverted = isVendor && api ? api.customerConversion : currentSeller.clientsConverted;
+  const monthGoal = isVendor && api ? api.monthlyGoal : currentSeller.monthGoal;
+
+  const goalPercent =
+    monthGoal > 0 ? Math.round((monthCommissions / monthGoal) * 100) : 0;
 
   const recentClients = clients
     .filter((c) => c.status === "pago_reserva" || c.status === "cerrado")
     .slice(0, 3);
 
-  const userName = user ? displayName(user.name, user.lastName) : currentSeller.name;
+  const userName = user ? displayUserName(user.name, user.lastName) : currentSeller.name;
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
@@ -41,21 +61,21 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 gap-3">
         <StatsCard
           title="Comisiones Mes"
-          value={`$${currentSeller.monthCommissions.toLocaleString()}`}
+          value={`$${monthCommissions.toLocaleString()}`}
           icon={DollarSign}
           gradient="commission"
           delay={0.1}
         />
         <StatsCard
           title="Total Histórico"
-          value={`$${currentSeller.totalCommissions.toLocaleString()}`}
+          value={`$${totalCommissions.toLocaleString()}`}
           icon={TrendingUp}
           gradient="gold"
           delay={0.15}
         />
         <StatsCard
           title="En Seguimiento"
-          value={String(currentSeller.clientsTracking)}
+          value={String(clientsTracking)}
           subtitle="clientes activos"
           icon={Users}
           gradient="info"
@@ -63,7 +83,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="Conversiones"
-          value={String(currentSeller.clientsConverted)}
+          value={String(clientsConverted)}
           subtitle="visitaron oficina"
           icon={Target}
           gradient="success"
@@ -82,9 +102,9 @@ const Dashboard = () => {
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Meta Mensual</p>
             <p className="text-lg font-extrabold text-foreground">
-              ${currentSeller.monthCommissions.toLocaleString()}{" "}
+              ${monthCommissions.toLocaleString()}{" "}
               <span className="text-sm font-medium text-muted-foreground">
-                / ${currentSeller.monthGoal.toLocaleString()}
+                / ${monthGoal.toLocaleString()}
               </span>
             </p>
           </div>

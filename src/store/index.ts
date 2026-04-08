@@ -6,6 +6,7 @@ import scheduleReducer from "./scheduleSlice";
 import clientsReducer from "./clientsSlice";
 import projectsReducer from "./projectsSlice";
 import profileReducer from "./profileSlice";
+import vendorDashboardReducer from "./vendorDashboardSlice";
 
 export const store = configureStore({
   reducer: {
@@ -15,6 +16,7 @@ export const store = configureStore({
     clients: clientsReducer,
     projects: projectsReducer,
     profile: profileReducer,
+    vendorDashboard: vendorDashboardReducer,
   },
 });
 
