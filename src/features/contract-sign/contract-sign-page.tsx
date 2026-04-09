@@ -3,7 +3,10 @@ import { isAxiosError } from 'axios';
 import { useMemo, useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useSearchParams } from 'react-router-dom';
-import { mergeSignatureImageIntoPdf } from '@/lib/merge-signature-into-pdf';
+import {
+  mergeSignatureImageIntoPdf,
+  type SignatureMergeMode,
+} from '@/lib/merge-signature-into-pdf';
 import {
   drivePdfLinkToPreviewUrl,
   getAgentContractByToken,
@@ -15,6 +18,7 @@ import { toast } from 'sonner';
 import { AlreadySignedContractView } from './already-signed-contract-view';
 import { ContractSessionErrorState } from './contract-session-error-state';
 import { ContractSignatureDialog } from './contract-signature-dialog';
+import { ContractSignedPreviewDialog } from './contract-signed-preview-dialog';
 import { ContractSignPageLoading } from './contract-sign-page-loading';
 import { contractSignQueryKey } from './contract-sign-query-key';
 import { InvalidSignLinkState } from './invalid-sign-link-state';
@@ -29,6 +33,8 @@ const ContractSignPage = () => {
   const queryClient = useQueryClient();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [signDialogOpen, setSignDialogOpen] = useState(false);
+  const [previewDraft, setPreviewDraft] = useState<{ blob: Blob; url: string } | null>(null);
+  const [isMergingPreview, setIsMergingPreview] = useState(false);
 
   const contractQuery = useQuery({
     queryKey: contractSignQueryKey(token),
@@ -55,24 +61,20 @@ const ContractSignPage = () => {
   }, [contractQuery.data?.signedPdfLink, contractQuery.data?.pdfLink]);
 
   const uploadMutation = useMutation({
-    mutationFn: async (signatureImageBytes: Uint8Array) => {
+    mutationFn: async (pdfBlob: Blob) => {
       if (!token) throw new Error('Missing sign token');
-      const pdfBytes = pdfQuery.data;
-      if (!pdfBytes) throw new Error('El PDF aún no está listo.');
-      const merged = await mergeSignatureImageIntoPdf(pdfBytes, signatureImageBytes);
-      const mergedCopy = new Uint8Array(merged);
-      return postSignedContractPdf(
-        token,
-        new Blob([mergedCopy], { type: 'application/pdf' })
-      );
+      return postSignedContractPdf(token, pdfBlob);
     },
     onSuccess: () => {
       setSubmitError(null);
       toast.success('Contrato firmado correctamente.');
+      setPreviewDraft((prev) => {
+        if (prev?.url) URL.revokeObjectURL(prev.url);
+        return null;
+      });
       if (token) {
         queryClient.invalidateQueries({ queryKey: contractSignQueryKey(token) });
       }
-      setSignDialogOpen(false);
       sigRef.current?.clear();
     },
     onError: (err: unknown) => {
@@ -87,6 +89,59 @@ const ContractSignPage = () => {
     },
   });
 
+  const handleRequestPreview = async (
+    signatureBytes: Uint8Array,
+    signatureMode: SignatureMergeMode
+  ) => {
+    const pdfBytes = pdfQuery.data;
+    if (!pdfBytes) {
+      toast.error('El PDF aún no está listo.');
+      return;
+    }
+    setIsMergingPreview(true);
+    setSubmitError(null);
+    try {
+      const merged = await mergeSignatureImageIntoPdf(pdfBytes, signatureBytes, {
+        signatureMode,
+      });
+      const blob = new Blob([new Uint8Array(merged)], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      setPreviewDraft({ blob, url });
+      setSignDialogOpen(false);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'No se pudo generar la vista previa del PDF.';
+      setSubmitError(msg);
+      toast.error(msg);
+    } finally {
+      setIsMergingPreview(false);
+    }
+  };
+
+  const handlePreviewDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setPreviewDraft((prev) => {
+        if (prev?.url) URL.revokeObjectURL(prev.url);
+        return null;
+      });
+      setSubmitError(null);
+    }
+  };
+
+  const handleEditFromPreview = () => {
+    setPreviewDraft((prev) => {
+      if (prev?.url) URL.revokeObjectURL(prev.url);
+      return null;
+    });
+    setSubmitError(null);
+    setSignDialogOpen(true);
+  };
+
+  const handleSendFromPreview = () => {
+    if (!previewDraft) return;
+    uploadMutation.mutate(previewDraft.blob);
+  };
+
   const handleSignDialogOpenChange = (open: boolean) => {
     setSignDialogOpen(open);
     if (!open) {
@@ -96,6 +151,8 @@ const ContractSignPage = () => {
   };
 
   const pdfReady = Boolean(pdfQuery.data) && !pdfQuery.isLoading && !pdfQuery.isError;
+  const isBusyWithSigningFlow =
+    uploadMutation.isPending || isMergingPreview || Boolean(previewDraft);
 
   if (!token) {
     return <InvalidSignLinkState />;
@@ -137,7 +194,7 @@ const ContractSignPage = () => {
             isPdfLoading={pdfQuery.isLoading}
             isPdfError={pdfQuery.isError}
             pdfReady={pdfReady}
-            isUploadPending={uploadMutation.isPending}
+            isUploadPending={isBusyWithSigningFlow}
             onOpenSignDialog={() => {
               setSubmitError(null);
               setSignDialogOpen(true);
@@ -153,8 +210,18 @@ const ContractSignPage = () => {
           signaturePadRef={sigRef}
           submitError={submitError}
           pdfReady={pdfReady}
-          isPending={uploadMutation.isPending}
-          onConfirm={(bytes) => uploadMutation.mutate(bytes)}
+          isPreparingPreview={isMergingPreview}
+          onRequestPreview={handleRequestPreview}
+        />
+
+        <ContractSignedPreviewDialog
+          open={Boolean(previewDraft)}
+          onOpenChange={handlePreviewDialogOpenChange}
+          pdfObjectUrl={previewDraft?.url ?? null}
+          isSending={uploadMutation.isPending}
+          errorMessage={submitError}
+          onSend={handleSendFromPreview}
+          onEditSignature={handleEditFromPreview}
         />
       </div>
     </div>

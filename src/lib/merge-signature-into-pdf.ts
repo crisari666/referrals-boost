@@ -14,6 +14,20 @@ export { dataUrlToUint8Array } from '@/lib/data-url';
 
 const MAX_SIGNED_PDF_BYTES = 24 * 1024 * 1024;
 
+/** Typed name: larger box (user-approved sizing). */
+const TYPE_MIN_W_PT = 200;
+const TYPE_MIN_H_PT = 64;
+const TYPE_PLACEHOLDER_EXPAND = 1.55;
+const TYPE_INNER_PAD = 0.98;
+
+/** Drawn signature: smaller box so strokes don’t dominate the page. */
+const DRAW_MIN_W_PT = 108;
+const DRAW_MIN_H_PT = 38;
+const DRAW_PLACEHOLDER_EXPAND = 1.1;
+const DRAW_INNER_PAD = 0.96;
+
+export type SignatureMergeMode = 'draw' | 'type';
+
 async function embedSignatureRaster(
   pdfDoc: PDFDocument,
   bytes: Uint8Array
@@ -31,8 +45,9 @@ async function embedSignatureRaster(
 export async function mergeSignatureImageIntoPdf(
   pdfBytes: ArrayBuffer,
   imageBytes: Uint8Array,
-  options?: { placeholder?: string }
+  options?: { placeholder?: string; signatureMode?: SignatureMergeMode }
 ): Promise<Uint8Array> {
+  const mode: SignatureMergeMode = options?.signatureMode ?? 'type';
   const marker = options?.placeholder ?? DEFAULT_SIGN_PLACEHOLDER;
   const rect = await findSignPlaceholderInPdf(pdfBytes, marker);
   if (!rect) {
@@ -49,25 +64,59 @@ export async function mergeSignatureImageIntoPdf(
     throw new Error('Página del marcador de firma no válida.');
   }
 
-  const { width: boxW, height: boxH } = {
-    width: Math.max(rect.width, 24),
-    height: Math.max(rect.height, 16),
-  };
+  const { width: pageW, height: pageH } = page.getSize();
+
+  const minW = mode === 'draw' ? DRAW_MIN_W_PT : TYPE_MIN_W_PT;
+  const minH = mode === 'draw' ? DRAW_MIN_H_PT : TYPE_MIN_H_PT;
+  const expand = mode === 'draw' ? DRAW_PLACEHOLDER_EXPAND : TYPE_PLACEHOLDER_EXPAND;
+  const innerPad = mode === 'draw' ? DRAW_INNER_PAD : TYPE_INNER_PAD;
+
+  let boxW = Math.max(rect.width * expand, minW);
+  let boxH = Math.max(rect.height * expand, minH);
+
+  const midY = rect.y + rect.height / 2;
+  let boxX: number;
+  let boxY = midY - boxH / 2;
+
+  if (mode === 'draw') {
+    boxX = rect.x;
+  } else {
+    const midX = rect.x + rect.width / 2;
+    boxX = midX - boxW / 2;
+  }
+
+  if (boxY < 0) boxY = 0;
+  if (boxY + boxH > pageH) {
+    boxY = Math.max(0, pageH - boxH);
+    boxH = Math.min(boxH, pageH - boxY);
+  }
+
+  if (mode === 'draw') {
+    if (boxX < 0) boxX = 0;
+    if (boxX + boxW > pageW) {
+      boxW = Math.min(boxW, pageW - boxX);
+    }
+  } else {
+    if (boxX < 0) boxX = 0;
+    if (boxX + boxW > pageW) {
+      boxX = Math.max(0, pageW - boxW);
+      boxW = Math.min(boxW, pageW - boxX);
+    }
+  }
 
   page.drawRectangle({
-    x: rect.x,
-    y: rect.y,
+    x: boxX,
+    y: boxY,
     width: boxW,
     height: boxH,
     color: rgb(1, 1, 1),
     borderWidth: 0,
   });
 
-  const innerPad = 0.92;
   const innerW = boxW * innerPad;
   const innerH = boxH * innerPad;
-  const originX = rect.x + (boxW - innerW) / 2;
-  const originY = rect.y + (boxH - innerH) / 2;
+  const originX = boxX + (boxW - innerW) / 2;
+  const originY = boxY + (boxH - innerH) / 2;
 
   const imgAspect = embeddedImage.width / embeddedImage.height;
 
@@ -82,7 +131,8 @@ export async function mergeSignatureImageIntoPdf(
     drawW = drawH * imgAspect;
   }
 
-  const dx = originX + (innerW - drawW) / 2;
+  const dx =
+    mode === 'draw' ? originX : originX + (innerW - drawW) / 2;
   const dy = originY + (innerH - drawH) / 2;
 
   page.drawImage(embeddedImage, {
