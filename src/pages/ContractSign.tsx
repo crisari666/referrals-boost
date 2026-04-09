@@ -155,23 +155,23 @@ const ContractSign = () => {
 
   if (contract.signed) {
     return (
-      <div className='min-h-screen bg-muted/30 p-4 md:p-8'>
-        <div className='mx-auto flex max-w-3xl flex-col gap-6'>
+      <div className='min-h-screen bg-muted/30 p-3 md:p-5'>
+        <div className='mx-auto flex max-w-3xl flex-col gap-4'>
           <Card>
-            <CardHeader>
-              <CardTitle className='flex items-center gap-2'>
-                <CheckCircle2 className='h-6 w-6 text-green-600' />
+            <CardHeader className='space-y-0.5 px-4 py-3'>
+              <CardTitle className='flex items-center gap-1.5 text-base font-semibold'>
+                <CheckCircle2 className='h-5 w-5 shrink-0 text-green-600' />
                 Contrato ya firmado
               </CardTitle>
-              <CardDescription>
+              <CardDescription className='text-xs'>
                 Hola, {contract.fullName}. Este contrato ya fue firmado.
               </CardDescription>
             </CardHeader>
           </Card>
           {signedPreviewSrc ? (
             <Card>
-              <CardHeader>
-                <CardTitle className='text-lg'>Documento</CardTitle>
+              <CardHeader className='px-4 py-2'>
+                <CardTitle className='text-sm font-semibold'>Documento</CardTitle>
               </CardHeader>
               <CardContent className='p-0'>
                 <iframe
@@ -188,15 +188,15 @@ const ContractSign = () => {
   }
 
   return (
-    <div className='min-h-screen bg-muted/30 p-4 md:p-8'>
-      <div className='mx-auto flex max-w-3xl flex-col gap-6'>
+    <div className='min-h-screen bg-muted/30 p-3 md:p-5'>
+      <div className='mx-auto flex max-w-3xl flex-col gap-4'>
         <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <PenLine className='h-6 w-6' />
+          <CardHeader className='space-y-0.5 px-4 py-3'>
+            <CardTitle className='flex items-center gap-1.5 text-base font-semibold'>
+              <PenLine className='h-5 w-5 shrink-0' />
               Firmar contrato
             </CardTitle>
-            <CardDescription>
+            <CardDescription className='text-xs'>
               Hola, {contract.fullName}. Revisa el documento y firma abajo.
             </CardDescription>
           </CardHeader>
@@ -204,9 +204,9 @@ const ContractSign = () => {
 
         {previewSrc ? (
           <Card>
-            <CardHeader>
-              <CardTitle className='text-lg'>Vista previa</CardTitle>
-              <CardDescription>
+            <CardHeader className='space-y-0.5 px-4 py-2'>
+              <CardTitle className='text-sm font-semibold'>Vista previa</CardTitle>
+              <CardDescription className='text-xs'>
                 Desplázate hasta el final del documento antes de firmar.
               </CardDescription>
             </CardHeader>
@@ -221,13 +221,13 @@ const ContractSign = () => {
         ) : null}
 
         <Card>
-          <CardHeader>
-            <CardTitle className='text-lg'>Tu firma</CardTitle>
-            <CardDescription>
+          <CardHeader className='space-y-0.5 px-4 py-2'>
+            <CardTitle className='text-sm font-semibold'>Tu firma</CardTitle>
+            <CardDescription className='text-xs'>
               Dibuja en el recuadro. Puedes borrar y volver a intentar.
             </CardDescription>
           </CardHeader>
-          <CardContent className='space-y-4'>
+          <CardContent className='space-y-3 px-4 pb-4 pt-0'>
             {pdfQuery.isError ? (
               <p className='text-sm text-destructive'>
                 No se pudo descargar el PDF para fusionar la firma. Comprueba la
