@@ -1,15 +1,36 @@
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, type PDFImage } from 'pdf-lib';
 
 import {
   DEFAULT_SIGN_PLACEHOLDER,
   findSignPlaceholderInPdf,
 } from '@/lib/find-sign-placeholder-in-pdf';
+import {
+  isJpegBytes,
+  isPngBytes,
+  rasterBytesToPng,
+} from '@/lib/signature-image';
+
+export { dataUrlToUint8Array } from '@/lib/data-url';
 
 const MAX_SIGNED_PDF_BYTES = 24 * 1024 * 1024;
 
-export async function mergePngSignatureIntoPdf(
+async function embedSignatureRaster(
+  pdfDoc: PDFDocument,
+  bytes: Uint8Array
+): Promise<PDFImage> {
+  if (isPngBytes(bytes)) {
+    return pdfDoc.embedPng(bytes);
+  }
+  if (isJpegBytes(bytes)) {
+    return pdfDoc.embedJpg(bytes);
+  }
+  const png = await rasterBytesToPng(bytes);
+  return pdfDoc.embedPng(png);
+}
+
+export async function mergeSignatureImageIntoPdf(
   pdfBytes: ArrayBuffer,
-  pngBytes: Uint8Array,
+  imageBytes: Uint8Array,
   options?: { placeholder?: string }
 ): Promise<Uint8Array> {
   const marker = options?.placeholder ?? DEFAULT_SIGN_PLACEHOLDER;
@@ -21,7 +42,7 @@ export async function mergePngSignatureIntoPdf(
   }
 
   const pdfDoc = await PDFDocument.load(pdfBytes);
-  const pngImage = await pdfDoc.embedPng(pngBytes);
+  const embeddedImage = await embedSignatureRaster(pdfDoc, imageBytes);
   const pages = pdfDoc.getPages();
   const page = pages[rect.pageIndex];
   if (!page) {
@@ -48,7 +69,8 @@ export async function mergePngSignatureIntoPdf(
   const originX = rect.x + (boxW - innerW) / 2;
   const originY = rect.y + (boxH - innerH) / 2;
 
-  const imgAspect = pngImage.width / pngImage.height;
+  const imgAspect = embeddedImage.width / embeddedImage.height;
+
   const boxAspect = innerW / innerH;
   let drawW: number;
   let drawH: number;
@@ -63,7 +85,7 @@ export async function mergePngSignatureIntoPdf(
   const dx = originX + (innerW - drawW) / 2;
   const dy = originY + (innerH - drawH) / 2;
 
-  page.drawImage(pngImage, {
+  page.drawImage(embeddedImage, {
     x: dx,
     y: dy,
     width: drawW,
@@ -79,12 +101,4 @@ export async function mergePngSignatureIntoPdf(
   return out;
 }
 
-export function dataUrlToUint8Array(dataUrl: string): Uint8Array {
-  const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, '');
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
+export const mergePngSignatureIntoPdf = mergeSignatureImageIntoPdf;

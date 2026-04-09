@@ -3,7 +3,7 @@ import { isAxiosError } from 'axios';
 import { useMemo, useRef, useState } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useSearchParams } from 'react-router-dom';
-import { dataUrlToUint8Array, mergePngSignatureIntoPdf } from '@/lib/merge-signature-into-pdf';
+import { mergeSignatureImageIntoPdf } from '@/lib/merge-signature-into-pdf';
 import {
   drivePdfLinkToPreviewUrl,
   getAgentContractByToken,
@@ -55,18 +55,11 @@ const ContractSignPage = () => {
   }, [contractQuery.data?.signedPdfLink, contractQuery.data?.pdfLink]);
 
   const uploadMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (signatureImageBytes: Uint8Array) => {
       if (!token) throw new Error('Missing sign token');
-      const pad = sigRef.current;
-      if (!pad || pad.isEmpty()) {
-        throw new Error('Dibuja tu firma antes de confirmar.');
-      }
-      const trimmed = pad.getTrimmedCanvas();
-      const dataUrl = trimmed.toDataURL('image/png');
-      const pngBytes = dataUrlToUint8Array(dataUrl);
       const pdfBytes = pdfQuery.data;
       if (!pdfBytes) throw new Error('El PDF aún no está listo.');
-      const merged = await mergePngSignatureIntoPdf(pdfBytes, pngBytes);
+      const merged = await mergeSignatureImageIntoPdf(pdfBytes, signatureImageBytes);
       const mergedCopy = new Uint8Array(merged);
       return postSignedContractPdf(
         token,
@@ -161,7 +154,7 @@ const ContractSignPage = () => {
           submitError={submitError}
           pdfReady={pdfReady}
           isPending={uploadMutation.isPending}
-          onConfirm={() => uploadMutation.mutate()}
+          onConfirm={(bytes) => uploadMutation.mutate(bytes)}
         />
       </div>
     </div>
