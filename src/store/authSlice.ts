@@ -5,6 +5,16 @@ import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
 
 export type { AuthUser, UserRole } from "@/types/auth";
 
+function isApiUserLoginResult(value: unknown): value is ApiUser {
+  if (!value || typeof value !== "object") return false;
+  const u = value as Record<string, unknown>;
+  return (
+    typeof u._id === "string" &&
+    typeof u.token === "string" &&
+    u.token.length > 0
+  );
+}
+
 function mapApiUserToAuthUser(api: ApiUser): AuthUser {
   const role: UserRole = api.root ? "admin" : api.physical ? "asesor_fisico" : "asesor_referido";
   return {
@@ -61,6 +71,14 @@ export const loginUser = createAsyncThunk<
     const response = await authService.login(payload);
     if (response.error) {
       return rejectWithValue(response.error);
+    }
+    if (!isApiUserLoginResult(response.result)) {
+      const raw = response.message?.trim() ?? "";
+      const msg =
+        raw.length > 0 && raw.toLowerCase() !== "success"
+          ? raw
+          : "No se pudo iniciar sesión. Verifica usuario y contraseña.";
+      return rejectWithValue(msg);
     }
     return mapApiUserToAuthUser(response.result);
   } catch (err: unknown) {

@@ -40,10 +40,10 @@ export type ApiUser = {
   token: string;
 };
 
-/** Login API response wrapper */
+/** Login API response wrapper (`result` is false when credentials are invalid) */
 export type LoginResponse = {
   error: string | null;
-  result: ApiUser;
+  result: ApiUser | false;
   message: string;
 };
 
