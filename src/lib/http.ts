@@ -8,7 +8,8 @@ console.log("BASE_URL", BASE_URL);
 const httpClient = axios.create();
 
 function shouldSkipAuthHeader(url: string): boolean {
-  return /signin/i.test(url) || /\/login(\/|$)/i.test(url);
+  if (/signin/i.test(url) || /\/login(\/|$)/i.test(url)) return true;
+  return /agent-contract-sign/i.test(url);
 }
 
 httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -64,6 +65,17 @@ export async function get<T = unknown>(
   return data;
 }
 
+export async function getArrayBuffer(
+  path: string,
+  options?: HttpOptions
+): Promise<ArrayBuffer> {
+  const config = buildConfig(path, options);
+  config.method = "GET";
+  config.responseType = "arraybuffer";
+  const { data } = await httpClient.request<ArrayBuffer>(config);
+  return data;
+}
+
 /**
  * POST request. Use path (relative to BASE_URL) or pass options.url for absolute URL.
  */
@@ -75,6 +87,18 @@ export async function post<T = unknown>(
   const config = buildConfig(path, options);
   config.method = "POST";
   config.data = body;
+  const { data } = await httpClient.request<T>(config);
+  return data;
+}
+
+export async function postMultipart<T = unknown>(
+  path: string,
+  formData: FormData,
+  options?: HttpOptions
+): Promise<T> {
+  const config = buildConfig(path, options);
+  config.method = "POST";
+  config.data = formData;
   const { data } = await httpClient.request<T>(config);
   return data;
 }
@@ -107,4 +131,12 @@ export async function del<T = unknown>(
   return data;
 }
 
-export const http = { get, post, patch, delete: del, del };
+export const http = {
+  get,
+  getArrayBuffer,
+  post,
+  postMultipart,
+  patch,
+  delete: del,
+  del,
+};

@@ -11,6 +11,12 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: [
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+      {
+        find: /^trim-canvas$/,
+        replacement: path.resolve(__dirname, "./src/shims/trim-canvas.ts"),
+      },
+    ],
   },
 });

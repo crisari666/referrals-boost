@@ -10,6 +10,7 @@ import { ProjectDetail, Projects } from '@/features/Projects';
 import Index from '@/pages/Index';
 import Login from '@/pages/Login';
 import NotFound from '@/pages/NotFound';
+import ContractSign from '@/pages/ContractSign';
 import Schedule from '@/pages/Schedule';
 import WhatsAppSync from '@/pages/WhatsAppSync';
 
@@ -22,6 +23,7 @@ const Protected = ({ children }: { children: ReactNode }) => (
 const AppRouter = () => (
   <Routes>
     <Route path='/login' element={<Login />} />
+    <Route path='/sign' element={<ContractSign />} />
     <Route path='/' element={<Protected><Index /></Protected>} />
     <Route path='/projects' element={<Protected><Projects /></Protected>} />
     <Route path='/projects/:id' element={<Protected><ProjectDetail /></Protected>} />
