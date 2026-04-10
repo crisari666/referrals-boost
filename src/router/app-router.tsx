@@ -9,6 +9,7 @@ import { Profile } from '@/features/Profile';
 import { ProjectDetail, Projects } from '@/features/Projects';
 import Index from '@/pages/Index';
 import Login from '@/pages/Login';
+import FirstAccess from '@/pages/FirstAccess';
 import NotFound from '@/pages/NotFound';
 import ContractSign from '@/pages/ContractSign';
 import Schedule from '@/pages/Schedule';
@@ -23,6 +24,7 @@ const Protected = ({ children }: { children: ReactNode }) => (
 const AppRouter = () => (
   <Routes>
     <Route path='/login' element={<Login />} />
+    <Route path='/first-access' element={<FirstAccess />} />
     <Route path='/sign' element={<ContractSign />} />
     <Route path='/' element={<Protected><Index /></Protected>} />
     <Route path='/projects' element={<Protected><Projects /></Protected>} />

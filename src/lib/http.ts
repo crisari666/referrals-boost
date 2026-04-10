@@ -9,7 +9,8 @@ const httpClient = axios.create();
 
 function shouldSkipAuthHeader(url: string): boolean {
   if (/signin/i.test(url) || /\/login(\/|$)/i.test(url)) return true;
-  return /agent-contract-sign/i.test(url);
+  if (/agent-contract-sign/i.test(url)) return true;
+  return /agent-first-access/i.test(url);
 }
 
 httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
