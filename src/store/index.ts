@@ -7,6 +7,7 @@ import clientsReducer from "./clientsSlice";
 import projectsReducer from "./projectsSlice";
 import profileReducer from "./profileSlice";
 import vendorDashboardReducer from "./vendorDashboardSlice";
+import crmPresenceReducer from "./crmPresenceSlice";
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     projects: projectsReducer,
     profile: profileReducer,
     vendorDashboard: vendorDashboardReducer,
+    crmPresence: crmPresenceReducer,
   },
 });
 

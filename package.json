@@ -1,5 +1,6 @@
 {
   "name": "vite_react_shadcn_ts",
+  "description": "React project for the agents ventors, referal and physical",
   "private": true,
   "version": "0.0.0",
   "type": "module",

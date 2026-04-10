@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare, CalendarDays, LogOut } from "lucide-react";
+import { CrmSocketListener } from "@/components/crm-socket-listener";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logout } from "@/store/authSlice";
 import type { UserRole } from "@/store/authSlice";
@@ -34,6 +35,8 @@ const Layout = ({ children }: LayoutProps) => {
   const user = useAppSelector((s) => s.auth.user);
   const userRole = user?.role as UserRole | undefined;
 
+  console.log({user});
+
   const navItems = allNavItems.filter((item) => {
     if (item.physicalOnly && !user?.physical) return false;
     if (item.roles && (!userRole || !item.roles.includes(userRole))) return false;
@@ -47,6 +50,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0 md:pl-64">
+      <CrmSocketListener />
       {/* Desktop sidebar */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 flex-col bg-card border-r border-border z-40">
         <div className="p-6">
