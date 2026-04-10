@@ -61,6 +61,29 @@ const initialState: WhatsAppState = {
   sendingMessage: false,
 };
 
+function isSessionAlreadyConnectedResponse(
+  payload: { success: boolean; message?: string } | undefined,
+): boolean {
+  if (!payload?.success) return false;
+  return /already active/i.test(payload.message ?? "");
+}
+
+function isSessionRestoreStartedResponse(
+  payload: { success: boolean; message?: string } | undefined,
+): boolean {
+  if (!payload?.success) return false;
+  return /restore started/i.test(payload.message ?? "");
+}
+
+function isLegacyAlreadyAuthErrorResponse(
+  payload: { success: boolean; message?: string } | undefined,
+): boolean {
+  if (!payload || payload.success !== false) return false;
+  return /already exists and authenticated|already authenticated/i.test(
+    payload.message ?? "",
+  );
+}
+
 // ─── Async Thunks (Events) ──────────────────────────────────────────
 
 /** EVENT: REQUEST_QR_CODE — Ask backend for a new QR code */
@@ -75,44 +98,50 @@ export const requestQrCode = createAsyncThunk(
 /** EVENT: SYNC_CONNECTION — Trigger manual sync after scanning */
 export const syncConnection = createAsyncThunk(
   "whatsapp/syncConnection",
-  async () => {
-    const result = await whatsappService.syncConnection();
-    return result;
+  async (sessionId: string) => {
+    return whatsappService.syncConnection(sessionId);
   }
 );
 
 /** EVENT: FETCH_CHATS — Load chat list after connection */
 export const fetchChats = createAsyncThunk(
   "whatsapp/fetchChats",
-  async () => {
-    const result = await whatsappService.fetchChats();
-    return result;
+  async (sessionId: string) => {
+    return whatsappService.fetchChats(sessionId);
   }
 );
 
 /** EVENT: FETCH_MESSAGES — Load messages for a specific chat */
 export const fetchMessages = createAsyncThunk(
   "whatsapp/fetchMessages",
-  async (chatId: string) => {
-    const messages = await whatsappService.fetchMessages(chatId);
-    return { chatId, messages };
+  async (payload: { chatId: string; sessionId: string }) => {
+    const messages = await whatsappService.fetchMessages(
+      payload.sessionId,
+      payload.chatId
+    );
+    return { chatId: payload.chatId, messages };
   }
 );
 
 /** EVENT: SEND_MESSAGE — Send a text or media message */
 export const sendMessage = createAsyncThunk(
   "whatsapp/sendMessage",
-  async (payload: { chatId: string; content: string; type: WhatsAppMessage["type"]; mediaFile?: File }) => {
-    const message = await whatsappService.sendMessage(payload);
-    return message;
+  async (payload: {
+    sessionId: string;
+    chatId: string;
+    content: string;
+    type: WhatsAppMessage["type"];
+    mediaFile?: File;
+  }) => {
+    return whatsappService.sendMessage(payload.sessionId, payload);
   }
 );
 
 /** EVENT: DISCONNECT — Disconnect WhatsApp session */
 export const disconnect = createAsyncThunk(
   "whatsapp/disconnect",
-  async () => {
-    await whatsappService.disconnect();
+  async (sessionId?: string) => {
+    await whatsappService.disconnect(sessionId);
   }
 );
 
@@ -202,7 +231,21 @@ const whatsappSlice = createSlice({
       state.errorMessage = null;
     });
     builder.addCase(requestQrCode.fulfilled, (state, action) => {
-      // Backend now emits QR over WebSocket; keep loading state until WS event arrives.
+      if (isSessionRestoreStartedResponse(action.payload)) {
+        state.connectionStatus = "connecting";
+        state.qrCode = null;
+        state.errorMessage = null;
+        return;
+      }
+      if (
+        isSessionAlreadyConnectedResponse(action.payload) ||
+        isLegacyAlreadyAuthErrorResponse(action.payload)
+      ) {
+        state.connectionStatus = "connected";
+        state.qrCode = null;
+        state.errorMessage = null;
+        return;
+      }
       if (!state.qrCode) {
         state.connectionStatus = "qr_loading";
       }
@@ -217,7 +260,7 @@ const whatsappSlice = createSlice({
       state.connectionStatus = "connecting";
     });
     builder.addCase(syncConnection.fulfilled, (state, action) => {
-      if (action.payload.connected) {
+      if (action.payload.success) {
         state.connectionStatus = "connected";
       } else {
         state.connectionStatus = "error";

@@ -12,17 +12,19 @@ import { es } from "date-fns/locale";
 const ChatList = () => {
   const dispatch = useAppDispatch();
   const { chats, chatsLoading, activeChat } = useAppSelector((s) => s.whatsapp);
+  const phone = useAppSelector((s) => s.auth.user?.phone);
 
   useEffect(() => {
-    dispatch(fetchChats());
-  }, [dispatch]);
+    if (!phone) return;
+    dispatch(fetchChats(phone));
+  }, [dispatch, phone]);
 
   const handleSelectChat = (chatId: string) => {
     dispatch(setActiveChat(chatId));
   };
 
   const handleDisconnect = () => {
-    dispatch(disconnect());
+    dispatch(disconnect(phone ?? undefined));
   };
 
   if (chatsLoading) {

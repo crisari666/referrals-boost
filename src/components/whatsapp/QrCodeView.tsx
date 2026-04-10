@@ -24,7 +24,7 @@ const QrCodeView = () => {
   };
 
   const handleSync = () => {
-    dispatch(syncConnection());
+    if (phone) dispatch(syncConnection(phone));
   };
 
   const handleRetry = () => {
@@ -54,7 +54,7 @@ const QrCodeView = () => {
               Abre WhatsApp en tu teléfono → Dispositivos vinculados → Vincular un dispositivo
             </p>
             <Card className="p-4 bg-card border-2 border-primary/20">
-              <QRCode value={qrCode} size={220} color="red" bgColor="GrayText" fgColor="white" />
+              <QRCode value={qrCode} size={220} color="white" bgColor="black" fgColor="red" />
             </Card>
             <Button onClick={handleScanStarted} className="gap-2">
               <CheckCircle2 className="w-4 h-4" />

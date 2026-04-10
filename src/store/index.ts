@@ -8,6 +8,7 @@ import projectsReducer from "./projectsSlice";
 import profileReducer from "./profileSlice";
 import vendorDashboardReducer from "./vendorDashboardSlice";
 import crmPresenceReducer from "./crmPresenceSlice";
+import twilioVoiceReducer from "./twilioVoiceSlice";
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ export const store = configureStore({
     profile: profileReducer,
     vendorDashboard: vendorDashboardReducer,
     crmPresence: crmPresenceReducer,
+    twilioVoice: twilioVoiceReducer,
   },
 });
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAppDispatch } from "@/store";
 import { websocketService } from "@/shared/services/websocket.service";
+import { WHATSAPP_MS_ORIGIN } from "@/services/whatsappService";
 import { qrReceived, sessionReady, sessionError } from "@/store/whatsappSlice";
 
 type WhatsappSocketListenerProps = {
@@ -34,13 +35,14 @@ const WhatsappSocketListener = ({ sessionId }: WhatsappSocketListenerProps) => {
     if (!sessionId) return;
 
     if (!websocketService.isConnectedToServer()) {
-      const serverUrl = import.meta.env.VITE_URL_WHATSAPP_MS;
-      if (!serverUrl) {
+      const base = WHATSAPP_MS_ORIGIN;
+      if (!base) {
         return;
       }
-      const base = serverUrl.replace(/\/$/, "");
       const namespace = import.meta.env.VITE_WHATSAPP_WS_NAMESPACE ?? "";
-      const url = namespace ? `${base}${namespace.startsWith("/") ? namespace : `/${namespace}`}` : base;
+      const url = namespace
+        ? `${base.replace(/\/$/, "")}${namespace.startsWith("/") ? namespace : `/${namespace}`}`
+        : base;
       websocketService.connect(url, { query: { sessionId } });
     } else {
       const roomName = `session:${sessionId}`;

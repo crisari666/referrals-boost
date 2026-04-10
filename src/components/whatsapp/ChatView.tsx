@@ -11,6 +11,7 @@ import { ArrowLeft, Image, FileText, Mic, Paperclip, Send, X } from "lucide-reac
 const ChatView = () => {
   const dispatch = useAppDispatch();
   const { activeChat, messages, messagesLoading, sendingMessage, chats } = useAppSelector((s) => s.whatsapp);
+  const phone = useAppSelector((s) => s.auth.user?.phone);
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -23,10 +24,9 @@ const ChatView = () => {
   const chatMessages = activeChat ? messages[activeChat] || [] : [];
 
   useEffect(() => {
-    if (activeChat && !messages[activeChat]) {
-      dispatch(fetchMessages(activeChat));
-    }
-  }, [dispatch, activeChat, messages]);
+    if (!activeChat || !phone || messages[activeChat]) return;
+    dispatch(fetchMessages({ chatId: activeChat, sessionId: phone }));
+  }, [dispatch, activeChat, messages, phone]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -35,7 +35,7 @@ const ChatView = () => {
   }, [chatMessages]);
 
   const handleSend = () => {
-    if ((!text.trim() && attachments.length === 0) || !activeChat) return;
+    if ((!text.trim() && attachments.length === 0) || !activeChat || !phone) return;
 
     if (attachments.length > 0) {
       attachments.forEach((file) => {
@@ -46,13 +46,28 @@ const ChatView = () => {
           : file.type.startsWith("audio/")
           ? "audio"
           : "document";
-        dispatch(sendMessage({ chatId: activeChat, content: file.name, type, mediaFile: file }));
+        dispatch(
+          sendMessage({
+            sessionId: phone,
+            chatId: activeChat,
+            content: file.name,
+            type,
+            mediaFile: file,
+          }),
+        );
       });
       setAttachments([]);
     }
 
     if (text.trim()) {
-      dispatch(sendMessage({ chatId: activeChat, content: text, type: "text" }));
+      dispatch(
+        sendMessage({
+          sessionId: phone,
+          chatId: activeChat,
+          content: text,
+          type: "text",
+        }),
+      );
       setText("");
     }
   };
@@ -66,9 +81,15 @@ const ChatView = () => {
 
   const handleVoiceNote = () => {
     setIsRecording(!isRecording);
-    if (isRecording && activeChat) {
-      // Mock: send a voice note
-      dispatch(sendMessage({ chatId: activeChat, content: "Nota de voz", type: "voice" }));
+    if (isRecording && activeChat && phone) {
+      dispatch(
+        sendMessage({
+          sessionId: phone,
+          chatId: activeChat,
+          content: "Nota de voz",
+          type: "voice",
+        }),
+      );
       setIsRecording(false);
     }
   };

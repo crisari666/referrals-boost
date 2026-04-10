@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, MessageCircle, ChevronDown, Check, CalendarPlus, PhoneCall } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import ScheduleDialog from '@/components/schedule/ScheduleDialog';
+import { ClientContactActions } from './client-contact-actions';
 import * as clientsService from '@/services/clientsService';
 import {
   statusLabels,
@@ -42,8 +42,6 @@ export function ClientDetailProfileCard({
   onStatusOpenChange,
   onStatusChange,
 }: ClientDetailProfileCardProps) {
-  const waDigits = client.whatsapp.replace(/\D/g, '');
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -138,58 +136,7 @@ export function ClientDetailProfileCard({
       </div>
 
       {isPhysical && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-5">
-          {waDigits ? (
-            <a
-              href={`https://wa.me/${waDigits}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-1 bg-accent/10 rounded-xl py-3"
-            >
-              <MessageCircle className="w-5 h-5 text-accent" />
-              <span className="text-[10px] font-medium text-accent">WhatsApp</span>
-            </a>
-          ) : (
-            <div className="flex flex-col items-center gap-1 bg-muted/40 rounded-xl py-3 opacity-60">
-              <MessageCircle className="w-5 h-5 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-muted-foreground">WhatsApp</span>
-            </div>
-          )}
-          {client.phone?.replace(/\D/g, '') ? (
-            <a
-              href={`tel:${client.phone.replace(/\D/g, '')}`}
-              className="flex flex-col items-center gap-1 bg-info/10 rounded-xl py-3"
-            >
-              <Phone className="w-5 h-5 text-info" />
-              <span className="text-[10px] font-medium text-info">Llamar</span>
-            </a>
-          ) : (
-            <div className="flex flex-col items-center gap-1 bg-muted/40 rounded-xl py-3 opacity-60">
-              <Phone className="w-5 h-5 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-muted-foreground">Llamar</span>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => toast.info('Iniciando llamada VoIP...')}
-            className="flex flex-col items-center gap-1 bg-success/10 rounded-xl py-3"
-          >
-            <PhoneCall className="w-5 h-5 text-success" />
-            <span className="text-[10px] font-medium text-success">VoIP</span>
-          </button>
-          <ScheduleDialog
-            clientId={client.id}
-            trigger={
-              <button
-                type="button"
-                className="flex flex-col items-center gap-1 bg-primary/10 rounded-xl py-3 w-full"
-              >
-                <CalendarPlus className="w-5 h-5 text-primary" />
-                <span className="text-[10px] font-medium text-primary">Agendar</span>
-              </button>
-            }
-          />
-        </div>
+        <ClientContactActions client={client} clientId={client.id} isPhysical={isPhysical} />
       )}
     </motion.div>
   );
