@@ -65,7 +65,8 @@ export function disconnect(sessionId?: string) {
   });
 }
 
-export function fetchChats(sessionId: string) {
+export async function fetchChats(sessionId: string) {
+  await syncConnection(sessionId);
   return http.get<WhatsAppChat[]>("/chats", {
     url: `${WHATSAPP_WEB}/chats`,
     params: { sessionId },

@@ -26,3 +26,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generated from pdfjs-dist at build/dev time (see scripts/copy-pdf-worker.mjs)
+public/pdf.worker.min.mjs

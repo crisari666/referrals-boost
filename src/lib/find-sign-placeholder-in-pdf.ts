@@ -1,5 +1,6 @@
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import pdfWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+const pdfWorkerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.mjs`;
 
 let workerConfigured = false;
 
