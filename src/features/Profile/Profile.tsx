@@ -6,6 +6,7 @@ import { fetchVendorDashboard } from '@/store/vendorDashboardSlice';
 import { useAppDispatch, useAppSelector, type RootState } from '@/store';
 import { ProfileAchievementsSection } from './profile-achievements-section';
 import { ProfileIdentityCard } from './profile-identity-card';
+import { ProfileAccountSection } from './profile-account-section';
 import { ProfilePasswordSection } from './profile-password-section';
 import { ProfileReferralSection } from './profile-referral-section';
 import { ProfileSummarySection } from './profile-summary-section';
@@ -54,7 +55,9 @@ const Profile = () => {
         levelProgress={seller.levelProgress}
       />
 
-      <ProfileReferralSection referralLink={seller.referralLink} onCopy={copyLink} />
+      {/* <ProfileReferralSection referralLink={seller.referralLink} onCopy={copyLink} /> */}
+
+      <ProfileAccountSection />
 
       <ProfilePasswordSection />
 

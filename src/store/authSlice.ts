@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { APP_CONSTANTS } from "@/constants/app-constants";
 import * as authService from "@/services/authService";
+import * as profileService from "@/services/profileService";
 import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
 
 export type { AuthUser, UserRole } from "@/types/auth";
@@ -61,6 +62,28 @@ function getInitialAuthState(): AuthState {
     return { ...base, user: null, isAuthenticated: false };
   }
 }
+
+export const refreshOwnProfile = createAsyncThunk<
+  Pick<AuthUser, "name" | "lastName" | "email" | "phone">,
+  void,
+  { rejectValue: string }
+>("auth/refreshOwnProfile", async (_, { rejectWithValue }) => {
+  try {
+    const p = await profileService.getOwnProfile();
+    return {
+      name: p.name,
+      lastName: p.lastName,
+      email: p.email,
+      phone: p.phone,
+    };
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "No se pudo actualizar los datos de sesión.";
+    return rejectWithValue(message);
+  }
+});
 
 export const loginUser = createAsyncThunk<
   AuthUser,
@@ -124,6 +147,15 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? "Error desconocido";
+      })
+      .addCase(refreshOwnProfile.fulfilled, (state, action) => {
+        if (state.user != null) {
+          state.user = { ...state.user, ...action.payload };
+          localStorage.setItem(
+            APP_CONSTANTS.AUTH_USER_STORAGE_KEY,
+            JSON.stringify(state.user)
+          );
+        }
       });
   },
 });

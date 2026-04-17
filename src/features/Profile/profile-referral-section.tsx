@@ -19,9 +19,9 @@ export function ProfileReferralSection({ referralLink, onCopy }: ProfileReferral
         <h3 className="font-bold text-foreground">Tu Enlace de Referido</h3>
       </div>
       <div className="flex items-center gap-2">
-        <div className="flex-1 bg-secondary rounded-xl px-4 py-3 text-sm text-foreground truncate font-mono">
+        {/* <div className="flex-1 bg-secondary rounded-xl px-4 py-3 text-sm text-foreground truncate font-mono">
           {referralLink}
-        </div>
+        </div> */}
         <button
           type="button"
           onClick={onCopy}
