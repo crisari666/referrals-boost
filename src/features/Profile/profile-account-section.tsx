@@ -151,7 +151,7 @@ export function ProfileAccountSection() {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-card p-6 space-y-8">
+    <section>
       <div>
         <h2 className="text-lg font-semibold text-foreground">Datos de cuenta</h2>
         <p className="text-sm text-muted-foreground">Nombre, teléfono y correo de contacto</p>
