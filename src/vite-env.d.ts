@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_URL_SOCKET?: string;
   /** Quantum VoIP server base URL, e.g. https://host/voip (global prefix is voip; path continues with /token/...) */
   readonly VITE_URL_VOIP_SERVER?: string;
+  /** Customers microservice REST origin, e.g. http://localhost:4000/customers-rest/ */
+  readonly VITE_URL_CUSTOMERS_MS?: string;
 }
 
 interface ImportMeta {

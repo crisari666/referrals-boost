@@ -1,12 +1,49 @@
 import { motion } from 'framer-motion';
 import { StickyNote } from 'lucide-react';
 import * as clientsService from '@/services/clientsService';
+import type { MsCustomerDescriptionEntry } from '@/services/clientsService.types';
 import { formatCreationDetailUser, formatDetailDate } from './client-detail-formatters';
+
+export type ClientDetailApiNote = clientsService.CreationDetailNote | MsCustomerDescriptionEntry;
+
+function isMsDescriptionEntry(n: ClientDetailApiNote): n is MsCustomerDescriptionEntry {
+  return (
+    typeof n === 'object' &&
+    n !== null &&
+    'description' in n &&
+    typeof (n as MsCustomerDescriptionEntry).description === 'string' &&
+    !('note' in n)
+  );
+}
+
+/** CRM `CreationDetailNote` or raw customers MS description row. */
+function toNoteDisplayRow(n: ClientDetailApiNote): {
+  key: string;
+  user: string | clientsService.CreationDetailPopulatedUser;
+  createdAt: string;
+  body: string;
+} {
+  if (isMsDescriptionEntry(n)) {
+    return {
+      key: String(n._id),
+      user: n.user,
+      createdAt: n.date,
+      body: n.description,
+    };
+  }
+  const r = n as clientsService.CreationDetailNote;
+  return {
+    key: r._id,
+    user: r.user,
+    createdAt: r.createdAt,
+    body: r.note,
+  };
+}
 
 export type ClientDetailNotesSectionProps = {
   isMock: boolean;
   mockNotes: string[];
-  apiNotes: clientsService.CreationDetailNote[];
+  apiNotes: ClientDetailApiNote[];
 };
 
 export function ClientDetailNotesSection({
@@ -43,14 +80,17 @@ export function ClientDetailNotesSection({
       )}
       {hasApi && (
         <ul className="space-y-3">
-          {apiNotes.map((n) => (
-            <li key={n._id} className="bg-secondary/50 rounded-xl px-4 py-3">
-              <p className="text-xs text-muted-foreground">
-                {formatCreationDetailUser(n.user)} · {formatDetailDate(n.createdAt)}
-              </p>
-              <p className="text-sm text-foreground mt-1 whitespace-pre-wrap">{n.note}</p>
-            </li>
-          ))}
+          {apiNotes.map((n) => {
+            const row = toNoteDisplayRow(n);
+            return (
+              <li key={row.key} className="bg-secondary/50 rounded-xl px-4 py-3">
+                <p className="text-xs text-muted-foreground">
+                  {formatCreationDetailUser(row.user)} · {formatDetailDate(row.createdAt)}
+                </p>
+                <p className="text-sm text-foreground mt-1 whitespace-pre-wrap">{row.body}</p>
+              </li>
+            );
+          })}
         </ul>
       )}
     </motion.div>
