@@ -3,6 +3,7 @@ import { StickyNote } from 'lucide-react';
 import * as clientsService from '@/services/clientsService';
 import type { MsCustomerDescriptionEntry } from '@/services/clientsService.types';
 import { useAppSelector } from '@/store';
+import { useParams } from 'react-router-dom';
 import { ClientAddNoteDialog } from './client-add-note-dialog';
 import { formatCreationDetailUser, formatDetailDate } from './client-detail-formatters';
 
@@ -45,18 +46,23 @@ function toNoteDisplayRow(n: ClientDetailApiNote): {
 export type ClientDetailNotesSectionProps = {
   isMock: boolean;
   mockNotes: string[];
-  apiNotes: ClientDetailApiNote[];
-  onAddNote?: (note: string) => Promise<void>;
 };
 
-export function ClientDetailNotesSection({
-  isMock,
-  mockNotes,
-  apiNotes,
-  onAddNote,
-}: ClientDetailNotesSectionProps) {
+export function ClientDetailNotesSection({ isMock, mockNotes }: ClientDetailNotesSectionProps) {
+  const { id: routeId } = useParams();
   const isPhysical = useAppSelector((s) => s.auth.user?.physical === true);
-  const allowAddNote = !isMock && isPhysical && Boolean(onAddNote);
+  const detailReady = useAppSelector(
+    (s) =>
+      s.clients.vendorCreationDetailStatus === 'succeeded' &&
+      Boolean(s.clients.vendorCreationDetail?.customer) &&
+      Boolean(routeId) &&
+      s.clients.vendorCreationDetailCustomerId === routeId
+  );
+  const apiNotes = useAppSelector((s) => {
+    if (!routeId || s.clients.vendorCreationDetailCustomerId !== routeId) return [];
+    return s.clients.vendorCreationDetail?.notes ?? [];
+  });
+  const allowAddNote = !isMock && isPhysical && Boolean(routeId);
   const hasMock = isMock && mockNotes.length > 0;
   const hasApi = !isMock && apiNotes.length > 0;
   if (!hasMock && !hasApi && !allowAddNote) return null;
@@ -73,7 +79,9 @@ export function ClientDetailNotesSection({
           <StickyNote className="w-4 h-4 text-warning" />
           <h3 className="font-bold text-foreground">Notas</h3>
         </div>
-        {allowAddNote && onAddNote && <ClientAddNoteDialog onSubmit={onAddNote} />}
+        {allowAddNote && routeId && detailReady && (
+          <ClientAddNoteDialog customerId={routeId} />
+        )}
       </div>
       {!hasMock && !hasApi && allowAddNote && (
         <p className="text-sm text-muted-foreground">

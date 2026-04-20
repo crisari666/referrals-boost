@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { ChevronDown, Check, Pencil } from 'lucide-react';
 import { ClientContactActions } from './client-contact-actions';
-import * as clientsService from '@/services/clientsService';
 import {
   statusLabels,
   statusColors,
@@ -10,7 +12,8 @@ import {
 } from '@/data/mockData';
 import { formatDetailDate } from './client-detail-formatters';
 import { ClientDetailStepSelect } from './client-detail-step-select';
-import { useAppSelector } from '@/store';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { openVendorCustomerEditModal } from '@/store/clientsSlice';
 
 const statusOrder: ClientStatus[] = [
   'nuevo',
@@ -24,36 +27,36 @@ export type ClientDetailProfileCardProps = {
   client: Client;
   initials: string;
   projectTitle: string | undefined;
-  apiCustomer: clientsService.CreationDetailCustomer | null | undefined;
+  isMock: boolean;
   isPhysical: boolean;
-  showEditCustomer?: boolean;
-  onEditCustomerClick?: () => void;
-  currentCustomerStepId?: string | null;
-  currentStatus: ClientStatus;
-  statusOpen: boolean;
-  onStatusOpenChange: (open: boolean) => void;
-  onLegacyStatusChange: (status: ClientStatus) => void;
-  onCatalogStepChange?: (stepId: string) => void;
 };
 
 export function ClientDetailProfileCard({
   client,
   initials,
   projectTitle,
-  apiCustomer,
+  isMock,
   isPhysical,
-  showEditCustomer = false,
-  onEditCustomerClick,
-  currentCustomerStepId = null,
-  currentStatus,
-  statusOpen,
-  onStatusOpenChange,
-  onLegacyStatusChange,
-  onCatalogStepChange,
 }: ClientDetailProfileCardProps) {
+  const dispatch = useAppDispatch();
+  const { id: routeId } = useParams();
   const catalogStepCount = useAppSelector((s) => s.clients.vendorStepCatalog.length);
-  const useCatalogPicker =
-    catalogStepCount > 0 && typeof onCatalogStepChange === 'function';
+  const apiCustomer = useAppSelector((s) => {
+    if (isMock || !routeId || s.clients.vendorCreationDetailCustomerId !== routeId) {
+      return undefined;
+    }
+    return s.clients.vendorCreationDetail?.customer ?? undefined;
+  });
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<ClientStatus>(client.status);
+
+  useEffect(() => {
+    setCurrentStatus(client.status);
+  }, [client.id, client.status]);
+
+  const useCatalogPicker = catalogStepCount > 0 && !isMock;
+  const currentCustomerStepId = apiCustomer?.customerStepId ?? null;
+  const showEditCustomer = !isMock && Boolean(apiCustomer);
 
   return (
     <motion.div
@@ -87,11 +90,11 @@ export function ClientDetailProfileCard({
             )}
           </div>
         </div>
-        {showEditCustomer && onEditCustomerClick ? (
+        {showEditCustomer ? (
           <button
             type="button"
             aria-label="Editar cliente"
-            onClick={onEditCustomerClick}
+            onClick={() => dispatch(openVendorCustomerEditModal())}
             className="shrink-0 p-2 rounded-xl border border-border bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
           >
             <Pencil className="w-4 h-4 text-muted-foreground" />
@@ -103,19 +106,13 @@ export function ClientDetailProfileCard({
         {useCatalogPicker ? (
           <ClientDetailStepSelect
             currentStepId={currentCustomerStepId}
-            open={statusOpen}
-            onOpenChange={onStatusOpenChange}
-            onSelectStep={(stepId) => {
-              onCatalogStepChange!(stepId);
-              onStatusOpenChange(false);
-            }}
             disabled={!isPhysical}
           />
         ) : isPhysical ? (
           <>
             <button
               type="button"
-              onClick={() => onStatusOpenChange(!statusOpen)}
+              onClick={() => setStatusOpen(!statusOpen)}
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-secondary/30 transition-colors hover:bg-secondary/50 cursor-pointer"
             >
               <div className="flex items-center gap-2">
@@ -144,7 +141,11 @@ export function ClientDetailProfileCard({
                     <button
                       key={s}
                       type="button"
-                      onClick={() => onLegacyStatusChange(s)}
+                      onClick={() => {
+                        setCurrentStatus(s);
+                        setStatusOpen(false);
+                        toast.success(`Estado actualizado a "${statusLabels[s]}"`);
+                      }}
                       className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/40 transition-colors cursor-pointer"
                     >
                       <span

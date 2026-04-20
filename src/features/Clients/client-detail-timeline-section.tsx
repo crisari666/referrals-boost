@@ -1,19 +1,20 @@
 import { motion } from 'framer-motion';
-import * as clientsService from '@/services/clientsService';
+import { useParams } from 'react-router-dom';
 import type { Client } from '@/data/mockData';
+import { useAppSelector } from '@/store';
 import { formatCreationDetailUser, formatDetailDate, situationLabel } from './client-detail-formatters';
 
 export type ClientDetailTimelineSectionProps = {
   isMock: boolean;
   client: Client;
-  apiLogs: clientsService.CreationDetailLogSituation[];
 };
 
-export function ClientDetailTimelineSection({
-  isMock,
-  client,
-  apiLogs,
-}: ClientDetailTimelineSectionProps) {
+export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTimelineSectionProps) {
+  const { id: routeId } = useParams();
+  const apiLogs = useAppSelector((s) => {
+    if (!routeId || isMock || s.clients.vendorCreationDetailCustomerId !== routeId) return [];
+    return s.clients.vendorCreationDetail?.customerLogSituations ?? [];
+  });
   const hasMockTimeline = isMock && client.interactions.length > 0;
   const hasApiTimeline = !isMock && apiLogs.length > 0;
 

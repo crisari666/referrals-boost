@@ -1,12 +1,63 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { toast } from "sonner";
+import { z } from "zod";
 import { clients as initialClients, type Client, type ClientStatus } from "@/data/mockData";
 import * as clientsService from "@/services/clientsService";
-import type { VendorCustomerStep } from "@/services/clientsService.types";
+import type {
+  CreationDetailCustomer,
+  CreationDetailNote,
+  CustomerCreationDetailPayload,
+  UpdateMsCustomerPayload,
+  VendorCustomerStep,
+} from "@/services/clientsService.types";
+import type { EditClientFormState } from "@/features/Clients/EditClientModal";
 
 type AddCustomerNoteArgs = {
   customerId: string;
   note: string;
 };
+
+const emptyVendorEditForm: EditClientFormState = {
+  name: "",
+  email: "",
+  whatsapp: "",
+  phone: "",
+  documentType: "",
+  document: "",
+  projectInterest: "",
+};
+
+const editClientSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es obligatorio").max(100),
+  email: z.string().trim().email("Correo inválido").max(255),
+  whatsapp: z.string().trim().min(1, "WhatsApp es obligatorio").max(40),
+  phone: z.string().trim().min(1, "El teléfono es obligatorio").max(40),
+  documentType: z.string().optional(),
+  document: z.string().trim().max(30).optional(),
+  projectInterest: z.string().optional().or(z.literal("")),
+});
+
+function buildEditFormFromCustomer(c: CreationDetailCustomer): EditClientFormState {
+  const fullName = [c.name, c.lastName].filter(Boolean).join(" ").trim() || c.name;
+  const interestItems = c.interestProyect ?? [];
+  const lastProject =
+    interestItems.length > 0
+      ? interestItems[interestItems.length - 1]?.proyect?.trim() ?? ""
+      : "";
+  let documentTypeUi = "";
+  const dt = c.documentType?.toLowerCase();
+  if (dt === "cc") documentTypeUi = "INE";
+  else if (dt === "passport") documentTypeUi = "Pasaporte";
+  return {
+    name: fullName,
+    email: c.email ?? "",
+    whatsapp: c.whatsapp ?? "",
+    phone: c.phone ?? "",
+    documentType: documentTypeUi,
+    document: c.document ?? "",
+    projectInterest: lastProject,
+  };
+}
 
 export const fetchVendorCustomerSteps = createAsyncThunk<VendorCustomerStep[], void, { rejectValue: string }>(
   "clients/fetchVendorCustomerSteps",
@@ -23,8 +74,101 @@ export const fetchVendorCustomerSteps = createAsyncThunk<VendorCustomerStep[], v
   }
 );
 
+export const fetchVendorCustomerCreationDetail = createAsyncThunk<
+  CustomerCreationDetailPayload,
+  string,
+  { rejectValue: string }
+>("clients/fetchVendorCustomerCreationDetail", async (customerId, { rejectWithValue }) => {
+  try {
+    const res = await clientsService.getCustomerCreationDetail(customerId);
+    if (res.error || res.result === null || !res.result.customer) {
+      return rejectWithValue(res.error || "Cliente no encontrado");
+    }
+    return res.result;
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "No se pudo cargar el cliente.";
+    return rejectWithValue(message);
+  }
+});
+
+export const patchVendorCustomerStepRequest = createAsyncThunk<
+  void,
+  { customerId: string; stepId: string },
+  { rejectValue: string }
+>("clients/patchVendorCustomerStepRequest", async ({ customerId, stepId }, { dispatch, rejectWithValue }) => {
+  try {
+    await clientsService.patchMsCustomerStep(customerId, stepId);
+    await dispatch(fetchVendorCustomerCreationDetail(customerId)).unwrap();
+    toast.success("Etapa actualizada");
+  } catch (err: unknown) {
+    toast.error("No se pudo actualizar la etapa");
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "patch-step-failed";
+    return rejectWithValue(message);
+  }
+});
+
+type SubmitVendorEditReject =
+  | string
+  | { formErrors: Record<string, string> };
+
+export const submitVendorCustomerEdit = createAsyncThunk<
+  void,
+  void,
+  { rejectValue: SubmitVendorEditReject; state: { clients: ClientsState } }
+>("clients/submitVendorCustomerEdit", async (_, { getState, dispatch, rejectWithValue }) => {
+  const { vendorCustomerEdit, vendorCreationDetailCustomerId } = getState().clients;
+  if (!vendorCreationDetailCustomerId) {
+    return rejectWithValue("missing-customer");
+  }
+  const parsed = editClientSchema.safeParse(vendorCustomerEdit.form);
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    parsed.error.errors.forEach((e) => {
+      fieldErrors[e.path[0] as string] = e.message;
+    });
+    return rejectWithValue({ formErrors: fieldErrors });
+  }
+  const parts = parsed.data.name.trim().split(/\s+/);
+  const namePart = parts[0] ?? "";
+  const lastNamePart = parts.slice(1).join(" ");
+  const docType = clientsService.mapVendorDocumentTypeToMs(parsed.data.documentType);
+  const body: UpdateMsCustomerPayload = {
+    name: namePart,
+    lastName: lastNamePart,
+    phone: parsed.data.phone.trim(),
+    whatsapp: parsed.data.whatsapp.trim(),
+    email: parsed.data.email.trim(),
+    ...(parsed.data.document?.trim()
+      ? { document: parsed.data.document.trim() }
+      : { document: "" }),
+    ...(docType ? { documentType: docType } : {}),
+    interestedProjects: parsed.data.projectInterest?.trim()
+      ? [
+          {
+            projectId: parsed.data.projectInterest.trim(),
+            date: new Date().toISOString().slice(0, 10),
+          },
+        ]
+      : [],
+  };
+  try {
+    await clientsService.updateMsCustomer(vendorCreationDetailCustomerId, body);
+    await dispatch(fetchVendorCustomerCreationDetail(vendorCreationDetailCustomerId)).unwrap();
+    toast.success("Cliente actualizado");
+  } catch {
+    toast.error("No se pudo guardar los cambios");
+    return rejectWithValue("update-failed");
+  }
+});
+
 export const addCustomerNoteRequest = createAsyncThunk<
-  clientsService.CreationDetailNote,
+  CreationDetailNote,
   AddCustomerNoteArgs,
   { rejectValue: string }
 >("clients/addCustomerNoteRequest", async ({ customerId, note }, { rejectWithValue }) => {
@@ -47,12 +191,21 @@ export const addCustomerNoteRequest = createAsyncThunk<
   }
 });
 
-interface ClientsState {
+export interface ClientsState {
   list: Client[];
   search: string;
   vendorStepCatalog: VendorCustomerStep[];
   vendorStepCatalogStatus: "idle" | "loading" | "succeeded" | "failed";
   listStepFilterId: string | null;
+  vendorCreationDetail: CustomerCreationDetailPayload | null;
+  vendorCreationDetailCustomerId: string | null;
+  vendorCreationDetailStatus: "idle" | "loading" | "succeeded" | "failed";
+  vendorCustomerEdit: {
+    open: boolean;
+    form: EditClientFormState;
+    errors: Record<string, string>;
+    submitting: boolean;
+  };
 }
 
 const initialState: ClientsState = {
@@ -61,6 +214,15 @@ const initialState: ClientsState = {
   vendorStepCatalog: [],
   vendorStepCatalogStatus: "idle",
   listStepFilterId: null,
+  vendorCreationDetail: null,
+  vendorCreationDetailCustomerId: null,
+  vendorCreationDetailStatus: "idle",
+  vendorCustomerEdit: {
+    open: false,
+    form: emptyVendorEditForm,
+    errors: {},
+    submitting: false,
+  },
 };
 
 const clientsSlice = createSlice({
@@ -98,6 +260,32 @@ const clientsSlice = createSlice({
     setListStepFilterId(state, action: PayloadAction<string | null>) {
       state.listStepFilterId = action.payload;
     },
+    clearVendorCreationDetail(state) {
+      state.vendorCreationDetail = null;
+      state.vendorCreationDetailCustomerId = null;
+      state.vendorCreationDetailStatus = "idle";
+    },
+    openVendorCustomerEditModal(state) {
+      const c = state.vendorCreationDetail?.customer;
+      if (!c) return;
+      state.vendorCustomerEdit.open = true;
+      state.vendorCustomerEdit.form = buildEditFormFromCustomer(c);
+      state.vendorCustomerEdit.errors = {};
+    },
+    closeVendorCustomerEditModal(state) {
+      state.vendorCustomerEdit.open = false;
+      state.vendorCustomerEdit.form = emptyVendorEditForm;
+      state.vendorCustomerEdit.errors = {};
+      state.vendorCustomerEdit.submitting = false;
+    },
+    setVendorCustomerEditField(state, action: PayloadAction<{ field: string; value: string }>) {
+      const { field, value } = action.payload;
+      (state.vendorCustomerEdit.form as Record<string, string>)[field] = value;
+      state.vendorCustomerEdit.errors[field] = "";
+    },
+    setVendorCustomerEditErrors(state, action: PayloadAction<Record<string, string>>) {
+      state.vendorCustomerEdit.errors = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -111,6 +299,44 @@ const clientsSlice = createSlice({
       .addCase(fetchVendorCustomerSteps.rejected, (state) => {
         state.vendorStepCatalogStatus = "failed";
         state.vendorStepCatalog = [];
+      })
+      .addCase(fetchVendorCustomerCreationDetail.pending, (state, action) => {
+        state.vendorCreationDetailStatus = "loading";
+        state.vendorCreationDetailCustomerId = action.meta.arg;
+        state.vendorCreationDetail = null;
+      })
+      .addCase(fetchVendorCustomerCreationDetail.fulfilled, (state, action) => {
+        state.vendorCreationDetailStatus = "succeeded";
+        state.vendorCreationDetail = action.payload;
+      })
+      .addCase(fetchVendorCustomerCreationDetail.rejected, (state) => {
+        state.vendorCreationDetailStatus = "failed";
+        state.vendorCreationDetail = null;
+      })
+      .addCase(addCustomerNoteRequest.fulfilled, (state, action) => {
+        const id = action.meta.arg.customerId;
+        if (
+          state.vendorCreationDetail &&
+          state.vendorCreationDetailCustomerId === id
+        ) {
+          state.vendorCreationDetail.notes = [action.payload, ...state.vendorCreationDetail.notes];
+        }
+      })
+      .addCase(submitVendorCustomerEdit.pending, (state) => {
+        state.vendorCustomerEdit.submitting = true;
+      })
+      .addCase(submitVendorCustomerEdit.fulfilled, (state) => {
+        state.vendorCustomerEdit.submitting = false;
+        state.vendorCustomerEdit.open = false;
+        state.vendorCustomerEdit.form = emptyVendorEditForm;
+        state.vendorCustomerEdit.errors = {};
+      })
+      .addCase(submitVendorCustomerEdit.rejected, (state, action) => {
+        state.vendorCustomerEdit.submitting = false;
+        const p = action.payload;
+        if (p && typeof p === "object" && "formErrors" in p) {
+          state.vendorCustomerEdit.errors = p.formErrors;
+        }
       });
   },
 });
@@ -125,5 +351,10 @@ export const {
   setSearch,
   setClientList,
   setListStepFilterId,
+  clearVendorCreationDetail,
+  openVendorCustomerEditModal,
+  closeVendorCustomerEditModal,
+  setVendorCustomerEditField,
+  setVendorCustomerEditErrors,
 } = clientsSlice.actions;
 export default clientsSlice.reducer;

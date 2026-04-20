@@ -3,6 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Field from './Field';
 import type { DocumentType } from '@/data/mockData';
 import { useAppDispatch, useAppSelector } from '@/store';
+import {
+  closeVendorCustomerEditModal,
+  setVendorCustomerEditField,
+  submitVendorCustomerEdit,
+} from '@/store/clientsSlice';
 import { fetchProjects } from '@/store/projectsSlice';
 import { useEffect } from 'react';
 
@@ -18,31 +23,29 @@ export type EditClientFormState = {
   projectInterest: string;
 };
 
-export type EditClientModalProps = {
-  open: boolean;
-  onClose: () => void;
-  form: EditClientFormState;
-  errors: Record<string, string>;
-  updateField: (field: string, value: string) => void;
-  onSubmit: () => void;
-  submitting?: boolean;
-};
-
-export function EditClientModal({
-  open,
-  onClose,
-  form,
-  errors,
-  updateField,
-  onSubmit,
-  submitting = false,
-}: EditClientModalProps) {
+export function EditClientModal() {
   const dispatch = useAppDispatch();
+  const open = useAppSelector((s) => s.clients.vendorCustomerEdit.open);
+  const form = useAppSelector((s) => s.clients.vendorCustomerEdit.form);
+  const errors = useAppSelector((s) => s.clients.vendorCustomerEdit.errors);
+  const submitting = useAppSelector((s) => s.clients.vendorCustomerEdit.submitting);
 
   useEffect(() => {
     void dispatch(fetchProjects());
   }, [dispatch]);
   const projectList = useAppSelector((state) => state.projects.list);
+
+  const onClose = () => {
+    dispatch(closeVendorCustomerEditModal());
+  };
+
+  const updateField = (field: string, value: string) => {
+    dispatch(setVendorCustomerEditField({ field, value }));
+  };
+
+  const onSubmit = () => {
+    void dispatch(submitVendorCustomerEdit());
+  };
 
   return (
     <AnimatePresence>

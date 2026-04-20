@@ -11,12 +11,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { useAppDispatch } from '@/store';
+import { addCustomerNoteRequest } from '@/store/clientsSlice';
 
 type ClientAddNoteDialogProps = {
-  onSubmit: (note: string) => Promise<void>;
+  customerId: string;
 };
 
-export function ClientAddNoteDialog({ onSubmit }: ClientAddNoteDialogProps) {
+export function ClientAddNoteDialog({ customerId }: ClientAddNoteDialogProps) {
+  const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +33,7 @@ export function ClientAddNoteDialog({ onSubmit }: ClientAddNoteDialogProps) {
     }
     setSubmitting(true);
     try {
-      await onSubmit(trimmed);
+      await dispatch(addCustomerNoteRequest({ customerId, note: trimmed })).unwrap();
       setNoteText('');
       setOpen(false);
       toast.success('Nota agregada');

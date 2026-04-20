@@ -1,13 +1,12 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check } from 'lucide-react';
-import { useAppSelector } from '@/store';
+import { useParams } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { patchVendorCustomerStepRequest } from '@/store/clientsSlice';
 
 export type ClientDetailStepSelectProps = {
   currentStepId: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSelectStep: (stepId: string) => void;
   disabled?: boolean;
 };
 
@@ -23,12 +22,12 @@ function stepBadgeStyle(color: string | undefined): CSSProperties | undefined {
 
 export function ClientDetailStepSelect({
   currentStepId,
-  open,
-  onOpenChange,
-  onSelectStep,
   disabled = false,
 }: ClientDetailStepSelectProps) {
+  const { id: customerId } = useParams();
+  const dispatch = useAppDispatch();
   const catalog = useAppSelector((s) => s.clients.vendorStepCatalog);
+  const [open, setOpen] = useState(false);
   const sorted = useMemo(() => {
     return [...catalog]
       .filter((s) => s.isActive)
@@ -37,12 +36,18 @@ export function ClientDetailStepSelect({
 
   const current = sorted.find((s) => s.id === currentStepId) ?? null;
 
+  const selectStep = (stepId: string) => {
+    if (!customerId) return;
+    void dispatch(patchVendorCustomerStepRequest({ customerId, stepId }));
+    setOpen(false);
+  };
+
   return (
     <div className="relative">
       <button
         type="button"
         disabled={disabled || sorted.length === 0}
-        onClick={() => !disabled && sorted.length > 0 && onOpenChange(!open)}
+        onClick={() => !disabled && sorted.length > 0 && setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-secondary/30 transition-colors hover:bg-secondary/50 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -78,7 +83,7 @@ export function ClientDetailStepSelect({
               <button
                 key={s.id}
                 type="button"
-                onClick={() => onSelectStep(s.id)}
+                onClick={() => selectStep(s.id)}
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/40 transition-colors cursor-pointer"
               >
                 <span
