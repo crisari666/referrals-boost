@@ -1,10 +1,9 @@
 import { useMemo, type CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check } from 'lucide-react';
-import type { VendorCustomerStep } from '@/services/clientsService.types';
+import { useAppSelector } from '@/store';
 
 export type ClientDetailStepSelectProps = {
-  steps: VendorCustomerStep[];
   currentStepId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -23,18 +22,18 @@ function stepBadgeStyle(color: string | undefined): CSSProperties | undefined {
 }
 
 export function ClientDetailStepSelect({
-  steps,
   currentStepId,
   open,
   onOpenChange,
   onSelectStep,
   disabled = false,
 }: ClientDetailStepSelectProps) {
+  const catalog = useAppSelector((s) => s.clients.vendorStepCatalog);
   const sorted = useMemo(() => {
-    return [...steps]
+    return [...catalog]
       .filter((s) => s.isActive)
       .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
-  }, [steps]);
+  }, [catalog]);
 
   const current = sorted.find((s) => s.id === currentStepId) ?? null;
 

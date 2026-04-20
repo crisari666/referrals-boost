@@ -1,8 +1,15 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Phone, MessageCircle } from "lucide-react";
+import { useMemo, type CSSProperties } from "react";
+import { ChevronRight } from "lucide-react";
 import type { Client } from "@/data/mockData";
 import { statusLabels, statusColors, projects } from "@/data/mockData";
 import { motion } from "framer-motion";
+import { useAppSelector } from "@/store";
+
+function stepBadgeStyle(color: string | undefined): CSSProperties | undefined {
+  if (!color?.trim()) return undefined;
+  return { backgroundColor: color.trim(), color: "#0f172a" };
+}
 
 interface ClientRowProps {
   client: Client;
@@ -10,6 +17,12 @@ interface ClientRowProps {
 }
 
 const ClientRow = ({ client, index = 0 }: ClientRowProps) => {
+  const catalog = useAppSelector((s) => s.clients.vendorStepCatalog);
+  const currentStep = useMemo(() => {
+    if (!client.customerStepId) return null;
+    return catalog.find((s) => s.id === client.customerStepId) ?? null;
+  }, [catalog, client.customerStepId]);
+
   const project = projects.find((p) => p.id === client.projectInterest);
   const initials = client.name
     .split(" ")
@@ -34,9 +47,25 @@ const ClientRow = ({ client, index = 0 }: ClientRowProps) => {
           <p className="font-semibold text-foreground text-sm truncate">{client.name}</p>
           <p className="text-xs text-muted-foreground truncate">{project?.title || "Sin proyecto"}</p>
         </div>
-        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${statusColors[client.status]}`}>
-          {statusLabels[client.status]}
-        </span>
+        {catalog.length > 0 ? (
+          <span
+            className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 truncate max-w-[7rem] sm:max-w-[9rem] ${
+              currentStep
+                ? "bg-secondary text-foreground"
+                : "bg-muted/60 text-muted-foreground font-medium"
+            }`}
+            style={currentStep ? stepBadgeStyle(currentStep.color) : undefined}
+            title={currentStep?.name ?? "Sin etapa"}
+          >
+            {currentStep?.name ?? "Sin etapa"}
+          </span>
+        ) : (
+          <span
+            className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${statusColors[client.status]}`}
+          >
+            {statusLabels[client.status]}
+          </span>
+        )}
         <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
       </Link>
     </motion.div>

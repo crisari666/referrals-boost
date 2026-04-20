@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { StickyNote } from 'lucide-react';
 import * as clientsService from '@/services/clientsService';
 import type { MsCustomerDescriptionEntry } from '@/services/clientsService.types';
+import { useAppSelector } from '@/store';
 import { ClientAddNoteDialog } from './client-add-note-dialog';
 import { formatCreationDetailUser, formatDetailDate } from './client-detail-formatters';
 
@@ -45,7 +46,6 @@ export type ClientDetailNotesSectionProps = {
   isMock: boolean;
   mockNotes: string[];
   apiNotes: ClientDetailApiNote[];
-  canAddNote?: boolean;
   onAddNote?: (note: string) => Promise<void>;
 };
 
@@ -53,12 +53,13 @@ export function ClientDetailNotesSection({
   isMock,
   mockNotes,
   apiNotes,
-  canAddNote = false,
   onAddNote,
 }: ClientDetailNotesSectionProps) {
+  const isPhysical = useAppSelector((s) => s.auth.user?.physical === true);
+  const allowAddNote = !isMock && isPhysical && Boolean(onAddNote);
   const hasMock = isMock && mockNotes.length > 0;
   const hasApi = !isMock && apiNotes.length > 0;
-  if (!hasMock && !hasApi && !canAddNote) return null;
+  if (!hasMock && !hasApi && !allowAddNote) return null;
 
   return (
     <motion.div
@@ -72,11 +73,9 @@ export function ClientDetailNotesSection({
           <StickyNote className="w-4 h-4 text-warning" />
           <h3 className="font-bold text-foreground">Notas</h3>
         </div>
-        {canAddNote && onAddNote && (
-          <ClientAddNoteDialog onSubmit={onAddNote} />
-        )}
+        {allowAddNote && onAddNote && <ClientAddNoteDialog onSubmit={onAddNote} />}
       </div>
-      {!hasMock && !hasApi && canAddNote && (
+      {!hasMock && !hasApi && allowAddNote && (
         <p className="text-sm text-muted-foreground">
           Aun no hay notas para este cliente.
         </p>

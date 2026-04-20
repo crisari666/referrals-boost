@@ -1,7 +1,8 @@
-import ClientRow from './ClientRow';
 import AddClientModal from './AddClientModal';
 import { Plus, Search } from 'lucide-react';
 import { useClient } from './use-client';
+import { ClientsListPanel } from './clients-list-panel';
+import { ClientsStepFilter } from './clients-step-filter';
 
 const Clients = () => {
   const {
@@ -33,30 +34,22 @@ const Clients = () => {
         </button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Buscar cliente..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Buscar cliente..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
+        <ClientsStepFilter />
       </div>
 
       <div className="space-y-2">
-        {loadingList ? (
-          <p className="text-center text-muted-foreground py-12 text-sm">Cargando clientes...</p>
-        ) : (
-          <>
-            {filtered.map((client, i) => (
-              <ClientRow key={client.id} client={client} index={i} />
-            ))}
-            {filtered.length === 0 && (
-              <p className="text-center text-muted-foreground py-12 text-sm">No se encontraron clientes</p>
-            )}
-          </>
-        )}
+        <ClientsListPanel loadingList={loadingList} clients={filtered} />
       </div>
 
       <AddClientModal

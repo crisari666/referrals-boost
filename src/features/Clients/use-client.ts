@@ -1,5 +1,5 @@
 import { useAppSelector, useAppDispatch } from '@/store';
-import { addClient, setSearch, setClientList } from '@/store/clientsSlice';
+import { addClient, setSearch, setClientList, fetchVendorCustomerSteps } from '@/store/clientsSlice';
 import {
   clients as mockClients,
   type Client,
@@ -43,6 +43,9 @@ export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Cli
     createdAt: c.createdAt?.split('T')[0] ?? '',
     notes: [],
     interactions: [],
+    ...(c.customerStepId != null && String(c.customerStepId).trim() !== ''
+      ? { customerStepId: String(c.customerStepId) }
+      : {}),
   };
 }
 
@@ -64,6 +67,9 @@ export function mapCreationCustomerToClient(
     createdAt: c.createdAt?.split('T')[0] ?? '',
     notes: [],
     interactions: [],
+    ...(c.customerStepId != null && String(c.customerStepId).trim() !== ''
+      ? { customerStepId: String(c.customerStepId) }
+      : {}),
   };
 }
 
@@ -93,6 +99,7 @@ export function useClient() {
   const dispatch = useAppDispatch();
   const clientList = useAppSelector((state) => state.clients.list);
   const search = useAppSelector((state) => state.clients.search);
+  const listStepFilterId = useAppSelector((state) => state.clients.listStepFilterId);
   const authUser = useAppSelector((state) => state.auth.user);
 
   const [showModal, setShowModal] = useState(false);
@@ -103,6 +110,7 @@ export function useClient() {
   useEffect(() => {
     let cancelled = false;
     setLoadingList(true);
+    const stepsTask = dispatch(fetchVendorCustomerSteps());
     clientsService
       .getCustomersByCreator()
       .then((res) => {
@@ -119,12 +127,16 @@ export function useClient() {
       });
     return () => {
       cancelled = true;
+      stepsTask.abort();
     };
   }, [dispatch, authUser]);
 
-  const filtered = clientList.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const q = search.toLowerCase();
+  const filtered = clientList.filter((c) => {
+    if (!c.name.toLowerCase().includes(q)) return false;
+    if (listStepFilterId == null) return true;
+    return (c.customerStepId ?? null) === listStepFilterId;
+  });
 
   const updateField = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }));

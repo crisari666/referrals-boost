@@ -10,7 +10,7 @@ import {
 } from '@/data/mockData';
 import { formatDetailDate } from './client-detail-formatters';
 import { ClientDetailStepSelect } from './client-detail-step-select';
-import type { VendorCustomerStep } from '@/services/clientsService.types';
+import { useAppSelector } from '@/store';
 
 const statusOrder: ClientStatus[] = [
   'nuevo',
@@ -28,8 +28,6 @@ export type ClientDetailProfileCardProps = {
   isPhysical: boolean;
   showEditCustomer?: boolean;
   onEditCustomerClick?: () => void;
-  /** CRM steps from customers-ms; when non-empty, replaces legacy estado pills. */
-  catalogSteps?: VendorCustomerStep[];
   currentCustomerStepId?: string | null;
   currentStatus: ClientStatus;
   statusOpen: boolean;
@@ -46,7 +44,6 @@ export function ClientDetailProfileCard({
   isPhysical,
   showEditCustomer = false,
   onEditCustomerClick,
-  catalogSteps = [],
   currentCustomerStepId = null,
   currentStatus,
   statusOpen,
@@ -54,8 +51,9 @@ export function ClientDetailProfileCard({
   onLegacyStatusChange,
   onCatalogStepChange,
 }: ClientDetailProfileCardProps) {
+  const catalogStepCount = useAppSelector((s) => s.clients.vendorStepCatalog.length);
   const useCatalogPicker =
-    catalogSteps.length > 0 && typeof onCatalogStepChange === 'function';
+    catalogStepCount > 0 && typeof onCatalogStepChange === 'function';
 
   return (
     <motion.div
@@ -104,7 +102,6 @@ export function ClientDetailProfileCard({
       <div className="mt-4 relative">
         {useCatalogPicker ? (
           <ClientDetailStepSelect
-            steps={catalogSteps}
             currentStepId={currentCustomerStepId}
             open={statusOpen}
             onOpenChange={onStatusOpenChange}

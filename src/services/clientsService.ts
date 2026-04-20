@@ -190,6 +190,9 @@ function mapMsMineRowToCustomerByCreator(row: MsCustomerMineRow): CustomerByCrea
     userAssigned: null,
     createdAt: created,
     updatedAt: row.updatedAt ?? created,
+    ...(row.customerStepId != null && String(row.customerStepId).trim() !== ""
+      ? { customerStepId: String(row.customerStepId) }
+      : {}),
   };
 }
 

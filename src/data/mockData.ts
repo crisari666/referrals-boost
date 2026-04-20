@@ -115,6 +115,7 @@ export interface Client {
   createdAt: string;
   notes: string[];
   interactions: { date: string; type: string; detail: string }[];
+  customerStepId?: string | null;
 }
 
 export const clients: Client[] = [

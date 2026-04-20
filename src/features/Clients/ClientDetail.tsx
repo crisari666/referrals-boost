@@ -5,9 +5,8 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '@/store';
 import * as clientsService from '@/services/clientsService';
-import type { VendorCustomerStep } from '@/services/clientsService.types';
 import { mapVendorDocumentTypeToMs } from '@/services/clientsService';
-import { addCustomerNoteRequest } from '@/store/clientsSlice';
+import { addCustomerNoteRequest, fetchVendorCustomerSteps } from '@/store/clientsSlice';
 import {
   mapCreationCustomerToClient,
   shouldIncludeMockClientsForUser,
@@ -74,7 +73,6 @@ const ClientDetail = () => {
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<ClientStatus>('nuevo');
   const [statusOpen, setStatusOpen] = useState(false);
-  const [catalogSteps, setCatalogSteps] = useState<VendorCustomerStep[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditClientFormState>(emptyEditForm);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
@@ -121,23 +119,12 @@ const ClientDetail = () => {
   }, [id, mockClient]);
 
   useEffect(() => {
-    if (mockClient) {
-      setCatalogSteps([]);
-      return;
-    }
-    let cancelled = false;
-    void clientsService
-      .listCustomerSteps()
-      .then((steps) => {
-        if (!cancelled) setCatalogSteps(steps);
-      })
-      .catch(() => {
-        if (!cancelled) setCatalogSteps([]);
-      });
+    if (mockClient) return;
+    const p = dispatch(fetchVendorCustomerSteps());
     return () => {
-      cancelled = true;
+      p.abort();
     };
-  }, [mockClient]);
+  }, [dispatch, mockClient]);
 
   useLayoutEffect(() => {
     if (client) setCurrentStatus(client.status);
@@ -283,7 +270,6 @@ const ClientDetail = () => {
         isPhysical={isPhysical}
         showEditCustomer={!mockClient && Boolean(creationDetail?.customer)}
         onEditCustomerClick={mockClient ? undefined : openEditModal}
-        catalogSteps={catalogSteps}
         currentCustomerStepId={currentStepId}
         currentStatus={currentStatus}
         statusOpen={statusOpen}
@@ -296,7 +282,6 @@ const ClientDetail = () => {
         isMock={Boolean(mockClient)}
         mockNotes={client.notes}
         apiNotes={apiNotes}
-        canAddNote={!mockClient}
         onAddNote={handleAddNote}
       />
 

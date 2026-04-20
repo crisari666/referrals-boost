@@ -2,14 +2,14 @@
 alwaysApply: true
 ---
 
-You are an expert in React, TypeScript, Shadcn UI, TanStack Query, Zustand, TailwindCSS, and modern web development, focusing on scalable and maintainable applications.
+You are an expert in React, TypeScript, Shadcn UI, TanStack Query, React Redux, Redux Toolkit, Zustand, TailwindCSS, and modern web development, focusing on scalable and maintainable applications.
 
 ## React Profile Context
 You are a **senior React developer** with expertise in:
 - **Modern React patterns** (hooks, functional components, context API)
 - **TypeScript** for type-safe development
 - **Performance optimization** (memoization, lazy loading, code splitting)
-- **State management** (useState, useReducer, Context, Zustand)
+- **State management** (useState, useReducer, Context, React Redux, Zustand)
 - **Component architecture** (composition, custom hooks, higher-order components)
 - **UI Components** (shadcn/ui, Radix UI primitives)
 - **Data fetching** (TanStack Query, SWR)
@@ -41,8 +41,8 @@ This is a **modern React application** with the following characteristics:
 - **shadcn/ui** for component library (Radix UI primitives + TailwindCSS)
 - **Vite** for build tooling
 - **React Router** for navigation
-- **TanStack Query** (formerly React Query) for server state management
-- **Redux** for client state management
+- **TanStack Query** (formerly React Query) for optional cache layers where already used
+- **React Redux + Redux Toolkit** for server-fetched data and shared app state
 - **React Hook Form** for form handling
 
 ## Code Conventions
@@ -108,10 +108,17 @@ This is a **modern React application** with the following characteristics:
 
 ## State Management
 - **Local state** with useState and useReducer
-- **Global state** with Zustand (preferred) or Context API
-- **Server state** with TanStack Query
+- **Global UI state** with Zustand (preferred) or Context API when it is not backend-sourced
+- **Data from the backend** with **React Redux** (store, slices, typed hooks) — see below
 - **Form state** with React Hook Form
 - **URL state** with React Router
+
+## React Redux and backend data
+- **Always** use **React Redux** for data obtained from the backend (REST, GraphQL, or other HTTP APIs): fetch via Redux Toolkit (`createAsyncThunk`, listeners, or RTK Query if introduced) and keep the canonical copy in the store.
+- Components read backend data with **`useSelector`** (or the project’s typed `useAppSelector`) and trigger loads or mutations with **`useDispatch`** (or `useAppDispatch`); do not treat `useState` or Zustand as the source of truth for API responses.
+- **Local `useState`** is only for ephemeral UI (modals, toggles, field drafts before submit), not for replacing stored API results.
+- Add or extend **slices** under the existing store pattern (`src/store/`) and keep async logic colocated with the domain slice unless the repo already uses a shared API module.
+- **Avoid passing store-backed objects through the component tree** (parent → child props for every level) when the same data already lives in Redux. Prefer **`useAppSelector` in the leaf** (or a small wrapper) that needs the data so intermediate parents do not re-render when that slice updates and props stay stable. Use **narrow selectors** (one field, `createSelector` for derived lists) so components subscribe only to what they render.
 
 ## shadcn/ui Guidelines
 - Use **shadcn/ui** as the primary component library
@@ -123,7 +130,7 @@ This is a **modern React application** with the following characteristics:
 - **Extend components** by adding new variants and props
 
 ## Zustand State Management
-- Use **Zustand** for global state management
+- Use **Zustand** for global **client/UI** state only — not for canonical backend API responses (those belong in Redux; see **React Redux and backend data**)
 - Create **store slices** for different domains
 - Use **immer** for complex state updates
 - Implement **selectors** for computed values
@@ -132,7 +139,7 @@ This is a **modern React application** with the following characteristics:
 - **DevTools integration** for debugging
 
 ## TanStack Query Guidelines
-- Use **TanStack Query** for all server state
+- Prefer **Redux** for server-fetched data in this app; use **TanStack Query** only for features that already rely on it or for strictly local, non-canonical caching
 - **Query keys** should be arrays with hierarchical structure
 - Use **query invalidation** for cache updates
 - Implement **optimistic updates** with useMutation

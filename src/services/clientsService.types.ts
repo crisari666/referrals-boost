@@ -42,6 +42,7 @@ export type CustomerByCreator = {
   userAssigned: string | null;
   createdAt: string;
   updatedAt: string;
+  customerStepId?: string | null;
 };
 
 export type ApiResponse<T> = {
