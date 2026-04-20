@@ -2,8 +2,9 @@ import { useParams, Link } from 'react-router-dom';
 import { clients, projects, statusLabels, type ClientStatus, type Client } from '@/data/mockData';
 import { useState, useEffect, useMemo, useLayoutEffect } from 'react';
 import { toast } from 'sonner';
-import { useAppSelector } from '@/store';
+import { useAppDispatch, useAppSelector } from '@/store';
 import * as clientsService from '@/services/clientsService';
+import { addCustomerNoteRequest } from '@/store/clientsSlice';
 import {
   mapCreationCustomerToClient,
   shouldIncludeMockClientsForUser,
@@ -16,6 +17,7 @@ import { ClientDetailTimelineSection } from './client-detail-timeline-section';
 const ClientDetail = () => {
   const { id } = useParams();
   const authUser = useAppSelector((s) => s.auth.user);
+  const dispatch = useAppDispatch();
   const mocksAllowed = shouldIncludeMockClientsForUser(authUser);
   const mockClient = useMemo(
     () => (id && mocksAllowed ? clients.find((c) => c.id === id) ?? null : null),
@@ -103,6 +105,18 @@ const ClientDetail = () => {
   const apiNotes = creationDetail?.notes ?? [];
   const apiLogs = creationDetail?.customerLogSituations ?? [];
 
+  const handleAddNote = async (note: string) => {
+    if (!id || mockClient) return;
+    const created = await dispatch(addCustomerNoteRequest({ customerId: id, note })).unwrap();
+    setCreationDetail((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        notes: [created, ...prev.notes],
+      };
+    });
+  };
+
   const handleStatusChange = (newStatus: ClientStatus) => {
     setCurrentStatus(newStatus);
     setStatusOpen(false);
@@ -129,6 +143,8 @@ const ClientDetail = () => {
         isMock={Boolean(mockClient)}
         mockNotes={client.notes}
         apiNotes={apiNotes}
+        canAddNote={!mockClient}
+        onAddNote={handleAddNote}
       />
 
       <ClientDetailTimelineSection isMock={Boolean(mockClient)} client={client} apiLogs={apiLogs} />

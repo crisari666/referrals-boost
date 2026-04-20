@@ -23,6 +23,7 @@ import type {
   CustomerCreationDetailResponse,
   CustomersByCreatorResponse,
   InterestProyectItem,
+  MsCustomerDescriptionEntry,
   MsCustomerDocument,
   MsCustomerMineRow,
   VendorCustomer,
@@ -234,6 +235,17 @@ export async function getCustomerCreationDetail(
     result: payload,
     message: "success",
   };
+}
+
+export function addCustomerDescription(customerId: string, description: string) {
+  return http.post<MsCustomerDescriptionEntry>(
+    '',
+    { description },
+    {
+      url: customersMsUrl(`customer/${encodeURIComponent(customerId)}/descriptions`),
+      ...withCustomersMsAuth(),
+    }
+  );
 }
 
 /**

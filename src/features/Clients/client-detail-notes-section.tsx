@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { StickyNote } from 'lucide-react';
 import * as clientsService from '@/services/clientsService';
 import type { MsCustomerDescriptionEntry } from '@/services/clientsService.types';
+import { ClientAddNoteDialog } from './client-add-note-dialog';
 import { formatCreationDetailUser, formatDetailDate } from './client-detail-formatters';
 
 export type ClientDetailApiNote = clientsService.CreationDetailNote | MsCustomerDescriptionEntry;
@@ -44,16 +45,20 @@ export type ClientDetailNotesSectionProps = {
   isMock: boolean;
   mockNotes: string[];
   apiNotes: ClientDetailApiNote[];
+  canAddNote?: boolean;
+  onAddNote?: (note: string) => Promise<void>;
 };
 
 export function ClientDetailNotesSection({
   isMock,
   mockNotes,
   apiNotes,
+  canAddNote = false,
+  onAddNote,
 }: ClientDetailNotesSectionProps) {
   const hasMock = isMock && mockNotes.length > 0;
   const hasApi = !isMock && apiNotes.length > 0;
-  if (!hasMock && !hasApi) return null;
+  if (!hasMock && !hasApi && !canAddNote) return null;
 
   return (
     <motion.div
@@ -62,10 +67,20 @@ export function ClientDetailNotesSection({
       transition={{ delay: 0.08 }}
       className="bg-card rounded-2xl p-5 border border-border shadow-sm"
     >
-      <div className="flex items-center gap-2 mb-4">
-        <StickyNote className="w-4 h-4 text-warning" />
-        <h3 className="font-bold text-foreground">Notas</h3>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <StickyNote className="w-4 h-4 text-warning" />
+          <h3 className="font-bold text-foreground">Notas</h3>
+        </div>
+        {canAddNote && onAddNote && (
+          <ClientAddNoteDialog onSubmit={onAddNote} />
+        )}
       </div>
+      {!hasMock && !hasApi && canAddNote && (
+        <p className="text-sm text-muted-foreground">
+          Aun no hay notas para este cliente.
+        </p>
+      )}
       {hasMock && (
         <ul className="space-y-2">
           {mockNotes.map((note, i) => (

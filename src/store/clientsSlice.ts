@@ -1,5 +1,35 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { clients as initialClients, type Client, type ClientStatus } from "@/data/mockData";
+import * as clientsService from "@/services/clientsService";
+
+type AddCustomerNoteArgs = {
+  customerId: string;
+  note: string;
+};
+
+export const addCustomerNoteRequest = createAsyncThunk<
+  clientsService.CreationDetailNote,
+  AddCustomerNoteArgs,
+  { rejectValue: string }
+>("clients/addCustomerNoteRequest", async ({ customerId, note }, { rejectWithValue }) => {
+  try {
+    const created = await clientsService.addCustomerDescription(customerId, note);
+    return {
+      _id: String(created._id),
+      customerId: String(created.customerId ?? customerId),
+      note: created.description,
+      user: created.user,
+      createdAt: created.date,
+      updatedAt: created.date,
+    };
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "No se pudo agregar la nota.";
+    return rejectWithValue(message);
+  }
+});
 
 interface ClientsState {
   list: Client[];
