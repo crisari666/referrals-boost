@@ -73,6 +73,7 @@ export type CreationDetailCustomer = {
   userCreator?: string;
   address?: string;
   status: number;
+  customerStepId?: string;
 };
 
 export type CreationDetailNote = {
@@ -184,6 +185,7 @@ export type MsCustomerMineRow = MsCustomerDocument & {
   createdAt?: string;
   updatedAt?: string;
   createdBy?: string;
+  customerStepId?: string;
   description?: (string | MsCustomerDescriptionEntry)[];
   interestedProjects?: {
     _id?: string;
@@ -191,4 +193,27 @@ export type MsCustomerMineRow = MsCustomerDocument & {
     date?: string | Date;
     addedBy?: string;
   }[];
+};
+
+/** Row from `GET customer-steps` (catalog). */
+export type VendorCustomerStep = {
+  id: string;
+  name: string;
+  description?: string;
+  order: number;
+  color?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpdateMsCustomerPayload = {
+  name?: string;
+  lastName?: string;
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  document?: string;
+  documentType?: "cc" | "passport";
+  interestedProjects?: { projectId: string; date?: string }[];
 };

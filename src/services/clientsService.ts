@@ -26,7 +26,9 @@ import type {
   MsCustomerDescriptionEntry,
   MsCustomerDocument,
   MsCustomerMineRow,
+  UpdateMsCustomerPayload,
   VendorCustomer,
+  VendorCustomerStep,
 } from "./clientsService.types";
 
 type WithTokenHeaders<T extends http.HttpOptions | undefined> = T extends http.HttpOptions
@@ -87,10 +89,14 @@ function withCustomersMsAuth(options?: http.HttpOptions): http.HttpOptions {
   return { ...options, headers };
 }
 
-function toMsDocumentType(raw?: string): "cc" | "passport" | undefined {
+/** Maps vendor UI document labels to customers-ms `DocumentType`. */
+export function mapVendorDocumentTypeToMs(
+  raw?: string
+): "cc" | "passport" | undefined {
   if (!raw?.trim()) return undefined;
   const v = raw.trim().toLowerCase();
-  if (v === "cc" || v === "cedula" || v === "cédula") return "cc";
+  if (v === "ine" || v === "cc" || v === "cedula" || v === "cédula" || v === "curp" || v === "rfc")
+    return "cc";
   if (v === "passport" || v === "pasaporte") return "passport";
   return undefined;
 }
@@ -133,6 +139,10 @@ function mapMsRowToCreationDetailCustomer(
     createdAt: row.createdAt,
     userCreator: row.createdBy,
     status: 0,
+    ...(row.customerStepId !== undefined &&
+      row.customerStepId !== null && {
+        customerStepId: String(row.customerStepId),
+      }),
   };
 }
 
@@ -248,6 +258,47 @@ export function addCustomerDescription(customerId: string, description: string) 
   );
 }
 
+/** `GET customer-steps` — CRM pipeline step catalog. */
+export async function listCustomerSteps(): Promise<VendorCustomerStep[]> {
+  const rows = await http.get<VendorCustomerStep[]>("", {
+    url: customersMsUrl("customer-steps"),
+    ...withCustomersMsAuth(),
+  });
+  return Array.isArray(rows) ? rows : [];
+}
+
+/** `PATCH customer/:customerId` on customers MS. */
+export async function updateMsCustomer(
+  customerId: string,
+  body: UpdateMsCustomerPayload
+): Promise<MsCustomerMineRow> {
+  return http.patch<MsCustomerMineRow>(
+    "",
+    body,
+    {
+      url: customersMsUrl(`customer/${encodeURIComponent(customerId)}`),
+      ...withCustomersMsAuth(),
+    }
+  );
+}
+
+/** `PATCH customer/:customerId/step` — pipeline step only. */
+export async function patchMsCustomerStep(
+  customerId: string,
+  customerStepId: string
+): Promise<MsCustomerMineRow> {
+  return http.patch<MsCustomerMineRow>(
+    "",
+    { customerStepId },
+    {
+      url: customersMsUrl(
+        `customer/${encodeURIComponent(customerId)}/step`
+      ),
+      ...withCustomersMsAuth(),
+    }
+  );
+}
+
 /**
  * Vendor create via customers MS: POST `customer`, then parallel
  * `customer/:id/descriptions` (each note) and `customer/:id/projects` (each interest).
@@ -256,7 +307,7 @@ export function addCustomerDescription(customerId: string, description: string) 
 export async function createVendorCustomer(
   payload: CreateVendorCustomerPayload
 ): Promise<CreateVendorCustomerResponse> {
-  const docType = toMsDocumentType(payload.documentType);
+  const docType = mapVendorDocumentTypeToMs(payload.documentType);
   const createBody: Record<string, unknown> = {
     name: payload.name.trim(),
     lastName: "",

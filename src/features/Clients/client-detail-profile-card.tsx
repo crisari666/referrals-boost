@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Check } from 'lucide-react';
-import { toast } from 'sonner';
+import { ChevronDown, Check, Pencil } from 'lucide-react';
 import { ClientContactActions } from './client-contact-actions';
 import * as clientsService from '@/services/clientsService';
 import {
@@ -10,6 +9,8 @@ import {
   type Client,
 } from '@/data/mockData';
 import { formatDetailDate } from './client-detail-formatters';
+import { ClientDetailStepSelect } from './client-detail-step-select';
+import type { VendorCustomerStep } from '@/services/clientsService.types';
 
 const statusOrder: ClientStatus[] = [
   'nuevo',
@@ -25,10 +26,16 @@ export type ClientDetailProfileCardProps = {
   projectTitle: string | undefined;
   apiCustomer: clientsService.CreationDetailCustomer | null | undefined;
   isPhysical: boolean;
+  showEditCustomer?: boolean;
+  onEditCustomerClick?: () => void;
+  /** CRM steps from customers-ms; when non-empty, replaces legacy estado pills. */
+  catalogSteps?: VendorCustomerStep[];
+  currentCustomerStepId?: string | null;
   currentStatus: ClientStatus;
   statusOpen: boolean;
   onStatusOpenChange: (open: boolean) => void;
-  onStatusChange: (status: ClientStatus) => void;
+  onLegacyStatusChange: (status: ClientStatus) => void;
+  onCatalogStepChange?: (stepId: string) => void;
 };
 
 export function ClientDetailProfileCard({
@@ -37,50 +44,82 @@ export function ClientDetailProfileCard({
   projectTitle,
   apiCustomer,
   isPhysical,
+  showEditCustomer = false,
+  onEditCustomerClick,
+  catalogSteps = [],
+  currentCustomerStepId = null,
   currentStatus,
   statusOpen,
   onStatusOpenChange,
-  onStatusChange,
+  onLegacyStatusChange,
+  onCatalogStepChange,
 }: ClientDetailProfileCardProps) {
+  const useCatalogPicker =
+    catalogSteps.length > 0 && typeof onCatalogStepChange === 'function';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-card rounded-2xl p-5 border border-border shadow-sm"
     >
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full gradient-commission flex items-center justify-center text-primary-foreground font-bold text-lg">
-          {initials}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div className="w-14 h-14 rounded-full gradient-commission flex items-center justify-center text-primary-foreground font-bold text-lg shrink-0">
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-bold text-foreground text-lg">{client.name}</h2>
+            <p className="text-sm text-muted-foreground">{projectTitle ?? 'Sin proyecto'}</p>
+            {apiCustomer?.email && (
+              <p className="text-xs text-muted-foreground mt-1 truncate">{apiCustomer.email}</p>
+            )}
+            {apiCustomer?.address?.trim() && (
+              <p className="text-xs text-muted-foreground mt-1">{apiCustomer.address}</p>
+            )}
+            {(apiCustomer?.document?.trim() || apiCustomer?.documentType?.trim()) && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {[apiCustomer.documentType, apiCustomer.document].filter(Boolean).join(' · ')}
+              </p>
+            )}
+            {apiCustomer?.createdAt && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Alta: {formatDetailDate(apiCustomer.createdAt)}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-bold text-foreground text-lg">{client.name}</h2>
-          <p className="text-sm text-muted-foreground">{projectTitle ?? 'Sin proyecto'}</p>
-          {apiCustomer?.email && (
-            <p className="text-xs text-muted-foreground mt-1 truncate">{apiCustomer.email}</p>
-          )}
-          {apiCustomer?.address?.trim() && (
-            <p className="text-xs text-muted-foreground mt-1">{apiCustomer.address}</p>
-          )}
-          {(apiCustomer?.document?.trim() || apiCustomer?.documentType?.trim()) && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {[apiCustomer.documentType, apiCustomer.document].filter(Boolean).join(' · ')}
-            </p>
-          )}
-          {apiCustomer?.createdAt && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Alta: {formatDetailDate(apiCustomer.createdAt)}
-            </p>
-          )}
-        </div>
+        {showEditCustomer && onEditCustomerClick ? (
+          <button
+            type="button"
+            aria-label="Editar cliente"
+            onClick={onEditCustomerClick}
+            className="shrink-0 p-2 rounded-xl border border-border bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
+          >
+            <Pencil className="w-4 h-4 text-muted-foreground" />
+          </button>
+        ) : null}
       </div>
 
       <div className="mt-4 relative">
-        {isPhysical ? (
+        {useCatalogPicker ? (
+          <ClientDetailStepSelect
+            steps={catalogSteps}
+            currentStepId={currentCustomerStepId}
+            open={statusOpen}
+            onOpenChange={onStatusOpenChange}
+            onSelectStep={(stepId) => {
+              onCatalogStepChange!(stepId);
+              onStatusOpenChange(false);
+            }}
+            disabled={!isPhysical}
+          />
+        ) : isPhysical ? (
           <>
             <button
               type="button"
               onClick={() => onStatusOpenChange(!statusOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-secondary/30 transition-colors hover:bg-secondary/50"
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-secondary/30 transition-colors hover:bg-secondary/50 cursor-pointer"
             >
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground font-medium">Estado:</span>
@@ -108,8 +147,8 @@ export function ClientDetailProfileCard({
                     <button
                       key={s}
                       type="button"
-                      onClick={() => onStatusChange(s)}
-                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/40 transition-colors"
+                      onClick={() => onLegacyStatusChange(s)}
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/40 transition-colors cursor-pointer"
                     >
                       <span
                         className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusColors[s]}`}
