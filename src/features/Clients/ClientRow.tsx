@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useMemo, type CSSProperties } from "react";
 import { ChevronRight } from "lucide-react";
 import type { Client } from "@/data/mockData";
-import { statusLabels, statusColors, projects } from "@/data/mockData";
+import { statusLabels, statusColors } from "@/data/mockData";
 import { motion } from "framer-motion";
 import { useAppSelector } from "@/store";
 
@@ -14,16 +14,17 @@ function stepBadgeStyle(color: string | undefined): CSSProperties | undefined {
 interface ClientRowProps {
   client: Client;
   index?: number;
+  projectTitles: Record<string, string>;
 }
 
-const ClientRow = ({ client, index = 0 }: ClientRowProps) => {
+const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
   const catalog = useAppSelector((s) => s.clients.vendorStepCatalog);
   const currentStep = useMemo(() => {
     if (!client.customerStepId) return null;
     return catalog.find((s) => s.id === client.customerStepId) ?? null;
   }, [catalog, client.customerStepId]);
 
-  const project = projects.find((p) => p.id === client.projectInterest);
+  const projectTitle = projectTitles[client.projectInterest];
   const initials = client.name
     .split(" ")
     .map((n) => n[0])
@@ -45,7 +46,7 @@ const ClientRow = ({ client, index = 0 }: ClientRowProps) => {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-foreground text-sm truncate">{client.name}</p>
-          <p className="text-xs text-muted-foreground truncate">{project?.title || "Sin proyecto"}</p>
+          <p className="text-xs text-muted-foreground truncate">{projectTitle || "Sin proyecto"}</p>
         </div>
         {catalog.length > 0 ? (
           <span
