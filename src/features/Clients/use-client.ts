@@ -12,6 +12,15 @@ import type { AddClientFormState } from './AddClientModal';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import axios from 'axios';
+
+function parseNestJsMessage(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const m = (data as { message?: unknown }).message;
+  if (typeof m === 'string') return m;
+  if (Array.isArray(m)) return m.filter(Boolean).map(String).join(', ');
+  return null;
+}
 
 const MOCK_CLIENTS_DEMO_LOGIN = 'kdev999';
 
@@ -219,12 +228,26 @@ export function useClient() {
       setErrors({});
       toast.success(`Cliente "${newClient.name}" agregado exitosamente`);
     } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        const apiMsg = parseNestJsMessage(err.response.data)?.trim();
+        const dup =
+          apiMsg && apiMsg.length > 0
+            ? apiMsg
+            : 'Este número de teléfono ya está registrado.';
+        setErrors({ phone: dup });
+        return;
+      }
       const message =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: string }).message)
           : 'No se pudo crear el cliente. Intenta de nuevo.';
       toast.error(message);
     }
+  };
+
+  const closeAddModal = () => {
+    setShowModal(false);
+    setErrors({});
   };
 
   return {
@@ -235,6 +258,7 @@ export function useClient() {
     loadingList,
     showModal,
     setShowModal,
+    closeAddModal,
     form,
     errors,
     updateField,

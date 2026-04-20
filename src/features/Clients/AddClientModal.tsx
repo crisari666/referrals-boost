@@ -8,6 +8,11 @@ import { useEffect } from "react";
 
 const DOCUMENT_TYPES: DocumentType[] = ["INE", "Pasaporte", "CURP", "RFC", "Otro"];
 
+/** Backend duplicate-phone / conflict (409), not Zod client validation. */
+function isServerDuplicatePhoneMessage(message: string): boolean {
+  return /ya existe|registrado|duplicate key/i.test(message);
+}
+
 export interface AddClientFormState {
   name: string;
   email: string;
@@ -42,6 +47,8 @@ const AddClientModal = ({
     void dispatch(fetchProjects());
   }, [dispatch]);
   const projectList = useAppSelector((state) => state.projects.list);
+  const duplicatePhoneBanner =
+    errors.phone && isServerDuplicatePhoneMessage(errors.phone) ? errors.phone : null;
 
   return (
     <AnimatePresence>
@@ -67,6 +74,15 @@ const AddClientModal = ({
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
+
+            {duplicatePhoneBanner ? (
+              <p
+                role="alert"
+                className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2"
+              >
+                {duplicatePhoneBanner}
+              </p>
+            ) : null}
 
             <Field label="Nombre *" error={errors.name}>
               <input value={form.name} onChange={(e) => updateField("name", e.target.value)} placeholder="Nombre completo" className="form-input" />

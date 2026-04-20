@@ -13,6 +13,7 @@ const Clients = () => {
     loadingList,
     showModal,
     setShowModal,
+    closeAddModal,
     form,
     errors,
     updateField,
@@ -54,7 +55,7 @@ const Clients = () => {
 
       <AddClientModal
         open={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={closeAddModal}
         form={form}
         errors={errors}
         updateField={updateField}

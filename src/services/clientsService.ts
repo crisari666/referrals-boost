@@ -101,6 +101,10 @@ export function mapVendorDocumentTypeToMs(
   return undefined;
 }
 
+function normalizeCustomersMsPhone(value: string): string {
+  return value.trim().replace(/\s+/g, "");
+}
+
 function msInterestDateToYmd(value: string | Date | undefined): string {
   if (value == null) return new Date().toISOString().slice(0, 10);
   if (typeof value === "string") {
@@ -314,11 +318,12 @@ export async function createVendorCustomer(
   payload: CreateVendorCustomerPayload
 ): Promise<CreateVendorCustomerResponse> {
   const docType = mapVendorDocumentTypeToMs(payload.documentType);
+  const canonicalPhone = normalizeCustomersMsPhone(payload.phone);
   const createBody: Record<string, unknown> = {
     name: payload.name.trim(),
     lastName: "",
-    phone: payload.phone.trim(),
-    whatsapp: payload.whatsapp.trim(),
+    phone: canonicalPhone,
+    whatsapp: canonicalPhone,
     email: payload.email.trim(),
   };
   if (payload.document?.trim()) {
