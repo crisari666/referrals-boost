@@ -25,6 +25,8 @@ const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
   }, [catalog, client.customerStepId]);
 
   const projectTitle = projectTitles[client.projectInterest];
+  const displayPhone =
+    (client.phone?.trim() || client.whatsapp?.trim() || "").trim() || null;
   const initials = client.name
     .split(" ")
     .map((n) => n[0])
@@ -48,6 +50,14 @@ const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
           <p className="font-semibold text-foreground text-sm truncate">{client.name}</p>
           <p className="text-xs text-muted-foreground truncate">{projectTitle || "Sin proyecto"}</p>
         </div>
+        {displayPhone ? (
+          <span
+            className="text-xs text-muted-foreground tabular-nums truncate max-w-[5.5rem] sm:max-w-[7.5rem] text-right shrink-0"
+            title={displayPhone}
+          >
+            {displayPhone}
+          </span>
+        ) : null}
         {catalog.length > 0 ? (
           <span
             className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 truncate max-w-[7rem] sm:max-w-[9rem] ${

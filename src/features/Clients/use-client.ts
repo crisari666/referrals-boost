@@ -146,9 +146,23 @@ export function useClient() {
     };
   }, [dispatch, authUser]);
 
-  const q = search.toLowerCase();
+  const trimmedSearch = search.trim();
+  const qLower = trimmedSearch.toLowerCase();
+  const digitQuery = trimmedSearch.replace(/\D/g, '');
   const filtered = clientList.filter((c) => {
-    if (!c.name.toLowerCase().includes(q)) return false;
+    if (trimmedSearch !== '') {
+      const nameHit = c.name.toLowerCase().includes(qLower);
+      const phoneStr = (c.phone ?? '').trim();
+      const waStr = (c.whatsapp ?? '').trim();
+      const textHit =
+        phoneStr.toLowerCase().includes(qLower) || waStr.toLowerCase().includes(qLower);
+      const digitsPhone = phoneStr.replace(/\D/g, '');
+      const digitsWa = waStr.replace(/\D/g, '');
+      const digitHit =
+        digitQuery.length > 0 &&
+        (digitsPhone.includes(digitQuery) || digitsWa.includes(digitQuery));
+      if (!nameHit && !textHit && !digitHit) return false;
+    }
     if (listStepFilterId == null) return true;
     return (c.customerStepId ?? null) === listStepFilterId;
   });
