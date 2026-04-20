@@ -32,13 +32,18 @@ const apiStatusToClient: Record<number, ClientStatus> = {
 
 export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Client {
   const name = [c.name, c.lastName].filter(Boolean).join(' ').trim() || c.name;
+  const interests = c.interestedProjects ?? [];
+  const lastProjectId =
+    interests.length > 0
+      ? String(interests[interests.length - 1]?.projectId ?? '').trim()
+      : '';
   return {
     id: c._id,
     name,
     email: c.email || undefined,
     phone: c.phone || undefined,
     whatsapp: c.whatsapp ?? '',
-    projectInterest: '',
+    projectInterest: lastProjectId,
     status: apiStatusToClient[c.status] ?? 'nuevo',
     createdAt: c.createdAt?.split('T')[0] ?? '',
     notes: [],
@@ -54,15 +59,16 @@ export function mapCreationCustomerToClient(
   c: clientsService.CreationDetailCustomer
 ): Client {
   const name = [c.name, c.lastName].filter(Boolean).join(' ').trim() || c.name;
-  const firstProyect =
-    c.interestProyect?.find((x) => x.proyect?.trim())?.proyect?.trim() ?? '';
+  const items = c.interestProyect ?? [];
+  const lastProyect =
+    items.length > 0 ? String(items[items.length - 1]?.proyect ?? '').trim() : '';
   return {
     id: customerId,
     name,
     email: c.email || undefined,
     phone: c.phone || undefined,
     whatsapp: c.whatsapp ?? '',
-    projectInterest: firstProyect,
+    projectInterest: lastProyect,
     status: apiStatusToClient[c.status] ?? 'nuevo',
     createdAt: c.createdAt?.split('T')[0] ?? '',
     notes: [],

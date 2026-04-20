@@ -43,6 +43,12 @@ export type CustomerByCreator = {
   createdAt: string;
   updatedAt: string;
   customerStepId?: string | null;
+  interestedProjects?: {
+    _id?: string;
+    projectId: string;
+    date?: string | Date;
+    addedBy?: string;
+  }[];
 };
 
 export type ApiResponse<T> = {

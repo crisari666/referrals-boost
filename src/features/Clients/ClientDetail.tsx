@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { clients, projects, statusLabels, type ClientStatus, type Client } from '@/data/mockData';
+import { clients, projects as mockProjectsCatalog, statusLabels, type ClientStatus, type Client } from '@/data/mockData';
 import { useState, useEffect, useMemo, useLayoutEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import * as clientsService from '@/services/clientsService';
 import { mapVendorDocumentTypeToMs } from '@/services/clientsService';
 import { addCustomerNoteRequest, fetchVendorCustomerSteps } from '@/store/clientsSlice';
+import { fetchProjects } from '@/store/projectsSlice';
 import {
   mapCreationCustomerToClient,
   shouldIncludeMockClientsForUser,
@@ -41,8 +42,11 @@ function buildEditFormFromCustomer(
   c: clientsService.CreationDetailCustomer
 ): EditClientFormState {
   const fullName = [c.name, c.lastName].filter(Boolean).join(' ').trim() || c.name;
-  const firstProject =
-    c.interestProyect?.find((x) => x.proyect?.trim())?.proyect?.trim() ?? '';
+  const interestItems = c.interestProyect ?? [];
+  const lastProject =
+    interestItems.length > 0
+      ? interestItems[interestItems.length - 1]?.proyect?.trim() ?? ''
+      : '';
   let documentTypeUi = '';
   const dt = c.documentType?.toLowerCase();
   if (dt === 'cc') documentTypeUi = 'INE';
@@ -54,13 +58,14 @@ function buildEditFormFromCustomer(
     phone: c.phone ?? '',
     documentType: documentTypeUi,
     document: c.document ?? '',
-    projectInterest: firstProject,
+    projectInterest: lastProject,
   };
 }
 
 const ClientDetail = () => {
   const { id } = useParams();
   const authUser = useAppSelector((s) => s.auth.user);
+  const projectsList = useAppSelector((s) => s.projects.list);
   const dispatch = useAppDispatch();
   const mocksAllowed = shouldIncludeMockClientsForUser(authUser);
   const mockClient = useMemo(
@@ -126,9 +131,22 @@ const ClientDetail = () => {
     };
   }, [dispatch, mockClient]);
 
+  useEffect(() => {
+    if (mockClient) return;
+    void dispatch(fetchProjects());
+  }, [dispatch, mockClient]);
+
   useLayoutEffect(() => {
     if (client) setCurrentStatus(client.status);
   }, [client]);
+
+  const projectTitle = useMemo(() => {
+    const pid = client?.projectInterest?.trim();
+    if (!pid) return undefined;
+    const fromStore = projectsList.find((p) => p.id === pid)?.title;
+    if (fromStore) return fromStore;
+    return mockProjectsCatalog.find((p) => p.id === pid)?.title ?? pid;
+  }, [client?.projectInterest, projectsList]);
 
   if (!id || (!loading && !client)) {
     return (
@@ -149,9 +167,6 @@ const ClientDetail = () => {
     );
   }
 
-  const projectTitle =
-    projects.find((p) => p.id === client.projectInterest)?.title ??
-    (client.projectInterest?.trim() ? client.projectInterest : undefined);
   const initials = client.name
     .split(' ')
     .map((n) => n[0])

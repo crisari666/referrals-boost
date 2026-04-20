@@ -193,6 +193,9 @@ function mapMsMineRowToCustomerByCreator(row: MsCustomerMineRow): CustomerByCrea
     ...(row.customerStepId != null && String(row.customerStepId).trim() !== ""
       ? { customerStepId: String(row.customerStepId) }
       : {}),
+    ...(row.interestedProjects && row.interestedProjects.length > 0
+      ? { interestedProjects: row.interestedProjects }
+      : {}),
   };
 }
 
