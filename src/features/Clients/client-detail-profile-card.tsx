@@ -80,7 +80,7 @@ export function ClientDetailProfileCard({
             <h2 className="font-bold text-foreground text-lg">{client.name}</h2>
             <p className="text-sm text-muted-foreground">{projectTitle ?? 'Sin proyecto'}</p>
             {apiCustomer?.email && (
-              <p className="text-xs text-muted-foreground mt-1 truncate">{apiCustomer.email}</p>
+              <p className="text-xs text-muted-foreground mt-1 truncate">{apiCustomer.phone}</p>
             )}
             {apiCustomer?.address?.trim() && (
               <p className="text-xs text-muted-foreground mt-1">{apiCustomer.address}</p>
