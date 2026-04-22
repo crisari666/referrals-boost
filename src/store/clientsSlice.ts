@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { toast } from "sonner";
 import { z } from "zod";
 import { clients as initialClients, type Client, type ClientStatus } from "@/data/mockData";
@@ -11,11 +11,16 @@ import type {
   VendorCustomerStep,
 } from "@/services/clientsService.types";
 import type { EditClientFormState } from "@/features/Clients/EditClientModal";
+import type { RootState } from "@/store";
 
 type AddCustomerNoteArgs = {
   customerId: string;
   note: string;
 };
+
+export type ClientsDateFilterKind = "all" | "today" | "yesterday" | "custom";
+
+const WITHOUT_STEP_FILTER_ID = "__without_step__";
 
 const emptyVendorEditForm: EditClientFormState = {
   name: "",
@@ -197,6 +202,8 @@ export interface ClientsState {
   vendorStepCatalog: VendorCustomerStep[];
   vendorStepCatalogStatus: "idle" | "loading" | "succeeded" | "failed";
   listStepFilterId: string | null;
+  listDateFilterKind: ClientsDateFilterKind;
+  listCustomDateFilter: string;
   vendorCreationDetail: CustomerCreationDetailPayload | null;
   vendorCreationDetailCustomerId: string | null;
   vendorCreationDetailStatus: "idle" | "loading" | "succeeded" | "failed";
@@ -214,6 +221,8 @@ const initialState: ClientsState = {
   vendorStepCatalog: [],
   vendorStepCatalogStatus: "idle",
   listStepFilterId: null,
+  listDateFilterKind: "all",
+  listCustomDateFilter: "",
   vendorCreationDetail: null,
   vendorCreationDetailCustomerId: null,
   vendorCreationDetailStatus: "idle",
@@ -259,6 +268,15 @@ const clientsSlice = createSlice({
     },
     setListStepFilterId(state, action: PayloadAction<string | null>) {
       state.listStepFilterId = action.payload;
+    },
+    setListDateFilterKind(state, action: PayloadAction<ClientsDateFilterKind>) {
+      state.listDateFilterKind = action.payload;
+      if (action.payload !== "custom") {
+        state.listCustomDateFilter = "";
+      }
+    },
+    setListCustomDateFilter(state, action: PayloadAction<string>) {
+      state.listCustomDateFilter = action.payload.trim();
     },
     clearVendorCreationDetail(state) {
       state.vendorCreationDetail = null;
@@ -351,10 +369,93 @@ export const {
   setSearch,
   setClientList,
   setListStepFilterId,
+  setListDateFilterKind,
+  setListCustomDateFilter,
   clearVendorCreationDetail,
   openVendorCustomerEditModal,
   closeVendorCustomerEditModal,
   setVendorCustomerEditField,
   setVendorCustomerEditErrors,
 } = clientsSlice.actions;
+
+function toYmd(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+function resolveSelectedDate(kind: ClientsDateFilterKind, customDate: string): string | null {
+  if (kind === "all") return null;
+  if (kind === "today") return toYmd(new Date());
+  if (kind === "yesterday") {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return toYmd(yesterday);
+  }
+  const normalized = customDate.trim().slice(0, 10);
+  return normalized.length > 0 ? normalized : null;
+}
+
+function matchesSearchFilter(client: Client, search: string): boolean {
+  const trimmedSearch = search.trim();
+  if (trimmedSearch === "") return true;
+  const qLower = trimmedSearch.toLowerCase();
+  const digitQuery = trimmedSearch.replace(/\D/g, "");
+  const nameHit = client.name.toLowerCase().includes(qLower);
+  const phoneStr = (client.phone ?? "").trim();
+  const waStr = (client.whatsapp ?? "").trim();
+  const textHit = phoneStr.toLowerCase().includes(qLower) || waStr.toLowerCase().includes(qLower);
+  const digitsPhone = phoneStr.replace(/\D/g, "");
+  const digitsWa = waStr.replace(/\D/g, "");
+  const digitHit =
+    digitQuery.length > 0 && (digitsPhone.includes(digitQuery) || digitsWa.includes(digitQuery));
+  return nameHit || textHit || digitHit;
+}
+
+function matchesDateFilter(client: Client, selectedDate: string | null): boolean {
+  if (selectedDate == null) return true;
+  const baseDate = (client.assignedDate?.trim() || client.createdAt?.trim() || "").slice(0, 10);
+  return baseDate === selectedDate;
+}
+
+function matchesStepFilter(client: Client, stepFilterId: string | null): boolean {
+  if (stepFilterId == null) return true;
+  if (stepFilterId === WITHOUT_STEP_FILTER_ID) {
+    return (client.customerStepId ?? "").trim() === "";
+  }
+  return (client.customerStepId ?? null) === stepFilterId;
+}
+
+export function matchesClientListFilters(
+  client: Client,
+  filters: {
+    search: string;
+    listStepFilterId: string | null;
+    listDateFilterKind: ClientsDateFilterKind;
+    listCustomDateFilter: string;
+  }
+): boolean {
+  const selectedDate = resolveSelectedDate(filters.listDateFilterKind, filters.listCustomDateFilter);
+  if (!matchesSearchFilter(client, filters.search)) return false;
+  if (!matchesDateFilter(client, selectedDate)) return false;
+  return matchesStepFilter(client, filters.listStepFilterId);
+}
+
+export const selectFilteredClients = createSelector(
+  [
+    (state: RootState) => state.clients.list,
+    (state: RootState) => state.clients.search,
+    (state: RootState) => state.clients.listStepFilterId,
+    (state: RootState) => state.clients.listDateFilterKind,
+    (state: RootState) => state.clients.listCustomDateFilter,
+  ],
+  (list, search, listStepFilterId, listDateFilterKind, listCustomDateFilter) =>
+    list.filter((client) =>
+      matchesClientListFilters(client, {
+        search,
+        listStepFilterId,
+        listDateFilterKind,
+        listCustomDateFilter,
+      })
+    )
+);
+
 export default clientsSlice.reducer;

@@ -1,5 +1,5 @@
 import { useAppSelector, useAppDispatch } from '@/store';
-import { addClient, setSearch, setClientList, fetchVendorCustomerSteps } from '@/store/clientsSlice';
+import { addClient, setClientList, fetchVendorCustomerSteps } from '@/store/clientsSlice';
 import {
   clients as mockClients,
   type Client,
@@ -55,6 +55,7 @@ export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Cli
     projectInterest: lastProjectId,
     status: apiStatusToClient[c.status] ?? 'nuevo',
     createdAt: c.createdAt?.split('T')[0] ?? '',
+    assignedDate: c.assignedDate?.split('T')[0] ?? undefined,
     notes: [],
     interactions: [],
     ...(c.customerStepId != null && String(c.customerStepId).trim() !== ''
@@ -113,8 +114,6 @@ const emptyForm: AddClientFormState = {
 export function useClient() {
   const dispatch = useAppDispatch();
   const clientList = useAppSelector((state) => state.clients.list);
-  const search = useAppSelector((state) => state.clients.search);
-  const listStepFilterId = useAppSelector((state) => state.clients.listStepFilterId);
   const authUser = useAppSelector((state) => state.auth.user);
 
   const [showModal, setShowModal] = useState(false);
@@ -145,27 +144,6 @@ export function useClient() {
       stepsTask.abort();
     };
   }, [dispatch, authUser]);
-
-  const trimmedSearch = search.trim();
-  const qLower = trimmedSearch.toLowerCase();
-  const digitQuery = trimmedSearch.replace(/\D/g, '');
-  const filtered = clientList.filter((c) => {
-    if (trimmedSearch !== '') {
-      const nameHit = c.name.toLowerCase().includes(qLower);
-      const phoneStr = (c.phone ?? '').trim();
-      const waStr = (c.whatsapp ?? '').trim();
-      const textHit =
-        phoneStr.toLowerCase().includes(qLower) || waStr.toLowerCase().includes(qLower);
-      const digitsPhone = phoneStr.replace(/\D/g, '');
-      const digitsWa = waStr.replace(/\D/g, '');
-      const digitHit =
-        digitQuery.length > 0 &&
-        (digitsPhone.includes(digitQuery) || digitsWa.includes(digitQuery));
-      if (!nameHit && !textHit && !digitHit) return false;
-    }
-    if (listStepFilterId == null) return true;
-    return (c.customerStepId ?? null) === listStepFilterId;
-  });
 
   const updateField = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -266,9 +244,6 @@ export function useClient() {
 
   return {
     clientList,
-    search,
-    setSearch: (value: string) => dispatch(setSearch(value)),
-    filtered,
     loadingList,
     showModal,
     setShowModal,

@@ -3,13 +3,13 @@ import { Plus, Search } from 'lucide-react';
 import { useClient } from './use-client';
 import { ClientsListPanel } from './clients-list-panel';
 import { ClientsStepFilter } from './clients-step-filter';
+import { ClientsDateFilter } from './clients-date-filter';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { setSearch } from '@/store/clientsSlice';
 
 const Clients = () => {
   const {
     clientList,
-    search,
-    setSearch,
-    filtered,
     loadingList,
     showModal,
     setShowModal,
@@ -19,6 +19,9 @@ const Clients = () => {
     updateField,
     submitNewClient,
   } = useClient();
+
+  const dispatch = useAppDispatch();
+  const search = useAppSelector((state) => state.clients.search);
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-4">
@@ -42,7 +45,7 @@ const Clients = () => {
             type="text"
             placeholder="Buscar por nombre, teléfono o WhatsApp..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => dispatch(setSearch(e.target.value))}
             className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
@@ -50,7 +53,8 @@ const Clients = () => {
       </div>
 
       <div className="space-y-2">
-        <ClientsListPanel loadingList={loadingList} clients={filtered} />
+        <ClientsDateFilter />
+        <ClientsListPanel loadingList={loadingList} />
       </div>
 
       <AddClientModal

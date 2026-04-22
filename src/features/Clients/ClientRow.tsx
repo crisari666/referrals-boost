@@ -27,6 +27,8 @@ const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
   const projectTitle = projectTitles[client.projectInterest];
   const displayPhone =
     (client.phone?.trim() || client.whatsapp?.trim() || "").trim() || null;
+  const displayDate = (client.assignedDate?.trim() || client.createdAt?.trim() || "").slice(0, 10);
+  const dateLabel = client.assignedDate?.trim() ? "Asignado" : "Creado";
   const initials = client.name
     .split(" ")
     .map((n) => n[0])
@@ -56,6 +58,14 @@ const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
             title={displayPhone}
           >
             {displayPhone}
+          </span>
+        ) : null}
+        {displayDate ? (
+          <span
+            className="text-xs text-muted-foreground tabular-nums truncate max-w-[7rem] sm:max-w-[8.5rem] text-right shrink-0"
+            title={`${dateLabel}: ${displayDate}`}
+          >
+            {displayDate}
           </span>
         ) : null}
         {catalog.length > 0 ? (

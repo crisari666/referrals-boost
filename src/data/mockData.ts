@@ -113,6 +113,7 @@ export interface Client {
   projectInterest: string;
   status: ClientStatus;
   createdAt: string;
+  assignedDate?: string;
   notes: string[];
   interactions: { date: string; type: string; detail: string }[];
   customerStepId?: string | null;

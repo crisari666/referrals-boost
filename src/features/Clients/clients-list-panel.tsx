@@ -1,17 +1,17 @@
 import { useEffect, useMemo } from 'react';
 import ClientRow from './ClientRow';
-import type { Client } from '@/data/mockData';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchProjects } from '@/store/projectsSlice';
+import { selectFilteredClients } from '@/store/clientsSlice';
 
 export type ClientsListPanelProps = {
   loadingList: boolean;
-  clients: Client[];
 };
 
-export function ClientsListPanel({ loadingList, clients }: ClientsListPanelProps) {
+export function ClientsListPanel({ loadingList }: ClientsListPanelProps) {
   const dispatch = useAppDispatch();
   const projectsList = useAppSelector((s) => s.projects.list);
+  const clients = useAppSelector(selectFilteredClients);
 
   useEffect(() => {
     void dispatch(fetchProjects());

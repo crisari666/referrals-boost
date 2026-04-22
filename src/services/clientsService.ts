@@ -192,6 +192,7 @@ function mapMsMineRowToCustomerByCreator(row: MsCustomerMineRow): CustomerByCrea
     status: 0,
     userCreator: row.createdBy ?? "",
     userAssigned: null,
+    assignedDate: row.assignedDate,
     createdAt: created,
     updatedAt: row.updatedAt ?? created,
     ...(row.customerStepId != null && String(row.customerStepId).trim() !== ""

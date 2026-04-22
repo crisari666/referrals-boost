@@ -31,6 +31,7 @@ export function ClientsStepFilter() {
         className="w-full appearance-none bg-card border border-border rounded-xl pl-10 pr-10 py-3 text-sm text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
       >
         <option value="">Todas las etapas</option>
+        <option value="__without_step__">Nuevos</option>
         {options.map((s) => (
           <option key={s.id} value={s.id}>
             {s.name}

@@ -40,6 +40,7 @@ export type CustomerByCreator = {
   status: number;
   userCreator: string;
   userAssigned: string | null;
+  assignedDate?: string;
   createdAt: string;
   updatedAt: string;
   customerStepId?: string | null;
@@ -192,6 +193,7 @@ export type MsCustomerMineRow = MsCustomerDocument & {
   createdAt?: string;
   updatedAt?: string;
   createdBy?: string;
+  assignedDate?: string;
   customerStepId?: string;
   description?: (string | MsCustomerDescriptionEntry)[];
   interestedProjects?: {
