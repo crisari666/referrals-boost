@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import whatsappReducer from "./whatsappSlice";
 import authReducer from "./authSlice";
-import scheduleReducer from "./scheduleSlice";
+import scheduleReducer from "@/features/schedule/store/scheduleSlice";
 import clientsReducer from "./clientsSlice";
 import projectsReducer from "./projectsSlice";
 import profileReducer from "./profileSlice";

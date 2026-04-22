@@ -65,7 +65,7 @@ function withAuth(options?: http.HttpOptions): WithTokenHeaders<typeof options> 
   };
 }
 
-function getCustomersMsOrigin(): string {
+export function getCustomersMsOrigin(): string {
   const raw = import.meta.env.VITE_URL_CUSTOMERS_MS?.trim();
   if (!raw) {
     throw new Error("VITE_URL_CUSTOMERS_MS is not configured");
@@ -73,14 +73,14 @@ function getCustomersMsOrigin(): string {
   return raw.replace(/\/$/, "");
 }
 
-function customersMsUrl(pathAfterOrigin: string): string {
+export function customersMsUrl(pathAfterOrigin: string): string {
   const origin = getCustomersMsOrigin();
   const p = pathAfterOrigin.replace(/^\//, "");
   return `${origin}/${p}`;
 }
 
 /** Customers MS expects JWT in `TOKEN` header (see crm-omega-customers-ms). */
-function withCustomersMsAuth(options?: http.HttpOptions): http.HttpOptions {
+export function withCustomersMsAuth(options?: http.HttpOptions): http.HttpOptions {
   const token = getStoredAuthToken();
   const headers: Record<string, string> = { ...(options?.headers ?? {}) };
   if (token) {

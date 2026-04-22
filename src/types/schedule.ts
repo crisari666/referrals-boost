@@ -1,43 +1,20 @@
-export type VisitType = "oficina" | "terreno" | "virtual";
-export type VisitStatus = "programada" | "completada" | "cancelada" | "no_asistio";
+import type {
+  VentorScheduleEventTypeApi,
+  VentorScheduleStatusApi,
+} from "@/services/scheduleService";
 
-export interface ScheduledVisit {
+/** Row used by schedule list cards (mapped from API + project catalog). */
+export interface ScheduleVisitRow {
   id: string;
-  clientId: string;
+  customerId: string;
   clientName: string;
-  projectId: string;
   projectName: string;
-  date: string; // ISO date
-  time: string; // HH:mm
-  type: VisitType;
-  status: VisitStatus;
-  notes?: string;
-  createdBy: string;
-  createdAt: string;
+  dateYmd: string;
+  timeHm: string;
+  eventType: VentorScheduleEventTypeApi;
+  status: VentorScheduleStatusApi;
+  note?: string;
 }
 
-export const visitTypeLabels: Record<VisitType, string> = {
-  oficina: "Oficina",
-  terreno: "Terreno",
-  virtual: "Virtual",
-};
-
-export const visitStatusLabels: Record<VisitStatus, string> = {
-  programada: "Programada",
-  completada: "Completada",
-  cancelada: "Cancelada",
-  no_asistio: "No asistió",
-};
-
-export const visitTypeIcons: Record<VisitType, string> = {
-  oficina: "🏢",
-  terreno: "🏗️",
-  virtual: "💻",
-};
-
-export const visitStatusColors: Record<VisitStatus, string> = {
-  programada: "bg-info text-info-foreground",
-  completada: "bg-success text-success-foreground",
-  cancelada: "bg-destructive text-destructive-foreground",
-  no_asistio: "bg-warning text-warning-foreground",
-};
+export type { VentorScheduleEventTypeApi as ScheduleEventType } from "@/services/scheduleService";
+export type { VentorScheduleStatusApi as ScheduleEventStatus } from "@/services/scheduleService";

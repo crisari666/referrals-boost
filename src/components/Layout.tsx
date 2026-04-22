@@ -1,10 +1,14 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare, CalendarDays, LogOut } from "lucide-react";
 import { CrmSocketListener } from "@/components/crm-socket-listener";
+import { Badge } from "@/components/ui/badge";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logout } from "@/store/authSlice";
 import type { UserRole } from "@/store/authSlice";
+import { fetchVentorScheduleByDay } from "@/features/schedule/store/scheduleSlice";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
+import { useEffect, useMemo } from "react";
 
 interface NavItem {
   path: string;
@@ -35,7 +39,18 @@ const Layout = ({ children }: LayoutProps) => {
   const user = useAppSelector((s) => s.auth.user);
   const userRole = user?.role as UserRole | undefined;
 
-  console.log({user});
+  const todayYmd = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
+  const scheduleNavEligible =
+    Boolean(userRole && (userRole === "asesor_fisico" || userRole === "admin"));
+  const todayPendingCount = useAppSelector(
+    (s) =>
+      (s.schedule.byDay[todayYmd] ?? []).filter((e) => e.status === "pending").length
+  );
+
+  useEffect(() => {
+    if (!scheduleNavEligible) return;
+    void dispatch(fetchVentorScheduleByDay(todayYmd));
+  }, [dispatch, scheduleNavEligible, todayYmd]);
 
   const navItems = allNavItems.filter((item) => {
     if (item.physicalOnly && !user?.physical) return false;
@@ -62,6 +77,8 @@ const Layout = ({ children }: LayoutProps) => {
         <nav className="flex-1 px-3 space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const showAgendaBadge =
+              item.path === "/schedule" && todayPendingCount > 0;
             return (
               <Link
                 key={item.path}
@@ -72,8 +89,17 @@ const Layout = ({ children }: LayoutProps) => {
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
               >
-                <item.icon className="w-5 h-5" />
-                {item.label}
+                <item.icon className="w-5 h-5 shrink-0" />
+                <span className="flex-1">{item.label}</span>
+                {showAgendaBadge ? (
+                  <Badge
+                    variant="destructive"
+                    className="h-5 min-w-5 px-1.5 text-[10px] tabular-nums cursor-pointer"
+                    aria-label={`${todayPendingCount} visitas pendientes hoy`}
+                  >
+                    {todayPendingCount > 99 ? "99+" : todayPendingCount}
+                  </Badge>
+                ) : null}
               </Link>
             );
           })}
@@ -100,11 +126,13 @@ const Layout = ({ children }: LayoutProps) => {
         <div className="flex items-center justify-around">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const showAgendaBadge =
+              item.path === "/schedule" && todayPendingCount > 0;
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className="relative flex flex-col items-center py-2 px-3"
+                className="relative flex flex-col items-center py-2 px-3 cursor-pointer"
               >
                 {isActive && (
                   <motion.div
@@ -113,11 +141,22 @@ const Layout = ({ children }: LayoutProps) => {
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
-                <item.icon
-                  className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  }`}
-                />
+                <span className="relative">
+                  <item.icon
+                    className={`w-5 h-5 transition-colors ${
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  />
+                  {showAgendaBadge ? (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -right-2 -top-2 h-4 min-w-4 px-0.5 p-0 flex items-center justify-center text-[9px] tabular-nums"
+                      aria-label={`${todayPendingCount} pendientes hoy`}
+                    >
+                      {todayPendingCount > 9 ? "9+" : todayPendingCount}
+                    </Badge>
+                  ) : null}
+                </span>
                 <span
                   className={`text-[10px] mt-1 font-medium ${
                     isActive ? "text-primary" : "text-muted-foreground"
