@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ChevronDown, Check, Pencil } from 'lucide-react';
@@ -9,6 +9,7 @@ import {
   statusColors,
   type ClientStatus,
   type Client,
+  projects as mockProjectsCatalog,
 } from '@/data/mockData';
 import { formatDetailDate } from './client-detail-formatters';
 import { ClientDetailStepSelect } from './client-detail-step-select';
@@ -26,7 +27,6 @@ const statusOrder: ClientStatus[] = [
 export type ClientDetailProfileCardProps = {
   client: Client;
   initials: string;
-  projectTitle: string | undefined;
   isMock: boolean;
   isPhysical: boolean;
 };
@@ -34,12 +34,19 @@ export type ClientDetailProfileCardProps = {
 export function ClientDetailProfileCard({
   client,
   initials,
-  projectTitle,
   isMock,
   isPhysical,
 }: ClientDetailProfileCardProps) {
   const dispatch = useAppDispatch();
   const { id: routeId } = useParams();
+  const projectsList = useAppSelector((s) => s.projects.list);
+  const projectTitle = useMemo(() => {
+    const pid = client.projectInterest?.trim();
+    if (!pid) return undefined;
+    const fromStore = projectsList.find((p) => p.id === pid)?.title;
+    if (fromStore) return fromStore;
+    return mockProjectsCatalog.find((p) => p.id === pid)?.title ?? pid;
+  }, [client.projectInterest, projectsList]);
   const catalogStepCount = useAppSelector((s) => s.clients.vendorStepCatalog.length);
   const apiCustomer = useAppSelector((s) => {
     if (isMock || !routeId || s.clients.vendorCreationDetailCustomerId !== routeId) {

@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { clients, projects as mockProjectsCatalog, type Client } from '@/data/mockData';
+import { clients, type Client } from '@/data/mockData';
 import { useEffect, useMemo, useLayoutEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -18,7 +18,6 @@ import { EditClientModal } from './EditClientModal';
 const ClientDetail = () => {
   const { id } = useParams();
   const authUser = useAppSelector((s) => s.auth.user);
-  const projectsList = useAppSelector((s) => s.projects.list);
   const vendorCreationDetailStatus = useAppSelector((s) => s.clients.vendorCreationDetailStatus);
   const vendorCreationDetail = useAppSelector((s) => s.clients.vendorCreationDetail);
   const vendorCreationDetailCustomerId = useAppSelector((s) => s.clients.vendorCreationDetailCustomerId);
@@ -64,14 +63,6 @@ const ClientDetail = () => {
     void dispatch(fetchProjects());
   }, [dispatch, mockClient]);
 
-  const projectTitle = useMemo(() => {
-    const pid = client?.projectInterest?.trim();
-    if (!pid) return undefined;
-    const fromStore = projectsList.find((p) => p.id === pid)?.title;
-    if (fromStore) return fromStore;
-    return mockProjectsCatalog.find((p) => p.id === pid)?.title ?? pid;
-  }, [client?.projectInterest, projectsList]);
-
   if (!id || (!loading && !client)) {
     return (
       <div className="p-8 text-center">
@@ -104,7 +95,6 @@ const ClientDetail = () => {
       <ClientDetailProfileCard
         client={client}
         initials={initials}
-        projectTitle={projectTitle}
         isMock={Boolean(mockClient)}
         isPhysical={isPhysical}
       />
