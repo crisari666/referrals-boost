@@ -25,6 +25,7 @@ export function getUserIdFromSocketPayload(payload: unknown): string | null {
 
 export function connectCrmSocket(token: string): Socket | null {
   const url = resolveCrmSocketUrl()
+  console.log('connectCrmSocketurl', url);
   if (!url) return null
   return io(url, {
     transports: ['websocket'],

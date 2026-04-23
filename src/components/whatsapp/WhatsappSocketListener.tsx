@@ -63,7 +63,7 @@ const WhatsappSocketListener = ({ sessionId }: WhatsappSocketListenerProps) => {
         ? `${base.replace(/\/$/, "")}${namespace.startsWith("/") ? namespace : `/${namespace}`}`
         : base;
       console.log('url', url);
-      websocketService.connect(url, { query: { sessionId } });
+      websocketService.connect(url, { query: { sessionId }, path: '/ws-socket' });
     } else {
       const roomName = `session:${sessionId}`;
       websocketService.joinRoom(roomName);
