@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { logout } from '@/store/authSlice';
 import * as vendorDashboardService from '@/services/vendorDashboardService';
 import type { VendorDashboardResult } from '@/services/vendorDashboardService';
+import * as clientsService from '@/services/clientsService';
 
 interface VendorDashboardState {
   data: VendorDashboardResult | null;
@@ -21,7 +22,18 @@ export const fetchVendorDashboard = createAsyncThunk<
   { rejectValue: string }
 >('vendorDashboard/fetch', async (_, { rejectWithValue }) => {
   try {
-    return await vendorDashboardService.getVendorDashboard();
+    const [dashboard, msStats] = await Promise.all([
+      vendorDashboardService.getVendorDashboard(),
+      clientsService.getVendorCustomerMineDashboardStats().catch(() => null),
+    ]);
+    if (msStats) {
+      return {
+        ...dashboard,
+        customersActives: msStats.customersActives,
+        customerConversion: msStats.customerConversion,
+      };
+    }
+    return dashboard;
   } catch (err: unknown) {
     const message =
       err && typeof err === 'object' && 'message' in err

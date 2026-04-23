@@ -226,6 +226,24 @@ export async function getCustomersByCreator(): Promise<CustomersByCreatorRespons
   };
 }
 
+/** `GET customer/mine/stats` — active + office-visit conversion KPIs from customers-ms. */
+export type VendorCustomerMineDashboardStats = {
+  customersActives: number;
+  customerConversion: number;
+};
+
+export async function getVendorCustomerMineDashboardStats(): Promise<VendorCustomerMineDashboardStats | null> {
+  try {
+    getCustomersMsOrigin();
+  } catch {
+    return null;
+  }
+  return http.get<VendorCustomerMineDashboardStats>("", {
+    url: customersMsUrl("customer/mine/stats"),
+    ...withCustomersMsAuth(),
+  });
+}
+
 /** GET {{BASE_URL}}customers/:customerId */
 export function getCustomerById(customerId: string) {
   return http.get<CustomerByIdResponse>(
