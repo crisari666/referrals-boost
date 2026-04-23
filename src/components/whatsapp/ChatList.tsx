@@ -24,7 +24,8 @@ const ChatList = () => {
   };
 
   const handleDisconnect = () => {
-    dispatch(disconnect(phone ?? undefined));
+    if (!phone) return;
+    dispatch(disconnect(phone));
   };
 
   if (chatsLoading) {
@@ -54,7 +55,14 @@ const ChatList = () => {
           <h3 className="font-bold text-foreground">Chats</h3>
           <Badge variant="secondary" className="text-xs">{chats.length}</Badge>
         </div>
-        <Button variant="ghost" size="sm" onClick={handleDisconnect} className="text-destructive hover:text-destructive">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDisconnect}
+          disabled={!phone}
+          className="text-destructive hover:text-destructive disabled:opacity-50"
+          title="Eliminar sesión"
+        >
           <LogOut className="w-4 h-4" />
         </Button>
       </div>

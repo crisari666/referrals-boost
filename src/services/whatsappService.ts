@@ -53,14 +53,14 @@ export function syncConnection(sessionId: string) {
   );
 }
 
-export function disconnect(sessionId?: string) {
+export function disconnect(sessionId: string) {
   return http.post<{
     success: boolean;
     sessionId?: string;
     disconnected?: string[];
     count?: number;
     message?: string;
-  }>("/disconnect", sessionId ? { sessionId } : undefined, {
+  }>("/disconnect", { sessionId }, {
     url: `${WHATSAPP_WEB}/disconnect`,
   });
 }

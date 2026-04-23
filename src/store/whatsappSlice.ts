@@ -140,7 +140,7 @@ export const sendMessage = createAsyncThunk(
 /** EVENT: DISCONNECT — Disconnect WhatsApp session */
 export const disconnect = createAsyncThunk(
   "whatsapp/disconnect",
-  async (sessionId?: string) => {
+  async (sessionId: string) => {
     await whatsappService.disconnect(sessionId);
   }
 );
