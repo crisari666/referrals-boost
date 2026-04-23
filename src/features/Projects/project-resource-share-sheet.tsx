@@ -30,11 +30,57 @@ interface ProjectResourceShareSheetProps {
   authHeaders?: Record<string, string>;
 }
 
+/** `number` = 0–100 from Content-Length; `indeterminate` = size unknown while bytes load */
+type BufferLoadProgress = number | 'indeterminate';
+
+async function readResponseAsBlobWithProgress(
+  response: Response,
+  onProgress: (p: BufferLoadProgress) => void,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  if (!response.ok) throw new Error('Request failed');
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+
+  const rawLen = response.headers.get('Content-Length');
+  const total = rawLen ? Number.parseInt(rawLen, 10) : NaN;
+  const body = response.body;
+  const canStreamProgress = body != null && Number.isFinite(total) && total > 0;
+
+  if (!canStreamProgress) {
+    onProgress('indeterminate');
+    const blob = await response.blob();
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    onProgress(100);
+    return blob;
+  }
+
+  const reader = body.getReader();
+  const chunks: BlobPart[] = [];
+  let received = 0;
+  onProgress(0);
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (signal?.aborted) {
+      await reader.cancel();
+      throw new DOMException('Aborted', 'AbortError');
+    }
+    chunks.push(value);
+    received += value.length;
+    onProgress(Math.min(100, Math.round((received / total) * 100)));
+  }
+
+  onProgress(100);
+  return new Blob(chunks);
+}
+
 const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }: ProjectResourceShareSheetProps) => {
   const { toast } = useToast();
   const [prefetchedFile, setPrefetchedFile] = useState<File | null>(null);
   const [prefetching, setPrefetching] = useState(false);
   const [shareInvoking, setShareInvoking] = useState(false);
+  const [bufferProgress, setBufferProgress] = useState<BufferLoadProgress | null>(null);
   const canUseNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   useEffect(() => {
@@ -42,11 +88,13 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
       setPrefetchedFile(null);
       setPrefetching(false);
       setShareInvoking(false);
+      setBufferProgress(null);
       return;
     }
 
     setPrefetchedFile(null);
     setPrefetching(true);
+    setBufferProgress('indeterminate');
     const ac = new AbortController();
     let cancelled = false;
 
@@ -54,7 +102,7 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
       try {
         const response = await fetch(resource.fetchUrl, { mode: 'cors', headers: authHeaders, signal: ac.signal });
         if (!response.ok) throw new Error('Prefetch failed');
-        const blob = await response.blob();
+        const blob = await readResponseAsBlobWithProgress(response, setBufferProgress, ac.signal);
         const fileType = blob.type || getMimeTypeFromFilename(resource.filename);
         const file = new File([blob], resource.filename, { type: fileType });
         if (!cancelled) setPrefetchedFile(file);
@@ -68,7 +116,10 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
           });
         }
       } finally {
-        if (!cancelled) setPrefetching(false);
+        if (!cancelled) {
+          setPrefetching(false);
+          setBufferProgress(null);
+        }
       }
     };
 
@@ -78,7 +129,7 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
       cancelled = true;
       ac.abort();
     };
-  }, [open, resource?.fetchUrl, resource?.filename, resource?.previewKind, authHeaders, toast]);
+  }, [open, resource, authHeaders, toast]);
 
   const handleDownload = useCallback(async () => {
     if (!resource) return;
@@ -134,11 +185,13 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
     try {
       let file = prefetchedFile;
       if (!file) {
+        setBufferProgress('indeterminate');
         const response = await fetch(resource.fetchUrl, { mode: 'cors', headers: authHeaders });
         if (!response.ok) throw new Error('Share request failed');
-        const blob = await response.blob();
+        const blob = await readResponseAsBlobWithProgress(response, setBufferProgress);
         const fileType = blob.type || getMimeTypeFromFilename(resource.filename);
         file = new File([blob], resource.filename, { type: fileType });
+        setBufferProgress(null);
       }
 
       if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
@@ -160,6 +213,7 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
         description: 'Could not prepare the file to share. Please try again.',
       });
     } finally {
+      setBufferProgress(null);
       setShareInvoking(false);
     }
   }, [authHeaders, canUseNativeShare, prefetchedFile, resource, toast]);
@@ -207,11 +261,14 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
 
         {preview}
 
-        <p className='mt-2 flex items-center gap-2 text-xs text-muted-foreground'>
+        <p className='mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
           {prefetching ? (
             <>
               <Loader2 className='h-3.5 w-3.5 shrink-0 animate-spin' aria-hidden />
               {LABELS.preparandoParaCompartir}
+              {typeof bufferProgress === 'number' ? (
+                <span className='tabular-nums text-foreground'>{bufferProgress}%</span>
+              ) : null}
             </>
           ) : prefetchedFile ? (
             LABELS.listoParaCompartir
@@ -227,13 +284,40 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
             <Button
               type='button'
               variant='default'
-              className='flex-1 cursor-pointer'
+              className='relative flex-1 cursor-pointer overflow-hidden'
               disabled={shareInvoking}
-              aria-busy={shareInvoking}
+              aria-busy={shareInvoking || prefetching}
+              {...(typeof bufferProgress === 'number'
+                ? { 'aria-valuenow': bufferProgress, 'aria-valuemin': 0, 'aria-valuemax': 100 }
+                : {})}
               onClick={() => void handleNativeShare()}
             >
-              {shareInvoking ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Share2 className='mr-2 h-4 w-4' />}
-              {LABELS.compartir}
+              {(prefetching || (shareInvoking && !prefetchedFile)) && bufferProgress != null && (
+                <span
+                  className='pointer-events-none absolute inset-x-0 bottom-0 h-1.5 bg-primary-foreground/25'
+                  aria-hidden
+                >
+                  {typeof bufferProgress === 'number' ? (
+                    <span
+                      className='block h-full bg-primary-foreground/90 transition-[width] duration-150 ease-out'
+                      style={{ width: `${bufferProgress}%` }}
+                    />
+                  ) : (
+                    <span className='block h-full w-[35%] animate-share-indeterminate bg-primary-foreground/90' />
+                  )}
+                </span>
+              )}
+              <span className='relative z-[1] flex items-center justify-center'>
+                {shareInvoking ? (
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                ) : (
+                  <Share2 className='mr-2 h-4 w-4' />
+                )}
+                {LABELS.compartir}
+                {typeof bufferProgress === 'number' ? (
+                  <span className='ml-2 text-xs tabular-nums opacity-90'>{bufferProgress}%</span>
+                ) : null}
+              </span>
             </Button>
           ) : resource ? (
             <WhatsappShareButton

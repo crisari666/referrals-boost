@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
-import { Lock, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Lock, LogOut, User } from 'lucide-react';
 import { ACHIEVEMENTS_GOALS_USERNAME } from '@/constants/app-constants';
 import { useToast } from '@/hooks/use-toast';
 import { displayUserName, profileInitials } from '@/lib/display-user-name';
 import { fetchVendorDashboard } from '@/store/vendorDashboardSlice';
+import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector, type RootState } from '@/store';
+import { logout } from '@/store/authSlice';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileAchievementsSection } from './profile-achievements-section';
 import { ProfileIdentityCard } from './profile-identity-card';
@@ -16,6 +19,7 @@ const VENDOR_LEVEL = 4;
 
 const Profile = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s: RootState) => s.auth.user);
   const seller = useAppSelector((s: RootState) => s.profile.seller);
@@ -43,6 +47,11 @@ const Profile = () => {
   const copyLink = () => {
     navigator.clipboard.writeText(seller.referralLink);
     toast({ title: '¡Enlace copiado!', description: 'Compártelo con tus clientes potenciales' });
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -100,6 +109,18 @@ const Profile = () => {
           <ProfileAchievementsSection achievements={seller.achievements} />
         ) : null}
       </Tabs>
+
+      <div className="border-t border-border pt-6 pb-2 md:pb-0">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer transition-colors duration-200"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" aria-hidden />
+          Cerrar sesión
+        </Button>
+      </div>
     </div>
   );
 };
