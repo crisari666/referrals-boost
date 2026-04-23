@@ -29,9 +29,9 @@ const ProjectDetailModal = ({ project, open, onOpenChange }: ProjectDetailModalP
         <div className="space-y-4">
           <ProjectDetailModalHeroSection project={project} />
           <ProjectDetailModalStatsSection project={project} />
+          <ProjectDetailModalResourcesSection project={project} />
           <ProjectDetailModalAmenitiesSection project={project} />
           <ProjectDetailModalWhatsappSection project={project} />
-          <ProjectDetailModalResourcesSection project={project} />
         </div>
       </DialogContent>
     </Dialog>

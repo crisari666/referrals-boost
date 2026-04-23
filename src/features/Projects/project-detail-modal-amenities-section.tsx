@@ -10,7 +10,7 @@ const ProjectDetailModalAmenitiesSection = ({ project }: ProjectDetailModalAmeni
   if (!hasGroupedAmenities) return null;
 
   return (
-    <div className='grid gap-3 md:grid-cols-2'>
+    <div className='grid grid-cols-2 gap-3'>
       {project.amenitiesGroups?.map((group) => (
         <div key={group.title} className='rounded-xl border bg-secondary/40 p-3'>
           <p className='mb-2 text-xs font-bold text-foreground'>{group.title}</p>
