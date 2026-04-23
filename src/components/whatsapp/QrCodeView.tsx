@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, RefreshCw, Smartphone, CheckCircle2, XCircle, Wifi } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import WhatsappSocketListener from "@/components/whatsapp/WhatsappSocketListener";
 import QRCode from "react-qr-code"
 
 const QrCodeView = () => {
@@ -33,7 +32,6 @@ const QrCodeView = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 p-6">
-      <WhatsappSocketListener sessionId={phone ?? null} />
       <AnimatePresence mode="wait">
         {/* LOADING QR */}
         {connectionStatus === "qr_loading" && (

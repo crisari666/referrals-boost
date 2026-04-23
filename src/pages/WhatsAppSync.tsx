@@ -2,15 +2,18 @@ import { useAppSelector } from "@/store";
 import QrCodeView from "@/components/whatsapp/QrCodeView";
 import ChatList from "@/components/whatsapp/ChatList";
 import ChatView from "@/components/whatsapp/ChatView";
+import WhatsappSocketListener from "@/components/whatsapp/WhatsappSocketListener";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 
 const WhatsAppSync = () => {
   const { connectionStatus, activeChat } = useAppSelector((s) => s.whatsapp);
+  const phone = useAppSelector((s) => s.auth.user?.phone);
   const isConnected = connectionStatus === "connected";
 
   return (
     <div className="h-screen flex flex-col">
+      <WhatsappSocketListener sessionId={phone ?? null} />
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
         <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useAppDispatch } from "@/store";
 import { websocketService } from "@/shared/services/websocket.service";
 import { WHATSAPP_MS_ORIGIN } from "@/services/whatsappService";
-import { qrReceived, sessionReady, sessionError } from "@/store/whatsappSlice";
+import { qrReceived, sessionReady, sessionError, newIncomingMessage } from "@/store/whatsappSlice";
 
 type WhatsappSocketListenerProps = {
   sessionId: string | null;
@@ -28,6 +28,25 @@ type SessionClosedPayload = {
   chatId?: string;
 };
 
+type NewMessagePayload = {
+  sessionId: string;
+  message: {
+    messageId: string;
+    chatId: string;
+    fromMe: boolean;
+    body?: string | null;
+    type?: string | null;
+    timestamp: number;
+  };
+};
+
+function mapIncomingType(type?: string | null): "text" | "image" | "video" | "audio" | "voice" | "document" {
+  const t = (type ?? "chat").toLowerCase();
+  if (t === "chat" || t === "conversation") return "text";
+  if (t === "image" || t === "video" || t === "audio" || t === "voice" || t === "document") return t;
+  return "text";
+}
+
 const WhatsappSocketListener = ({ sessionId }: WhatsappSocketListenerProps) => {
   const dispatch = useAppDispatch();
 
@@ -43,6 +62,7 @@ const WhatsappSocketListener = ({ sessionId }: WhatsappSocketListenerProps) => {
       const url = namespace
         ? `${base.replace(/\/$/, "")}${namespace.startsWith("/") ? namespace : `/${namespace}`}`
         : base;
+      console.log('url', url);
       websocketService.connect(url, { query: { sessionId } });
     } else {
       const roomName = `session:${sessionId}`;
@@ -69,11 +89,34 @@ const WhatsappSocketListener = ({ sessionId }: WhatsappSocketListenerProps) => {
       dispatch(sessionError({ message: "Sesión de WhatsApp cerrada" }));
     });
 
+    const unsubscribeNewMessage = websocketService.on<NewMessagePayload>("new_message", (data) => {
+      console.log('new_message', data);
+      if (data.sessionId !== sessionId) return;
+      const msg = data.message;
+      if (!msg?.messageId || !msg.chatId) return;
+
+      dispatch(
+        newIncomingMessage({
+          id: msg.messageId,
+          chatId: msg.chatId,
+          sender: msg.fromMe ? "me" : "them",
+          content: msg.body ?? "",
+          type: mapIncomingType(msg.type),
+          timestamp: new Date((msg.timestamp || Date.now() / 1000) * 1000).toISOString(),
+          status: msg.fromMe ? "sent" : "read",
+          isEdited: false,
+          editHistory: [],
+          isDeleted: false,
+        }),
+      );
+    });
+
     return () => {
       unsubscribeQr();
       unsubscribeReady();
       unsubscribeAuthFailure();
       unsubscribeSessionClosed();
+      unsubscribeNewMessage();
       const roomName = `session:${sessionId}`;
       if (websocketService.isConnectedToServer()) {
         websocketService.leaveRoom(roomName);
