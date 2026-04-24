@@ -54,6 +54,9 @@ const Profile = () => {
     navigate('/login', { replace: true });
   };
 
+  const logoutButtonClassName =
+    'w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer transition-colors duration-200';
+
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-4">
       <h1 className="text-2xl font-extrabold text-foreground">Mi Perfil</h1>
@@ -95,8 +98,19 @@ const Profile = () => {
           <TabsContent
             value="security"
             className="mt-0 border-t border-border p-4 md:p-6 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-            >
+          >
             <ProfilePasswordSection embedded />
+            <div className="mt-6 border-t border-border pt-6 md:hidden">
+              <Button
+                type="button"
+                variant="outline"
+                className={logoutButtonClassName}
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4" aria-hidden />
+                Cerrar sesión
+              </Button>
+            </div>
           </TabsContent>
         </div>
         <ProfileSummarySection
@@ -110,13 +124,8 @@ const Profile = () => {
         ) : null}
       </Tabs>
 
-      <div className="border-t border-border pt-6 pb-2 md:pb-0">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer transition-colors duration-200"
-          onClick={handleLogout}
-        >
+      <div className="hidden border-t border-border pt-6 pb-2 md:block md:pb-0">
+        <Button type="button" variant="outline" className={logoutButtonClassName} onClick={handleLogout}>
           <LogOut className="h-4 w-4" aria-hidden />
           Cerrar sesión
         </Button>
