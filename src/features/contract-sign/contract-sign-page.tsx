@@ -106,7 +106,12 @@ const ContractSignPage = () => {
       });
       const blob = new Blob([new Uint8Array(merged)], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-      setPreviewDraft({ blob, url });
+      setPreviewDraft((previousDraft) => {
+        if (previousDraft?.url) {
+          URL.revokeObjectURL(previousDraft.url);
+        }
+        return { blob, url };
+      });
       setSignDialogOpen(false);
     } catch (err) {
       const msg =

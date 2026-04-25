@@ -42,6 +42,7 @@ export const ContractSignedPreviewDialog = ({
       <div className='min-h-0 flex-1 overflow-hidden rounded-md border bg-muted/20'>
         {pdfObjectUrl ? (
           <iframe
+            key={pdfObjectUrl}
             title='Vista previa del PDF firmado'
             src={pdfObjectUrl}
             className='h-[min(70vh,720px)] w-full border-0 bg-background'
