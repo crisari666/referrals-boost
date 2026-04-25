@@ -56,7 +56,7 @@ export const ContractSignedPreviewDialog = ({
           ) : usesMobilePreview ? (
             <div className='flex h-[min(60vh,520px)] flex-col items-center justify-center gap-3 p-4'>
               <p className='text-center text-sm text-muted-foreground'>
-                En móvil, abre el PDF para validar la firma más reciente.
+                En móvil, abre el PDF para validar la firma más reciente. Vuelve a esta página para enviar el documento.
               </p>
               <Button asChild type='button' className='gap-2'>
                 <a href={pdfObjectUrl} target='_blank' rel='noreferrer'>
