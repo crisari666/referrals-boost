@@ -3,6 +3,10 @@ import { askAgent } from '@/services/agentChatService';
 import { getProjectResourceUrl } from '@/services/projectsService';
 import type { ChatHistoryMessage } from '@/types/agent-chat';
 import type { AssistantMessage, Resource, ResourceType } from '@/types/assistant';
+import {
+  dedupeResources,
+  mediaProjectsToResources,
+} from '@/features/Assistant/utils/merge-agent-chat-resources';
 
 const welcomeMessage = (): AssistantMessage => ({
   id: 'welcome',
@@ -108,8 +112,10 @@ export function useAgentChat() {
 
     try {
       const data = await askAgent({ question: trimmed, chatHistory });
-      const resources =
-        data.sources.length > 0 ? data.sources.map((s) => sourceToResource(s)) : undefined;
+      const fromSources = data.sources.map((s) => sourceToResource(s));
+      const fromMedia = mediaProjectsToResources(data.media, sourceToResource);
+      const merged = dedupeResources([...fromSources, ...fromMedia]);
+      const resources = merged.length > 0 ? merged : undefined;
 
       setMessages((prev) => [
         ...prev,
