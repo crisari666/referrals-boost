@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { askAgent } from '@/services/agentChatService';
+import { getProjectResourceUrl } from '@/services/projectsService';
 import type { ChatHistoryMessage } from '@/types/agent-chat';
-import type { AssistantMessage, Resource } from '@/types/assistant';
+import type { AssistantMessage, Resource, ResourceType } from '@/types/assistant';
 
 const welcomeMessage = (): AssistantMessage => ({
   id: 'welcome',
@@ -11,12 +12,47 @@ const welcomeMessage = (): AssistantMessage => ({
   timestamp: new Date().toISOString(),
 });
 
+const IMAGE_EXT = /\.(jpe?g|png|gif|webp|svg)(\?|#|$)/i;
+
+function inferResourceType(ref: string): ResourceType {
+  const lower = ref.toLowerCase();
+  if (/\.pdf(\?|#|$)/i.test(lower)) return 'pdf';
+  if (/\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(lower)) return 'video';
+  if (IMAGE_EXT.test(lower)) return 'image';
+  if (/contrato|contract/i.test(lower)) return 'contract';
+  return 'link';
+}
+
 function sourceToResource(src: string): Resource {
-  const isUrl = /^https?:\/\//i.test(src);
+  const trimmed = src.trim();
+  const label =
+    trimmed.split('/').pop()?.split('?')[0]?.trim() || trimmed || 'Fuente';
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    const type = inferResourceType(trimmed);
+    return {
+      type,
+      label,
+      openUrl: trimmed,
+      previewUrl: type === 'image' ? trimmed : undefined,
+    };
+  }
+
+  const resolved = getProjectResourceUrl(trimmed);
+  if (resolved) {
+    const type = inferResourceType(resolved);
+    return {
+      type,
+      label,
+      openUrl: resolved,
+      previewUrl: type === 'image' ? resolved : undefined,
+    };
+  }
+
   return {
-    type: 'link',
-    label: src.split('/').pop() || src,
-    url: isUrl ? src : '#',
+    type: inferResourceType(trimmed),
+    label,
+    copyText: trimmed,
   };
 }
 
