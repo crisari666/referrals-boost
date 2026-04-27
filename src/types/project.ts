@@ -12,6 +12,7 @@ export type ApiProject = {
   lat: number;
   lng: number;
   priceSell: number;
+  priceSellUsd?: number;
   commissionPercentage: number;
   commissionValue: number;
   amenities?: ApiAmenity[];
