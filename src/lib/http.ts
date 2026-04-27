@@ -9,6 +9,7 @@ const httpClient = axios.create();
 
 function shouldSkipAuthHeader(url: string): boolean {
   if (/signin/i.test(url) || /\/login(\/|$)/i.test(url)) return true;
+  if (/forgot-password/i.test(url)) return true;
   if (/agent-contract-sign/i.test(url)) return true;
   if (/signup-campaigns/i.test(url)) return true;
   return /agent-first-access/i.test(url);

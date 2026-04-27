@@ -47,6 +47,16 @@ export type LoginResponse = {
   message: string;
 };
 
+export type ForgotPasswordPayload = {
+  email: string;
+};
+
+/** POST /login/forgot-password */
+export type ForgotPasswordResponse = {
+  error: null;
+  message: string;
+};
+
 export type UserRole = "asesor_referido" | "asesor_fisico" | "admin";
 
 /** User type used in the app (mapped from API result); includes token for authenticated requests */

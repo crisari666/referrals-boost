@@ -1,8 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 import { APP_CONSTANTS } from "@/constants/app-constants";
 import * as authService from "@/services/authService";
 import * as profileService from "@/services/profileService";
 import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
+
+export const FORGOT_PASSWORD_SUCCESS_MESSAGE =
+  "Si tu correo se encuentra registrado, revisa tu bandeja de entrada";
 
 export type { AuthUser, UserRole } from "@/types/auth";
 
@@ -44,10 +48,19 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  forgotPasswordIsLoading: boolean;
+  forgotPasswordError: string | null;
+  forgotPasswordSubmitted: boolean;
 }
 
 function getInitialAuthState(): AuthState {
-  const base = { isLoading: false, error: null };
+  const base = {
+    isLoading: false,
+    error: null,
+    forgotPasswordIsLoading: false,
+    forgotPasswordError: null,
+    forgotPasswordSubmitted: false,
+  };
   try {
     const raw = localStorage.getItem(APP_CONSTANTS.AUTH_USER_STORAGE_KEY);
     if (!raw) return { ...base, user: null, isAuthenticated: false };
@@ -113,6 +126,33 @@ export const loginUser = createAsyncThunk<
   }
 });
 
+export const requestForgotPassword = createAsyncThunk<
+  void,
+  { email: string },
+  { rejectValue: string }
+>("auth/requestForgotPassword", async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authService.requestForgotPassword({
+      email: payload.email.trim(),
+    });
+    if (response.message !== "success" || response.error != null) {
+      return rejectWithValue("No se pudo enviar la solicitud. Intenta de nuevo.");
+    }
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === "object") {
+      const data = err.response.data as { error?: string };
+      if (typeof data.error === "string" && data.error.length > 0) {
+        return rejectWithValue("Revisa el formato del correo o intenta de nuevo.");
+      }
+    }
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "Error de conexión. Intenta de nuevo.";
+    return rejectWithValue(message);
+  }
+});
+
 const initialState: AuthState = getInitialAuthState();
 
 const authSlice = createSlice({
@@ -124,9 +164,17 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
+      state.forgotPasswordIsLoading = false;
+      state.forgotPasswordError = null;
+      state.forgotPasswordSubmitted = false;
     },
     clearError(state) {
       state.error = null;
+    },
+    clearForgotPasswordState(state) {
+      state.forgotPasswordIsLoading = false;
+      state.forgotPasswordError = null;
+      state.forgotPasswordSubmitted = false;
     },
   },
   extraReducers: (builder) => {
@@ -156,9 +204,24 @@ const authSlice = createSlice({
             JSON.stringify(state.user)
           );
         }
+      })
+      .addCase(requestForgotPassword.pending, (state) => {
+        state.forgotPasswordIsLoading = true;
+        state.forgotPasswordError = null;
+        state.forgotPasswordSubmitted = false;
+      })
+      .addCase(requestForgotPassword.fulfilled, (state) => {
+        state.forgotPasswordIsLoading = false;
+        state.forgotPasswordSubmitted = true;
+        state.forgotPasswordError = null;
+      })
+      .addCase(requestForgotPassword.rejected, (state, action) => {
+        state.forgotPasswordIsLoading = false;
+        state.forgotPasswordSubmitted = false;
+        state.forgotPasswordError = action.payload ?? "Error desconocido";
       });
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, clearForgotPasswordState } = authSlice.actions;
 export default authSlice.reducer;
