@@ -82,6 +82,8 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
   const [shareInvoking, setShareInvoking] = useState(false);
   const [bufferProgress, setBufferProgress] = useState<BufferLoadProgress | null>(null);
   const canUseNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+  const isResourceReady = Boolean(prefetchedFile) && !prefetching;
+  const shouldShowProgressIndicator = !isResourceReady && bufferProgress != null;
 
   useEffect(() => {
     if (!open || !resource) {
@@ -276,23 +278,48 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
         </p>
 
         <SheetFooter className='mt-4 flex w-full flex-row gap-2 sm:justify-stretch'>
-          <Button type='button' variant='outline' className='flex-1 cursor-pointer' onClick={() => void handleDownload()}>
-            <Download className='mr-2 h-4 w-4' />
-            {LABELS.descargar}
+          <Button
+            type='button'
+            variant='outline'
+            className='relative flex-1 cursor-pointer overflow-hidden'
+            disabled={!isResourceReady || shareInvoking}
+            aria-busy={shareInvoking || prefetching}
+            {...(typeof bufferProgress === 'number'
+              ? { 'aria-valuenow': bufferProgress, 'aria-valuemin': 0, 'aria-valuemax': 100 }
+              : {})}
+            onClick={() => void handleDownload()}
+          >
+            {shouldShowProgressIndicator && (
+              <span className='pointer-events-none absolute inset-x-0 bottom-0 h-1.5 bg-muted-foreground/20' aria-hidden>
+                {typeof bufferProgress === 'number' ? (
+                  <span
+                    className='block h-full bg-foreground/70 transition-[width] duration-150 ease-out'
+                    style={{ width: `${bufferProgress}%` }}
+                  />
+                ) : (
+                  <span className='block h-full w-[35%] animate-share-indeterminate bg-foreground/70' />
+                )}
+              </span>
+            )}
+            <span className='relative z-[1] flex items-center justify-center'>
+              <Download className='mr-2 h-4 w-4' />
+              {LABELS.descargar}
+              {typeof bufferProgress === 'number' ? <span className='ml-2 text-xs tabular-nums'>{bufferProgress}%</span> : null}
+            </span>
           </Button>
           {canUseNativeShare ? (
             <Button
               type='button'
               variant='default'
               className='relative flex-1 cursor-pointer overflow-hidden'
-              disabled={shareInvoking}
+              disabled={!isResourceReady || shareInvoking}
               aria-busy={shareInvoking || prefetching}
               {...(typeof bufferProgress === 'number'
                 ? { 'aria-valuenow': bufferProgress, 'aria-valuemin': 0, 'aria-valuemax': 100 }
                 : {})}
               onClick={() => void handleNativeShare()}
             >
-              {(prefetching || (shareInvoking && !prefetchedFile)) && bufferProgress != null && (
+              {shouldShowProgressIndicator && (
                 <span
                   className='pointer-events-none absolute inset-x-0 bottom-0 h-1.5 bg-primary-foreground/25'
                   aria-hidden
@@ -314,7 +341,7 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
                   <Share2 className='mr-2 h-4 w-4' />
                 )}
                 {LABELS.compartir}
-                {typeof bufferProgress === 'number' ? (
+                {shouldShowProgressIndicator && typeof bufferProgress === 'number' ? (
                   <span className='ml-2 text-xs tabular-nums opacity-90'>{bufferProgress}%</span>
                 ) : null}
               </span>

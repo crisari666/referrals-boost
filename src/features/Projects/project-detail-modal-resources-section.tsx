@@ -2,18 +2,12 @@ import { useCallback, useState } from 'react';
 import { Download, FileText, Images, Share2, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Project } from '@/data/mockData';
-import { useToast } from '@/hooks/use-toast';
 import { getStoredAuthToken } from '@/lib/auth-token';
-import {
-  buildProjectResourceDownloadUrl,
-  getProjectResourceUrl,
-  type ProjectResourceDownloadAttribute,
-} from '@/services/projectsService';
+import { getProjectResourceUrl } from '@/services/projectsService';
 import ProjectDetailModalImagePickerDialog from './project-detail-modal-image-picker-dialog';
 import { PROJECT_DETAIL_MODAL_LABELS as LABELS } from './project-detail-modal-labels';
 import ProjectResourceRowActions from './project-resource-row-actions';
 import ProjectResourceShareSheet, { type ProjectResourceShareSheetResource } from './project-resource-share-sheet';
-import { getFilenameFromDisposition, getFilenameFromUrl } from './project-resource-share-utils';
 
 interface ProjectDetailModalResourcesSectionProps {
   project: Project;
@@ -23,7 +17,6 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
   const [imageDialogMode, setImageDialogMode] = useState<'download' | 'share' | null>(null);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareResource, setShareResource] = useState<ProjectResourceShareSheetResource | null>(null);
-  const { toast } = useToast();
 
   const imageUrls = (project.images ?? []).map((name) => getProjectResourceUrl(name)).filter(Boolean);
   const reelVideoUrl = project.reelVideo ? getProjectResourceUrl(project.reelVideo) : '';
@@ -42,79 +35,6 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
     setShareSheetOpen(next);
     if (!next) setShareResource(null);
   }, []);
-
-  const handleDownload = async (url: string, fallbackName: string) => {
-    if (!url) return;
-
-    const filename = getFilenameFromUrl(url, fallbackName);
-    const shouldDownload = window.confirm(`Do you want to download "${filename}"?`);
-    if (!shouldDownload) return;
-
-    try {
-      const response = await fetch(url, { mode: 'cors', headers: authHeaders });
-      if (!response.ok) throw new Error('Download request failed');
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = blobUrl;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(blobUrl);
-    } catch {
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-
-      setTimeout(() => {
-        if (!document.hidden) {
-          window.alert('Download was blocked by the file server. Please ask backend to enable CORS/download headers for this resource.');
-        }
-      }, 700);
-    }
-  };
-
-  const handleAttributeDownload = async (attribute: ProjectResourceDownloadAttribute, fallbackName: string) => {
-    const shouldDownload = window.confirm(`Do you want to download "${fallbackName}"?`);
-    if (!shouldDownload) return;
-
-    try {
-      const url = buildProjectResourceDownloadUrl({ projectId: project.id, attribute });
-      const response = await fetch(url, { method: 'GET', headers: authHeaders });
-
-      if (!response.ok) {
-        if (response.status === 400 || response.status === 404) {
-          toast({
-            title: 'Resource unavailable',
-            description: 'This resource is not available for download yet.',
-          });
-          return;
-        }
-        throw new Error(`Download failed with status ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const filename = getFilenameFromDisposition(response.headers.get('Content-Disposition'), fallbackName);
-      const blobUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = blobUrl;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(blobUrl);
-    } catch {
-      toast({
-        title: 'Download error',
-        description: 'Could not download the resource. Please try again.',
-      });
-    }
-  };
 
   const openVideoShare = () => {
     if (!reelVideoUrl) return;
@@ -178,7 +98,7 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
             downloadLabel={LABELS.descargar}
             shareLabel={LABELS.compartir}
             resourceAvailable={Boolean(reelVideoUrl)}
-            onDownload={() => void handleAttributeDownload('reelVideo', `${project.title}-video.mp4`)}
+            onDownload={openVideoShare}
             onSharePreview={openVideoShare}
           />
         </div>
@@ -221,7 +141,7 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
             downloadLabel={LABELS.descargar}
             shareLabel={LABELS.compartir}
             resourceAvailable={Boolean(brochureUrl)}
-            onDownload={() => void handleAttributeDownload('brochure', `${project.title}-brochure.pdf`)}
+            onDownload={openBrochureShare}
             onSharePreview={openBrochureShare}
           />
         </div>
@@ -235,7 +155,7 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
             downloadLabel={LABELS.descargar}
             shareLabel={LABELS.compartir}
             resourceAvailable={Boolean(planeUrl)}
-            onDownload={() => void handleAttributeDownload('plane', `${project.title}-plano.pdf`)}
+            onDownload={openPlaneShare}
             onSharePreview={openPlaneShare}
           />
         </div>
@@ -249,7 +169,6 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
         onOpenChange={(nextOpen) => {
           if (!nextOpen) setImageDialogMode(null);
         }}
-        onDownloadImage={(url, fallbackName) => void handleDownload(url, fallbackName)}
         onRequestSharePreview={(url, index) => openImageShareFromPicker(url, index)}
       />
 

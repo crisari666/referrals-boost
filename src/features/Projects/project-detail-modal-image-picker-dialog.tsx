@@ -11,7 +11,6 @@ interface ProjectDetailModalImagePickerDialogProps {
   imageUrls: string[];
   projectTitle: string;
   onOpenChange: (open: boolean) => void;
-  onDownloadImage: (url: string, fallbackName: string) => void;
   onRequestSharePreview: (url: string, index: number) => void;
 }
 
@@ -21,7 +20,6 @@ const ProjectDetailModalImagePickerDialog = ({
   imageUrls,
   projectTitle,
   onOpenChange,
-  onDownloadImage,
   onRequestSharePreview,
 }: ProjectDetailModalImagePickerDialogProps) => {
   return (
@@ -51,7 +49,7 @@ const ProjectDetailModalImagePickerDialog = ({
                   size='sm'
                   variant='outline'
                   className='cursor-pointer shrink-0'
-                  onClick={() => onDownloadImage(url, `${projectTitle}-imagen-${index + 1}.jpg`)}
+                  onClick={() => onRequestSharePreview(url, index)}
                 >
                   <Download className='h-4 w-4' />
                 </Button>
