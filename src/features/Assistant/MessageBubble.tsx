@@ -1,11 +1,13 @@
-import { motion } from "framer-motion";
-import { Bot, User } from "lucide-react";
-import { format } from "date-fns";
-import type { AssistantMessage } from "@/types/assistant";
-import ResourceBadge from "./ResourceBadge";
+import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { Bot, User } from 'lucide-react';
+import type { ProjectResourceShareSheetResource } from '@/features/Projects/project-resource-share-sheet';
+import type { AssistantMessage } from '@/types/assistant';
+import AssistantMessageResources from './components/assistant-message-resources.cp';
 
 interface MessageBubbleProps {
   message: AssistantMessage;
+  onAssistantResourceShare: (payload: ProjectResourceShareSheetResource) => void;
 }
 
 const RichText = ({ text }: { text: string }) => (
@@ -22,7 +24,7 @@ const RichText = ({ text }: { text: string }) => (
   </>
 );
 
-const AssistantMessageBubble = ({ message }: MessageBubbleProps) => {
+const AssistantMessageBubble = ({ message, onAssistantResourceShare }: MessageBubbleProps) => {
   const isUser = message.role === "user";
 
   return (
@@ -49,16 +51,12 @@ const AssistantMessageBubble = ({ message }: MessageBubbleProps) => {
           <RichText text={message.content} />
         </div>
 
-        {message.resources && message.resources.length > 0 && (
-          <div className="mt-3 space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Recursos</p>
-            <div className="flex flex-wrap gap-2">
-              {message.resources.map((res, i) => (
-                <ResourceBadge key={i} {...res} />
-              ))}
-            </div>
-          </div>
-        )}
+        {message.resources && message.resources.length > 0 ? (
+          <AssistantMessageResources
+            resources={message.resources}
+            onOpenShare={onAssistantResourceShare}
+          />
+        ) : null}
 
         <p className={`text-[10px] mt-2 ${isUser ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
           {format(new Date(message.timestamp), "HH:mm")}

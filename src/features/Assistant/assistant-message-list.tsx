@@ -1,5 +1,6 @@
 import { AnimatePresence } from 'framer-motion';
 import type { RefObject } from 'react';
+import type { ProjectResourceShareSheetResource } from '@/features/Projects/project-resource-share-sheet';
 import type { AssistantMessage } from '@/types/assistant';
 import AssistantMessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
@@ -10,6 +11,7 @@ interface AssistantMessageListProps {
   messages: AssistantMessage[];
   isTyping: boolean;
   onScroll: () => void;
+  onAssistantResourceShare: (payload: ProjectResourceShareSheetResource) => void;
 }
 
 const AssistantMessageList = ({
@@ -18,6 +20,7 @@ const AssistantMessageList = ({
   messages,
   isTyping,
   onScroll,
+  onAssistantResourceShare,
 }: AssistantMessageListProps) => (
   <div
     ref={scrollRef}
@@ -26,7 +29,11 @@ const AssistantMessageList = ({
   >
     <AnimatePresence initial={false}>
       {messages.map((msg) => (
-        <AssistantMessageBubble key={msg.id} message={msg} />
+        <AssistantMessageBubble
+          key={msg.id}
+          message={msg}
+          onAssistantResourceShare={onAssistantResourceShare}
+        />
       ))}
     </AnimatePresence>
     {isTyping && <TypingIndicator />}
