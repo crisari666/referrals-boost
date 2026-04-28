@@ -5,6 +5,7 @@ export type CreateVendorCustomerPayload = {
   email: string;
   whatsapp: string;
   phone: string;
+  isReferral?: boolean;
   documentType?: string;
   document?: string;
   interestProyect?: InterestProyectItem[];
@@ -18,6 +19,7 @@ export type CreateCustomerPayload = {
   whatsapp: string;
   email: string;
   document: string;
+  isReferral?: boolean;
 };
 
 export type Customer = {
@@ -176,6 +178,7 @@ export type MsCustomerDocument = {
   email?: string;
   document?: string;
   documentType?: string;
+  isReferral?: boolean;
 };
 
 /** One row in `description` when customers MS returns populated description docs. */

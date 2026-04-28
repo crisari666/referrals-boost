@@ -344,6 +344,7 @@ export async function createVendorCustomer(
     phone: canonicalPhone,
     whatsapp: canonicalPhone,
     email: payload.email.trim(),
+    isReferral: payload.isReferral === true,
   };
   if (payload.document?.trim()) {
     createBody.document = payload.document.trim();
@@ -423,7 +424,14 @@ export async function createVendorCustomer(
 
 /** POST {{BASE_URL}}customers */
 export function createCustomer(payload: CreateCustomerPayload) {
-  return http.post<CreateCustomerResponse>(CUSTOMERS_BASE, payload, withAuth());
+  return http.post<CreateCustomerResponse>(
+    CUSTOMERS_BASE,
+    {
+      ...payload,
+      isReferral: payload.isReferral ?? true,
+    },
+    withAuth()
+  );
 }
 
 /** POST {{BASE_URL}}customer-logs/log-situation */
