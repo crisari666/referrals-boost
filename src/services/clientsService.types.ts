@@ -235,7 +235,10 @@ export type CustomerEventType =
   | 'WHATSAPP_MESSAGE'
   | 'PHONE_CALL'
   | 'VIDEO_CALL'
-  | 'CALL_CRM';
+  | 'CALL_CRM'
+  | 'CUSTOM_SENT_LAND'
+  | 'CUSTOMER_CANCELLED_VISIT_LAND'
+  | 'CUSTOMER_VISIT_LAND';
 
 export type CustomerEventItem = {
   id: string;
