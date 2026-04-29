@@ -23,6 +23,7 @@ export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTime
     if (!routeId || isMock || s.clients.vendorCreationDetailCustomerId !== routeId) return [];
     return s.clients.customerEvents;
   });
+  const isPhysicalUser = useAppSelector((s) => s.auth.user?.physical === true);
   const hasMockTimeline = isMock && client.interactions.length > 0;
   const hasApiTimeline = !isMock && apiLogs.length > 0;
   const hasEventsTimeline = !isMock && customerEvents.length > 0;
@@ -42,7 +43,7 @@ export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTime
       <h3 className="font-bold text-foreground mb-4">
         {isMock ? 'Historial de Interacciones' : 'Línea de situaciones'}
       </h3>
-      {!isMock && routeId && (
+      {!isMock && routeId && isPhysicalUser && (
         <div className="mb-4">
           <ClientAddEventDialog customerId={routeId} />
         </div>
