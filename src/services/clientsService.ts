@@ -92,6 +92,35 @@ export function withCustomersMsAuth(options?: http.HttpOptions): http.HttpOption
   return { ...options, headers };
 }
 
+const OBJECT_ID_HEX = /^[a-fA-F0-9]{24}$/;
+
+/**
+ * Normalizes `_id` from customers-ms JSON. Extended JSON uses `{ $oid: string }`;
+ * coercing that with `String()` yields `[object Object]` in URLs.
+ */
+export function normalizeMsCustomerDocumentId(raw: unknown): string {
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    return t;
+  }
+  if (raw && typeof raw === 'object' && '$oid' in raw) {
+    const oid = (raw as { $oid?: unknown }).$oid;
+    if (typeof oid === 'string') {
+      return oid.trim();
+    }
+  }
+  if (raw != null && typeof raw === 'object') {
+    const toStr = (raw as { toString?: () => unknown }).toString;
+    if (typeof toStr === 'function') {
+      const s = String(toStr.call(raw));
+      if (OBJECT_ID_HEX.test(s)) {
+        return s;
+      }
+    }
+  }
+  return '';
+}
+
 /** Maps vendor UI document labels to customers-ms `DocumentType`. */
 export function mapVendorDocumentTypeToMs(
   raw?: string
@@ -185,8 +214,11 @@ function mapMsDescriptionLinesToNotes(
 /** Maps customers MS list row to legacy CRM shape for existing UI. */
 function mapMsMineRowToCustomerByCreator(row: MsCustomerMineRow): CustomerByCreator {
   const created = row.createdAt ?? new Date().toISOString();
+  const rowId =
+    normalizeMsCustomerDocumentId(row._id) ||
+    (typeof row._id === 'string' ? row._id.trim() : '');
   return {
-    _id: String(row._id),
+    _id: rowId,
     name: row.name ?? "",
     lastName: row.lastName ?? "",
     phone: row.phone ?? "",
@@ -266,7 +298,9 @@ export async function getCustomerCreationDetail(
     url: customersMsUrl(`customer/${encodeURIComponent(customerId)}`),
     ...withCustomersMsAuth(),
   });
-  const id = String(row._id ?? customerId);
+  const id =
+    normalizeMsCustomerDocumentId(row._id) ||
+    (typeof customerId === 'string' ? customerId.trim() : '');
   const payload: CustomerCreationDetailPayload = {
     customer: mapMsRowToCreationDetailCustomer(row),
     notes: mapMsDescriptionLinesToNotes(row, id),

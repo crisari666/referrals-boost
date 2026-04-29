@@ -47,7 +47,9 @@ export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Cli
       ? String(interests[interests.length - 1]?.projectId ?? '').trim()
       : '';
   return {
-    id: c._id,
+    id:
+      clientsService.normalizeMsCustomerDocumentId(c._id) ||
+      (typeof c._id === 'string' ? c._id : ''),
     name,
     email: c.email || undefined,
     phone: c.phone || undefined,
