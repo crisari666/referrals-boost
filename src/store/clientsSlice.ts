@@ -5,6 +5,7 @@ import { clients as initialClients, type Client, type ClientStatus } from "@/dat
 import * as clientsService from "@/services/clientsService";
 import type {
   CreationDetailCustomer,
+  CustomerEventItem,
   CreationDetailNote,
   CustomerCreationDetailPayload,
   UpdateMsCustomerPayload,
@@ -12,11 +13,7 @@ import type {
 } from "@/services/clientsService.types";
 import type { EditClientFormState } from "@/features/Clients/EditClientModal";
 import type { RootState } from "@/store";
-
-type AddCustomerNoteArgs = {
-  customerId: string;
-  note: string;
-};
+import type { AddCustomerEventArgs, AddCustomerNoteArgs } from "./clients-slice.types";
 
 export type ClientsDateFilterKind = "all" | "today" | "yesterday" | "custom";
 
@@ -196,6 +193,38 @@ export const addCustomerNoteRequest = createAsyncThunk<
   }
 });
 
+export const fetchCustomerEventsRequest = createAsyncThunk<
+  CustomerEventItem[],
+  string,
+  { rejectValue: string }
+>('clients/fetchCustomerEventsRequest', async (customerId, { rejectWithValue }) => {
+  try {
+    return await clientsService.listCustomerEvents(customerId);
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === 'object' && 'message' in err
+        ? String((err as { message: string }).message)
+        : 'No se pudieron cargar los eventos.';
+    return rejectWithValue(message);
+  }
+});
+
+export const addCustomerEventRequest = createAsyncThunk<
+  CustomerEventItem,
+  AddCustomerEventArgs,
+  { rejectValue: string }
+>('clients/addCustomerEventRequest', async ({ customerId, payload }, { rejectWithValue }) => {
+  try {
+    return await clientsService.createCustomerEvent(customerId, payload);
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === 'object' && 'message' in err
+        ? String((err as { message: string }).message)
+        : 'No se pudo crear el evento.';
+    return rejectWithValue(message);
+  }
+});
+
 export interface ClientsState {
   list: Client[];
   search: string;
@@ -213,6 +242,11 @@ export interface ClientsState {
     errors: Record<string, string>;
     submitting: boolean;
   };
+  customerEvents: CustomerEventItem[];
+  customerEventsStatus: "idle" | "loading" | "succeeded" | "failed";
+  customerEventsError: string | null;
+  createEventLoading: boolean;
+  createEventError: string | null;
 }
 
 const initialState: ClientsState = {
@@ -232,6 +266,11 @@ const initialState: ClientsState = {
     errors: {},
     submitting: false,
   },
+  customerEvents: [],
+  customerEventsStatus: "idle",
+  customerEventsError: null,
+  createEventLoading: false,
+  createEventError: null,
 };
 
 const clientsSlice = createSlice({
@@ -282,6 +321,11 @@ const clientsSlice = createSlice({
       state.vendorCreationDetail = null;
       state.vendorCreationDetailCustomerId = null;
       state.vendorCreationDetailStatus = "idle";
+      state.customerEvents = [];
+      state.customerEventsStatus = "idle";
+      state.customerEventsError = null;
+      state.createEventError = null;
+      state.createEventLoading = false;
     },
     openVendorCustomerEditModal(state) {
       const c = state.vendorCreationDetail?.customer;
@@ -303,6 +347,10 @@ const clientsSlice = createSlice({
     },
     setVendorCustomerEditErrors(state, action: PayloadAction<Record<string, string>>) {
       state.vendorCustomerEdit.errors = action.payload;
+    },
+    clearCustomerEventsError(state) {
+      state.customerEventsError = null;
+      state.createEventError = null;
     },
   },
   extraReducers: (builder) => {
@@ -340,6 +388,33 @@ const clientsSlice = createSlice({
           state.vendorCreationDetail.notes = [action.payload, ...state.vendorCreationDetail.notes];
         }
       })
+      .addCase(fetchCustomerEventsRequest.pending, (state) => {
+        state.customerEventsStatus = "loading";
+        state.customerEventsError = null;
+      })
+      .addCase(fetchCustomerEventsRequest.fulfilled, (state, action) => {
+        state.customerEventsStatus = "succeeded";
+        state.customerEvents = action.payload;
+      })
+      .addCase(fetchCustomerEventsRequest.rejected, (state, action) => {
+        state.customerEventsStatus = "failed";
+        state.customerEvents = [];
+        state.customerEventsError =
+          action.payload ?? action.error.message ?? "No se pudieron cargar los eventos.";
+      })
+      .addCase(addCustomerEventRequest.pending, (state) => {
+        state.createEventLoading = true;
+        state.createEventError = null;
+      })
+      .addCase(addCustomerEventRequest.fulfilled, (state, action) => {
+        state.createEventLoading = false;
+        state.customerEvents = [action.payload, ...state.customerEvents];
+      })
+      .addCase(addCustomerEventRequest.rejected, (state, action) => {
+        state.createEventLoading = false;
+        state.createEventError =
+          action.payload ?? action.error.message ?? "No se pudo crear el evento.";
+      })
       .addCase(submitVendorCustomerEdit.pending, (state) => {
         state.vendorCustomerEdit.submitting = true;
       })
@@ -376,6 +451,7 @@ export const {
   closeVendorCustomerEditModal,
   setVendorCustomerEditField,
   setVendorCustomerEditErrors,
+  clearCustomerEventsError,
 } = clientsSlice.actions;
 
 function toYmd(value: Date): string {

@@ -15,6 +15,9 @@ import type {
   CreateCustomerResponse,
   CreateVendorCustomerPayload,
   CreateVendorCustomerResponse,
+  CreateCustomerEventPayload,
+  CustomerEventItem,
+  CustomerEventListResponse,
   CreationDetailCustomer,
   CreationDetailNote,
   CustomerByCreator,
@@ -323,6 +326,28 @@ export async function patchMsCustomerStep(
       url: customersMsUrl(
         `customer/${encodeURIComponent(customerId)}/step`
       ),
+      ...withCustomersMsAuth(),
+    }
+  );
+}
+
+export async function listCustomerEvents(customerId: string): Promise<CustomerEventItem[]> {
+  const response = await http.get<CustomerEventListResponse>("", {
+    url: customersMsUrl(`customer/${encodeURIComponent(customerId)}/events`),
+    ...withCustomersMsAuth(),
+  });
+  return response.items ?? [];
+}
+
+export async function createCustomerEvent(
+  customerId: string,
+  payload: CreateCustomerEventPayload,
+): Promise<CustomerEventItem> {
+  return http.post<CustomerEventItem>(
+    '',
+    payload,
+    {
+      url: customersMsUrl(`customer/${encodeURIComponent(customerId)}/events`),
       ...withCustomersMsAuth(),
     }
   );

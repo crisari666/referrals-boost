@@ -229,3 +229,36 @@ export type UpdateMsCustomerPayload = {
   documentType?: "cc" | "passport";
   interestedProjects?: { projectId: string; date?: string }[];
 };
+
+export type CustomerEventType =
+  | 'WHATSAPP_CALL'
+  | 'WHATSAPP_MESSAGE'
+  | 'PHONE_CALL'
+  | 'VIDEO_CALL'
+  | 'CALL_CRM';
+
+export type CustomerEventItem = {
+  id: string;
+  eventType: CustomerEventType;
+  description: string;
+  score?: number;
+  customerId: string;
+  userId: string;
+  officeId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CustomerEventListResponse = {
+  items: CustomerEventItem[];
+  total: number;
+  limit: number;
+  skip: number;
+};
+
+export type CreateCustomerEventPayload = {
+  eventType: CustomerEventType;
+  description: string;
+  score?: number;
+};
