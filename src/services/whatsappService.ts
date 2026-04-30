@@ -3,6 +3,7 @@
  * REST base: {VITE_URL_WHATSAPP_MS}/whatsapp-web (global prefix ws-rest is included in env).
  */
 
+import i18n from "@/i18n";
 import * as http from "@/lib/http";
 import type { WhatsAppChat, WhatsAppMessage } from "@/store/whatsappSlice";
 
@@ -91,15 +92,13 @@ export function sendMessage(
   },
 ) {
   if (payload.mediaFile) {
-    return Promise.reject(
-      new Error("El envío de archivos multimedia no está disponible aún"),
-    );
+    return Promise.reject(new Error(i18n.t("whatsapp.mediaSendUnavailable")));
   }
   const digits = payload.chatId.includes("@")
     ? (payload.chatId.split("@")[0] || "").replace(/\D/g, "")
     : payload.chatId.replace(/\D/g, "");
   if (!digits) {
-    return Promise.reject(new Error("Destino inválido"));
+    return Promise.reject(new Error(i18n.t("whatsapp.invalidDestination")));
   }
   return http
     .post<{ success: boolean; messageId: string; timestamp: number }>(

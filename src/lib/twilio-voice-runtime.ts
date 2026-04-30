@@ -1,5 +1,6 @@
 import { Device, type Call } from '@twilio/voice-sdk';
 
+import i18n from '@/i18n';
 import type { TwilioCallPhase } from '@/types/twilio-voice';
 
 let device: Device | null = null;
@@ -71,7 +72,7 @@ export async function connectOutboundCall(options: {
   customerId: string;
 }): Promise<void> {
   if (!device) {
-    throw new Error('Teléfono VoIP no listo');
+    throw new Error(i18n.t('twilio.voipPhoneNotReady'));
   }
   listeners.onCallPhase?.('connecting');
   const call = await device.connect({

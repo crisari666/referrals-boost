@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { http } from '@/lib/http';
 
 export type UserTwilioNumberResult = {
@@ -22,7 +23,7 @@ export type UserTwilioNumberResponse = {
 export async function fetchUserTwilioNumber(): Promise<UserTwilioNumberResult> {
   const data = await http.get<UserTwilioNumberResponse>('twilio-numbers/user-number');
   if (!data?.result?.number) {
-    throw new Error('No se pudo obtener el número Twilio del usuario');
+    throw new Error(i18n.t('twilio.twilioNumberFetchFailed'));
   }
   return data.result;
 }

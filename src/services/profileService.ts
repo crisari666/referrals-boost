@@ -3,6 +3,7 @@
  */
 
 import { isAxiosError } from "axios";
+import i18n from "@/i18n";
 import { get, patch, post } from "@/lib/http";
 
 export type OwnProfile = {
@@ -45,7 +46,7 @@ function rethrowAxios(err: unknown): never {
 export async function getOwnProfile(): Promise<OwnProfile> {
   try {
     const data = await get<UsersApiEnvelope<OwnProfile>>("users/me");
-    assertOk(data, "No se pudo cargar el perfil.");
+    assertOk(data, i18n.t("profile.apiProfileLoadFailed"));
     return data.result;
   } catch (e) {
     rethrowAxios(e);
@@ -58,7 +59,7 @@ export async function patchOwnProfile(
 ): Promise<void> {
   try {
     const data = await patch<UsersApiEnvelope<boolean>>("users/me", payload);
-    assertOk(data, "No se pudo guardar el perfil.");
+    assertOk(data, i18n.t("profile.apiProfileSaveFailed"));
   } catch (e) {
     rethrowAxios(e);
   }
@@ -71,7 +72,7 @@ export async function requestEmailChange(newEmail: string): Promise<void> {
       "users/me/email-change/request",
       { newEmail }
     );
-    assertOk(data, "No se pudo enviar el código de verificación.");
+    assertOk(data, i18n.t("profile.apiVerificationSendFailed"));
   } catch (e) {
     rethrowAxios(e);
   }
@@ -87,7 +88,7 @@ export async function confirmEmailChange(params: {
       "users/me/email-change/confirm",
       params
     );
-    assertOk(data, "No se pudo confirmar el correo.");
+    assertOk(data, i18n.t("profile.apiEmailConfirmFailed"));
   } catch (e) {
     rethrowAxios(e);
   }
@@ -103,7 +104,7 @@ export async function changeOwnPassword(params: {
       currentPassword: params.currentPassword,
       newPassword: params.newPassword,
     });
-    assertOk(data, "No se pudo actualizar la contraseña.");
+    assertOk(data, i18n.t("profile.apiPasswordUpdateFailed"));
   } catch (e) {
     rethrowAxios(e);
   }

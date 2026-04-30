@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import i18n from '@/i18n';
+
 export type VoipTokenApiResult = {
   tokenJWT: string;
   token: unknown;
@@ -13,7 +15,7 @@ export type VoipTokenApiResponse = {
 function resolveVoipBaseUrl(): string {
   const raw = import.meta.env.VITE_URL_VOIP_SERVER?.trim() ?? '';
   if (!raw) {
-    throw new Error('Falta VITE_URL_VOIP_SERVER en el entorno');
+    throw new Error(i18n.t('twilio.missingVoipEnv'));
   }
   return raw.replace(/\/$/, '');
 }
@@ -27,7 +29,7 @@ export async function fetchVoipAccessToken(identity: string): Promise<VoipTokenA
     },
   });
   if (!data?.result?.tokenJWT) {
-    throw new Error('Respuesta de token VoIP inválida');
+    throw new Error(i18n.t('twilio.voipTokenInvalid'));
   }
   return data.result;
 }

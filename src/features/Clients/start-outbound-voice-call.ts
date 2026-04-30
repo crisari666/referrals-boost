@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import type { AppDispatch, RootState } from '@/store';
 import { setCallError, setCallPhase, setDialogOpen } from '@/store/twilioVoiceSlice';
 import { connectOutboundCall } from '@/lib/twilio-voice-runtime';
@@ -11,19 +12,19 @@ export const startOutboundCall =
     const userNumber = twilioVoice.userNumber;
     const digits = payload.toDigits.replace(/\D/g, '');
     if (!userId) {
-      const msg = 'Sesión no válida';
+      const msg = i18n.t('twilio.invalidSession');
       dispatch(setCallError(msg));
       dispatch(setCallPhase('error'));
       throw new Error(msg);
     }
     if (!userNumber) {
-      const msg = 'No hay número Twilio asignado';
+      const msg = i18n.t('twilio.noTwilioNumber');
       dispatch(setCallError(msg));
       dispatch(setCallPhase('error'));
       throw new Error(msg);
     }
     if (twilioVoice.registrationStatus !== 'registered') {
-      const msg = 'VoIP aún no está listo';
+      const msg = i18n.t('twilio.voipNotReady');
       dispatch(setCallError(msg));
       dispatch(setCallPhase('error'));
       throw new Error(msg);
@@ -40,7 +41,7 @@ export const startOutboundCall =
         customerId: payload.customerId,
       });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'No se pudo iniciar la llamada';
+      const msg = e instanceof Error ? e.message : i18n.t('twilio.callStartFailed');
       dispatch(setCallError(msg));
       dispatch(setCallPhase('error'));
       throw e;

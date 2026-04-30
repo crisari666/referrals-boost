@@ -1,5 +1,6 @@
 import { PDFDocument, rgb, type PDFImage } from 'pdf-lib';
 
+import i18n from '@/i18n';
 import {
   DEFAULT_SIGN_PLACEHOLDER,
   findSignPlaceholderInPdf,
@@ -51,9 +52,7 @@ export async function mergeSignatureImageIntoPdf(
   const marker = options?.placeholder ?? DEFAULT_SIGN_PLACEHOLDER;
   const rect = await findSignPlaceholderInPdf(pdfBytes, marker);
   if (!rect) {
-    throw new Error(
-      `No se encontró el marcador "${marker}" en el PDF. Añádelo en el documento donde debe ir la firma.`
-    );
+    throw new Error(i18n.t('contract.pdfMarkerNotFound', { marker }));
   }
 
   const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -61,7 +60,7 @@ export async function mergeSignatureImageIntoPdf(
   const pages = pdfDoc.getPages();
   const page = pages[rect.pageIndex];
   if (!page) {
-    throw new Error('Página del marcador de firma no válida.');
+    throw new Error(i18n.t('contract.invalidSignaturePage'));
   }
 
   const { width: pageW, height: pageH } = page.getSize();
@@ -144,9 +143,7 @@ export async function mergeSignatureImageIntoPdf(
 
   const out = await pdfDoc.save();
   if (out.byteLength > MAX_SIGNED_PDF_BYTES) {
-    throw new Error(
-      'El documento firmado es demasiado grande. Prueba con una firma más pequeña.'
-    );
+    throw new Error(i18n.t('contract.signedDocumentTooLarge'));
   }
   return out;
 }
