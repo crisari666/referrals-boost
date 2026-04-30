@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import i18n from '@/i18n';
 import { askAgent } from '@/services/agentChatService';
 import { getProjectResourceUrl } from '@/services/projectsService';
 import type { ChatHistoryMessage } from '@/types/agent-chat';
@@ -8,11 +9,10 @@ import {
   mediaProjectsToResources,
 } from '@/features/Assistant/utils/merge-agent-chat-resources';
 
-const welcomeMessage = (): AssistantMessage => ({
+const buildWelcomeMessage = (): AssistantMessage => ({
   id: 'welcome',
   role: 'assistant',
-  content:
-    '¡Hola! 👋 Soy tu **asistente virtual de LoteLink**. Estoy entrenado con toda la información de nuestros proyectos inmobiliarios.\n\nPuedo ayudarte con:\n• Detalles y precios de proyectos\n• Opciones de financiamiento\n• Tips de ventas\n• Documentos y contratos\n\n¿En qué puedo ayudarte hoy?',
+  content: i18n.t('assistant.welcomeMarkdown'),
   timestamp: new Date().toISOString(),
 });
 
@@ -30,8 +30,7 @@ function inferResourceType(ref: string): ResourceType {
 function sourceToResource(src: string): Resource {
   const trimmed = src.trim();
   const label =
-    trimmed.split('/').pop()?.split('?')[0]?.trim() || trimmed || 'Fuente';
-
+    trimmed.split('/').pop()?.split('?')[0]?.trim() || trimmed || i18n.t('assistant.sourceFallback');
   if (/^https?:\/\//i.test(trimmed)) {
     const type = inferResourceType(trimmed);
     return {
@@ -41,7 +40,6 @@ function sourceToResource(src: string): Resource {
       previewUrl: type === 'image' ? trimmed : undefined,
     };
   }
-
   const resolved = getProjectResourceUrl(trimmed);
   if (resolved) {
     const type = inferResourceType(resolved);
@@ -52,7 +50,6 @@ function sourceToResource(src: string): Resource {
       previewUrl: type === 'image' ? resolved : undefined,
     };
   }
-
   return {
     type: inferResourceType(trimmed),
     label,
@@ -68,36 +65,43 @@ function buildHistory(messages: AssistantMessage[]): ChatHistoryMessage[] {
 }
 
 export function useAgentChat() {
-  const [messages, setMessages] = useState<AssistantMessage[]>(() => [welcomeMessage()]);
+  const [messages, setMessages] = useState<AssistantMessage[]>(() => [buildWelcomeMessage()]);
   const [isPending, setIsPending] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const messagesRef = useRef(messages);
   const pendingRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
-
+  useEffect(() => {
+    const onLanguageChanged = (): void => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === 'welcome' ? { ...m, content: i18n.t('assistant.welcomeMarkdown') } : m,
+        ),
+      );
+    };
+    i18n.on('languageChanged', onLanguageChanged);
+    return () => {
+      i18n.off('languageChanged', onLanguageChanged);
+    };
+  }, []);
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
-
   useEffect(() => {
     scrollToBottom();
   }, [messages, isPending, scrollToBottom]);
-
   const onScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 100);
   }, []);
-
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || pendingRef.current) return;
-
     const chatHistory = buildHistory(messagesRef.current);
     const userMessage: AssistantMessage = {
       id: `user-${Date.now()}`,
@@ -105,18 +109,15 @@ export function useAgentChat() {
       content: trimmed,
       timestamp: new Date().toISOString(),
     };
-
     pendingRef.current = true;
     setIsPending(true);
     setMessages((prev) => [...prev, userMessage]);
-
     try {
       const data = await askAgent({ question: trimmed, chatHistory });
       const fromSources = data.sources.map((s) => sourceToResource(s));
       const fromMedia = mediaProjectsToResources(data.media, sourceToResource);
       const merged = dedupeResources([...fromSources, ...fromMedia]);
       const resources = merged.length > 0 ? merged : undefined;
-
       setMessages((prev) => [
         ...prev,
         {
@@ -133,7 +134,7 @@ export function useAgentChat() {
         {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content: 'Lo siento, ocurrió un error. Por favor intenta de nuevo.',
+          content: i18n.t('assistant.sendError'),
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -142,7 +143,6 @@ export function useAgentChat() {
       setIsPending(false);
     }
   }, []);
-
   return {
     messages,
     isPending,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,23 +17,20 @@ import { useAppDispatch } from "@/store";
 const OTP_LENGTH = 6;
 
 export function ProfileAccountSection() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const dispatch = useAppDispatch();
-
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-
   const [savingProfile, setSavingProfile] = useState(false);
-
   const [newEmail, setNewEmail] = useState("");
   const [emailCode, setEmailCode] = useState("");
   const [emailStepIdle, setEmailStepIdle] = useState(true);
   const [requestingCode, setRequestingCode] = useState(false);
   const [confirmingEmail, setConfirmingEmail] = useState(false);
-
   const loadProfile = useCallback(async () => {
     setLoadingProfile(true);
     try {
@@ -45,17 +43,15 @@ export function ProfileAccountSection() {
       const msg =
         err && typeof err === "object" && "message" in err
           ? String((err as { message: string }).message)
-          : "No se pudo cargar el perfil.";
-      toast({ title: "Error", description: msg, variant: "destructive" });
+          : t("profile.apiProfileLoadFailed");
+      toast({ title: t("common.errorTitle"), description: msg, variant: "destructive" });
     } finally {
       setLoadingProfile(false);
     }
-  }, [toast]);
-
+  }, [toast, t]);
   useEffect(() => {
     void loadProfile();
   }, [loadProfile]);
-
   const onSaveProfile = async (e: FormEvent) => {
     e.preventDefault();
     setSavingProfile(true);
@@ -63,26 +59,25 @@ export function ProfileAccountSection() {
       await patchOwnProfile({ name, lastName, phone });
       await dispatch(refreshOwnProfile()).unwrap();
       toast({
-        title: "Perfil actualizado",
-        description: "Tus datos se guardaron correctamente.",
+        title: t("profile.accountProfileUpdated"),
+        description: t("profile.accountProfileUpdatedDesc"),
       });
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "message" in err
           ? String((err as { message: string }).message)
-          : "No se pudo guardar.";
-      toast({ title: "Error", description: msg, variant: "destructive" });
+          : t("profile.accountSaveFailed");
+      toast({ title: t("common.errorTitle"), description: msg, variant: "destructive" });
     } finally {
       setSavingProfile(false);
     }
   };
-
   const onRequestEmailCode = async () => {
     const trimmed = newEmail.trim();
     if (trimmed.length < 3) {
       toast({
-        title: "Correo",
-        description: "Ingresa un correo electrónico válido.",
+        title: t("profile.accountEmailLabel"),
+        description: t("profile.accountEmailInvalid"),
         variant: "destructive",
       });
       return;
@@ -93,27 +88,26 @@ export function ProfileAccountSection() {
       setEmailStepIdle(false);
       setEmailCode("");
       toast({
-        title: "Código enviado",
-        description: "Revisa la bandeja del nuevo correo e ingresa el código aquí.",
+        title: t("profile.accountCodeSentTitle"),
+        description: t("profile.accountCodeSentDesc"),
       });
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "message" in err
           ? String((err as { message: string }).message)
-          : "No se pudo enviar el código.";
-      toast({ title: "Error", description: msg, variant: "destructive" });
+          : t("profile.accountCodeSendFailed");
+      toast({ title: t("common.errorTitle"), description: msg, variant: "destructive" });
     } finally {
       setRequestingCode(false);
     }
   };
-
   const onConfirmEmail = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = newEmail.trim();
     if (emailCode.trim().length !== OTP_LENGTH) {
       toast({
-        title: "Código",
-        description: `El código debe tener ${OTP_LENGTH} dígitos.`,
+        title: t("profile.accountCodeTitle"),
+        description: t("profile.accountCodeLengthDesc", { count: OTP_LENGTH }),
         variant: "destructive",
       });
       return;
@@ -127,39 +121,36 @@ export function ProfileAccountSection() {
       setEmailCode("");
       setEmailStepIdle(true);
       toast({
-        title: "Correo actualizado",
-        description: "Tu correo de acceso se actualizó correctamente.",
+        title: t("profile.accountEmailUpdatedTitle"),
+        description: t("profile.accountEmailUpdatedDesc"),
       });
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "message" in err
           ? String((err as { message: string }).message)
-          : "No se pudo confirmar el correo.";
-      toast({ title: "Error", description: msg, variant: "destructive" });
+          : t("profile.accountEmailConfirmFailed");
+      toast({ title: t("common.errorTitle"), description: msg, variant: "destructive" });
     } finally {
       setConfirmingEmail(false);
     }
   };
-
   if (loadingProfile) {
     return (
       <section className="rounded-xl border border-border bg-card p-6 flex items-center gap-2 text-muted-foreground">
         <Loader2 className="w-5 h-5 animate-spin" />
-        <span>Cargando datos…</span>
+        <span>{t("profile.accountLoading")}</span>
       </section>
     );
   }
-
   return (
     <section>
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Datos de cuenta</h2>
-        <p className="text-sm text-muted-foreground">Nombre, teléfono y correo de contacto</p>
+        <h2 className="text-lg font-semibold text-foreground">{t("profile.accountSectionTitle")}</h2>
+        <p className="text-sm text-muted-foreground">{t("profile.accountSectionSubtitle")}</p>
       </div>
-
       <form onSubmit={onSaveProfile} className="space-y-4 max-w-md">
         <div className="space-y-2">
-          <Label htmlFor="profile-name">Nombre</Label>
+          <Label htmlFor="profile-name">{t("profile.accountLabelName")}</Label>
           <Input
             id="profile-name"
             autoComplete="given-name"
@@ -169,7 +160,7 @@ export function ProfileAccountSection() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="profile-lastname">Apellido</Label>
+          <Label htmlFor="profile-lastname">{t("profile.accountLabelLastName")}</Label>
           <Input
             id="profile-lastname"
             autoComplete="family-name"
@@ -179,7 +170,7 @@ export function ProfileAccountSection() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="profile-phone">Teléfono de contacto</Label>
+          <Label htmlFor="profile-phone">{t("profile.accountLabelPhone")}</Label>
           <Input
             id="profile-phone"
             type="tel"
@@ -197,30 +188,28 @@ export function ProfileAccountSection() {
           {savingProfile ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              Guardando…
+              {t("common.saving")}
             </>
           ) : (
-            "Guardar datos"
+            t("profile.accountSaveData")
           )}
         </Button>
       </form>
-
       <div className="border-t border-border pt-6 space-y-4 max-w-md">
         <div className="space-y-1">
-          <Label>Correo actual</Label>
+          <Label>{t("profile.accountCurrentEmail")}</Label>
           <p className="text-sm text-foreground font-medium">{email}</p>
         </div>
-
         <form onSubmit={onConfirmEmail} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="profile-new-email">Nuevo correo</Label>
+            <Label htmlFor="profile-new-email">{t("profile.accountNewEmail")}</Label>
             <Input
               id="profile-new-email"
               type="email"
               autoComplete="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              placeholder="nuevo@correo.com"
+              placeholder={t("profile.accountNewEmailPlaceholder")}
             />
           </div>
           <Button
@@ -233,17 +222,16 @@ export function ProfileAccountSection() {
             {requestingCode ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Enviando…
+                {t("common.sending")}
               </>
             ) : (
-              "Enviar código de verificación"
+              t("profile.accountSendVerificationCode")
             )}
           </Button>
-
           {!emailStepIdle ? (
             <>
               <div className="space-y-2">
-                <Label htmlFor="profile-email-code">Código del correo nuevo</Label>
+                <Label htmlFor="profile-email-code">{t("profile.accountNewEmailCodeLabel")}</Label>
                 <Input
                   id="profile-email-code"
                   inputMode="numeric"
@@ -263,10 +251,10 @@ export function ProfileAccountSection() {
                   {confirmingEmail ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Confirmando…
+                      {t("profile.accountConfirming")}
                     </>
                   ) : (
-                    "Confirmar nuevo correo"
+                    t("profile.accountConfirmEmail")
                   )}
                 </Button>
                 <Button
@@ -278,7 +266,7 @@ export function ProfileAccountSection() {
                     setEmailCode("");
                   }}
                 >
-                  Cancelar
+                  {t("common.cancel")}
                 </Button>
               </div>
             </>

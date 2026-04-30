@@ -1,4 +1,5 @@
 import { Link2, Copy } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 
 export type ProfileReferralSectionProps = {
@@ -7,6 +8,7 @@ export type ProfileReferralSectionProps = {
 };
 
 export function ProfileReferralSection({ referralLink, onCopy }: ProfileReferralSectionProps) {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -16,22 +18,21 @@ export function ProfileReferralSection({ referralLink, onCopy }: ProfileReferral
     >
       <div className="flex items-center gap-2 mb-3">
         <Link2 className="w-4 h-4 text-primary" />
-        <h3 className="font-bold text-foreground">Tu Enlace de Referido</h3>
+        <h3 className="font-bold text-foreground">{t('profile.referralTitle')}</h3>
       </div>
       <div className="flex items-center gap-2">
-        {/* <div className="flex-1 bg-secondary rounded-xl px-4 py-3 text-sm text-foreground truncate font-mono">
-          {referralLink}
-        </div> */}
         <button
           type="button"
           onClick={onCopy}
+          title={referralLink}
           className="w-10 h-10 gradient-commission rounded-xl flex items-center justify-center shrink-0"
+          aria-label={t('profile.linkCopiedTitle')}
         >
           <Copy className="w-4 h-4 text-primary-foreground" />
         </button>
       </div>
       <p className="text-xs text-muted-foreground mt-2">
-        Comparte este enlace y cada cliente que se registre quedará vinculado a ti automáticamente.
+        {t('profile.referralHelpText')}
       </p>
     </motion.div>
   );

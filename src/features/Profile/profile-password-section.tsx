@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ type ProfilePasswordSectionProps = {
 };
 
 export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps = {}) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -20,21 +22,20 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNext, setShowNext] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (next.length < 8) {
       toast({
-        title: 'Contraseña',
-        description: 'La nueva contraseña debe tener al menos 8 caracteres.',
+        title: t('profile.securityPasswordTitle'),
+        description: t('profile.securityPasswordMinError'),
         variant: 'destructive',
       });
       return;
     }
     if (next !== confirm) {
       toast({
-        title: 'Contraseña',
-        description: 'Las contraseñas no coinciden.',
+        title: t('profile.securityPasswordTitle'),
+        description: t('profile.securityPasswordMismatch'),
         variant: 'destructive',
       });
       return;
@@ -46,20 +47,19 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
       setNext('');
       setConfirm('');
       toast({
-        title: 'Contraseña actualizada',
-        description: 'Recibirás un correo de confirmación por seguridad.',
+        title: t('profile.securityPasswordUpdatedTitle'),
+        description: t('profile.securityPasswordUpdatedDesc'),
       });
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: string }).message)
-          : 'No se pudo actualizar la contraseña.';
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
+          : t('profile.apiPasswordUpdateFailed');
+      toast({ title: t('common.errorTitle'), description: msg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <section
       className={cn(
@@ -68,12 +68,12 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
       )}
     >
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Seguridad</h2>
-        <p className="text-sm text-muted-foreground">Cambiar contraseña de acceso</p>
+        <h2 className="text-lg font-semibold text-foreground">{t('profile.securityTitle')}</h2>
+        <p className="text-sm text-muted-foreground">{t('profile.securitySubtitle')}</p>
       </div>
       <form onSubmit={onSubmit} className="space-y-4 max-w-md">
         <div className="space-y-2">
-          <Label htmlFor="profile-current-pass">Contraseña actual</Label>
+          <Label htmlFor="profile-current-pass">{t('profile.securityCurrentPassword')}</Label>
           <div className="relative">
             <Input
               id="profile-current-pass"
@@ -90,7 +90,7 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
               size="icon"
               className="absolute right-0 top-0 h-full px-2 text-muted-foreground hover:text-foreground"
               onClick={() => setShowCurrent((v) => !v)}
-              aria-label={showCurrent ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-label={showCurrent ? t('profile.hidePassword') : t('profile.showPassword')}
               aria-pressed={showCurrent}
             >
               {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -98,7 +98,7 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="profile-new-pass">Nueva contraseña</Label>
+          <Label htmlFor="profile-new-pass">{t('profile.securityNewPassword')}</Label>
           <div className="relative">
             <Input
               id="profile-new-pass"
@@ -116,7 +116,7 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
               size="icon"
               className="absolute right-0 top-0 h-full px-2 text-muted-foreground hover:text-foreground"
               onClick={() => setShowNext((v) => !v)}
-              aria-label={showNext ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-label={showNext ? t('profile.hidePassword') : t('profile.showPassword')}
               aria-pressed={showNext}
             >
               {showNext ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -124,7 +124,7 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="profile-confirm-pass">Confirmar nueva contraseña</Label>
+          <Label htmlFor="profile-confirm-pass">{t('profile.securityConfirmPassword')}</Label>
           <div className="relative">
             <Input
               id="profile-confirm-pass"
@@ -142,7 +142,7 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
               size="icon"
               className="absolute right-0 top-0 h-full px-2 text-muted-foreground hover:text-foreground"
               onClick={() => setShowConfirm((v) => !v)}
-              aria-label={showConfirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-label={showConfirm ? t('profile.hidePassword') : t('profile.showPassword')}
               aria-pressed={showConfirm}
             >
               {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -153,10 +153,10 @@ export function ProfilePasswordSection({ embedded }: ProfilePasswordSectionProps
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              Guardando…
+              {t('common.saving')}
             </>
           ) : (
-            'Actualizar contraseña'
+            t('profile.securityUpdatePassword')
           )}
         </Button>
       </form>

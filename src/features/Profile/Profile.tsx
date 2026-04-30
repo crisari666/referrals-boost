@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Lock, LogOut, User } from 'lucide-react';
 import { ACHIEVEMENTS_GOALS_USERNAME } from '@/constants/app-constants';
@@ -18,6 +19,7 @@ import { ProfileSummarySection } from './profile-summary-section';
 const VENDOR_LEVEL = 4;
 
 const Profile = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -46,7 +48,7 @@ const Profile = () => {
 
   const copyLink = () => {
     navigator.clipboard.writeText(seller.referralLink);
-    toast({ title: '¡Enlace copiado!', description: 'Compártelo con tus clientes potenciales' });
+    toast({ title: t('profile.linkCopiedTitle'), description: t('profile.linkCopiedDescription') });
   };
 
   const handleLogout = () => {
@@ -59,7 +61,7 @@ const Profile = () => {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-4">
-      <h1 className="text-2xl font-extrabold text-foreground">Mi Perfil</h1>
+      <h1 className="text-2xl font-extrabold text-foreground">{t('profile.pageTitle')}</h1>
 
       <ProfileIdentityCard
         displayName={nameShown}
@@ -78,14 +80,14 @@ const Profile = () => {
               className="gap-2 rounded-lg cursor-pointer transition-colors duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-background/60 data-[state=active]:[&_svg]:text-foreground data-[state=inactive]:[&_svg]:opacity-60"
             >
               <User className="h-4 w-4 shrink-0" aria-hidden />
-              Cuenta
+              {t('profile.tabAccount')}
             </TabsTrigger>
             <TabsTrigger
               value="security"
               className="gap-2 rounded-lg cursor-pointer transition-colors duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:bg-background/60 data-[state=active]:[&_svg]:text-foreground data-[state=inactive]:[&_svg]:opacity-60"
             >
               <Lock className="h-4 w-4 shrink-0" aria-hidden />
-              Seguridad
+              {t('profile.tabSecurity')}
             </TabsTrigger>
           </TabsList>
           <TabsContent
@@ -108,7 +110,7 @@ const Profile = () => {
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" aria-hidden />
-                Cerrar sesión
+                {t('profile.logout')}
               </Button>
             </div>
           </TabsContent>
@@ -127,7 +129,7 @@ const Profile = () => {
       <div className="hidden border-t border-border pt-6 pb-2 md:block md:pb-0">
         <Button type="button" variant="outline" className={logoutButtonClassName} onClick={handleLogout}>
           <LogOut className="h-4 w-4" aria-hidden />
-          Cerrar sesión
+          {t('profile.logout')}
         </Button>
       </div>
     </div>
