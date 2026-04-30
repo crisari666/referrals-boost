@@ -1,5 +1,5 @@
+import { getDateFnsLocale } from "@/i18n/date-locale";
 import { addDays, format, isSameDay } from "date-fns";
-import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -20,6 +20,7 @@ const ScheduleWeekStrip = ({
   onSelectDate,
   pendingCountByDay,
 }: ScheduleWeekStripProps) => {
+  const dateLocale = getDateFnsLocale();
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
@@ -37,7 +38,7 @@ const ScheduleWeekStrip = ({
           <ChevronLeft className="w-4 h-4 text-muted-foreground" />
         </button>
         <span className="text-sm font-semibold text-foreground capitalize">
-          {format(weekStart, "MMMM yyyy", { locale: es })}
+          {format(weekStart, "MMMM yyyy", { locale: dateLocale })}
         </span>
         <button
           type="button"
@@ -73,7 +74,7 @@ const ScheduleWeekStrip = ({
                   isSelected ? "text-primary-foreground/70" : "text-muted-foreground"
                 }`}
               >
-                {format(day, "EEE", { locale: es })}
+                {format(day, "EEE", { locale: dateLocale })}
               </span>
               <span className="text-lg font-bold">{format(day, "d")}</span>
               {pending > 0 ? (

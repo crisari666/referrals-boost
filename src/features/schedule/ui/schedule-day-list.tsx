@@ -1,9 +1,10 @@
 import VisitCard from "./VisitCard";
 import type { ScheduleVisitRow } from "@/types/schedule";
+import { getDateFnsLocale } from "@/i18n/date-locale";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ScheduleDayListProps {
   selectedDate: Date;
@@ -18,10 +19,13 @@ const ScheduleDayList = ({
   showScheduleAssignee = false,
   assigneeNamesById = {},
 }: ScheduleDayListProps) => {
+  const { t, i18n } = useTranslation();
+  const dateLocale = getDateFnsLocale();
+  const datePattern = i18n.language?.startsWith("en") ? "EEEE, MMMM d" : "EEEE d 'de' MMMM";
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-foreground capitalize">
-        {format(selectedDate, "EEEE d 'de' MMMM", { locale: es })}
+        {format(selectedDate, datePattern, { locale: dateLocale })}
       </h2>
 
       <AnimatePresence mode="wait">
@@ -43,10 +47,8 @@ const ScheduleDayList = ({
             className="flex flex-col items-center py-12 text-muted-foreground"
           >
             <CalendarDays className="w-10 h-10 mb-3 opacity-40" />
-            <p className="text-sm font-medium">Sin visitas este día</p>
-            <p className="text-xs mt-1">
-              Selecciona otra fecha o agenda una nueva visita
-            </p>
+            <p className="text-sm font-medium">{t("schedule.emptyDayTitle")}</p>
+            <p className="text-xs mt-1">{t("schedule.emptyDayHint")}</p>
           </motion.div>
         )}
       </AnimatePresence>

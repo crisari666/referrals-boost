@@ -1,5 +1,6 @@
-import { VENTOR_SCHEDULE_STATUS_FILTERS } from "@/features/schedule/lib/schedule.constants";
+import { VENTOR_SCHEDULE_STATUS_FILTER_METAS } from "@/features/schedule/lib/schedule.constants";
 import type { VentorScheduleStatusApi } from "@/services/scheduleService";
+import { useTranslation } from "react-i18next";
 
 interface ScheduleStatusFiltersProps {
   filter: VentorScheduleStatusApi | "all";
@@ -10,9 +11,10 @@ const ScheduleStatusFilters = ({
   filter,
   onFilterChange,
 }: ScheduleStatusFiltersProps) => {
+  const { t } = useTranslation();
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
-      {VENTOR_SCHEDULE_STATUS_FILTERS.map((sf) => (
+      {VENTOR_SCHEDULE_STATUS_FILTER_METAS.map((sf) => (
         <button
           type="button"
           key={sf.value}
@@ -23,7 +25,7 @@ const ScheduleStatusFilters = ({
               : "bg-secondary text-muted-foreground hover:bg-secondary/80"
           }`}
         >
-          {sf.label}
+          {t(sf.labelKey)}
         </button>
       ))}
     </div>

@@ -1,29 +1,27 @@
 import type { VentorScheduleEventTypeApi, VentorScheduleStatusApi } from "@/services/scheduleService";
 
-export const VENTOR_SCHEDULE_STATUS_FILTERS: {
+export const VENTOR_SCHEDULE_STATUS_FILTER_METAS: {
   value: VentorScheduleStatusApi | "all";
-  label: string;
+  labelKey: string;
 }[] = [
-  { value: "all", label: "Todas" },
-  { value: "pending", label: "Pendientes" },
-  { value: "done", label: "Hechas" },
-  { value: "cancelled", label: "Canceladas" },
+  { value: "all", labelKey: "schedule.filterAll" },
+  { value: "pending", labelKey: "schedule.filterPending" },
+  { value: "done", labelKey: "schedule.filterDone" },
+  { value: "cancelled", labelKey: "schedule.filterCancelled" },
 ];
 
-export const VENTOR_SCHEDULE_STATUS_LABELS: Record<VentorScheduleStatusApi, string> =
-  {
-    pending: "Pendiente",
-    done: "Hecha",
-    cancelled: "Cancelada",
-  };
+export const VENTOR_SCHEDULE_STATUS_LABEL_KEYS: Record<VentorScheduleStatusApi, string> = {
+  pending: "schedule.statusPending",
+  done: "schedule.statusDone",
+  cancelled: "schedule.statusCancelled",
+};
 
-export const VENTOR_SCHEDULE_TYPE_LABELS: Record<VentorScheduleEventTypeApi, string> =
-  {
-    virtual: "Virtual",
-    office: "Oficina",
-    on_land: "En terreno",
-    call: "Llamada",
-  };
+export const VENTOR_SCHEDULE_TYPE_LABEL_KEYS: Record<VentorScheduleEventTypeApi, string> = {
+  virtual: "schedule.typeVirtual",
+  office: "schedule.typeOffice",
+  on_land: "schedule.typeOnLand",
+  call: "schedule.typeCall",
+};
 
 export const VENTOR_SCHEDULE_STATUS_BADGE_CLASS: Record<
   VentorScheduleStatusApi,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,18 +16,8 @@ import { CalendarPlus, Building2, MapPin, MonitorSmartphone, Phone } from "lucid
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import type { VentorScheduleEventTypeApi } from "@/services/scheduleService";
-import { VENTOR_SCHEDULE_TYPE_LABELS } from "@/features/schedule/lib/schedule.constants";
-
-const eventTypes: {
-  value: VentorScheduleEventTypeApi;
-  label: string;
-  Icon: LucideIcon;
-}[] = [
-  { value: "office", label: VENTOR_SCHEDULE_TYPE_LABELS.office, Icon: Building2 },
-  { value: "on_land", label: VENTOR_SCHEDULE_TYPE_LABELS.on_land, Icon: MapPin },
-  { value: "virtual", label: VENTOR_SCHEDULE_TYPE_LABELS.virtual, Icon: MonitorSmartphone },
-  { value: "call", label: VENTOR_SCHEDULE_TYPE_LABELS.call, Icon: Phone },
-];
+import { VENTOR_SCHEDULE_TYPE_LABEL_KEYS } from "@/features/schedule/lib/schedule.constants";
+import { useTranslation } from "react-i18next";
 
 interface ScheduleDialogProps {
   clientId?: string;
@@ -35,6 +25,7 @@ interface ScheduleDialogProps {
 }
 
 const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const clients = useAppSelector((s) => s.clients.list);
   const projects = useAppSelector((s) => s.projects.list);
@@ -47,6 +38,16 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
   const [type, setType] = useState<VentorScheduleEventTypeApi>("office");
   const [notes, setNotes] = useState("");
 
+  const eventTypes = useMemo(
+    (): { value: VentorScheduleEventTypeApi; label: string; Icon: LucideIcon }[] => [
+      { value: "office", label: t(VENTOR_SCHEDULE_TYPE_LABEL_KEYS.office), Icon: Building2 },
+      { value: "on_land", label: t(VENTOR_SCHEDULE_TYPE_LABEL_KEYS.on_land), Icon: MapPin },
+      { value: "virtual", label: t(VENTOR_SCHEDULE_TYPE_LABEL_KEYS.virtual), Icon: MonitorSmartphone },
+      { value: "call", label: t(VENTOR_SCHEDULE_TYPE_LABEL_KEYS.call), Icon: Phone },
+    ],
+    [t],
+  );
+
   const client = clients.find((c) => c.id === selectedClient);
   const project = client
     ? projects.find((p) => p.id === client.projectInterest)
@@ -55,7 +56,7 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient || !date || !time) {
-      toast.error("Completa los campos obligatorios");
+      toast.error(t("schedule.requiredFields"));
       return;
     }
 
@@ -70,11 +71,11 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
     );
 
     if (createVentorScheduleEventRequest.rejected.match(resultAction)) {
-      toast.error(resultAction.payload ?? "No se pudo agendar");
+      toast.error(resultAction.payload ?? t("schedule.scheduleFailed"));
       return;
     }
 
-    toast.success("Visita agendada correctamente");
+    toast.success(t("schedule.scheduleSuccess"));
     void dispatch(fetchVentorScheduleByDay(date));
     setOpen(false);
     resetForm();
@@ -94,20 +95,20 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
         {trigger ?? (
           <Button size="sm" className="gap-2 cursor-pointer">
             <CalendarPlus className="w-4 h-4" />
-            Agendar Visita
+            {t("schedule.scheduleVisit")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Agendar Visita</DialogTitle>
+          <DialogTitle>{t("schedule.dialogTitle")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 mt-2">
           {!clientId && (
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Cliente
+                {t("schedule.clientLabel")}
               </label>
               <select
                 value={selectedClient}
@@ -115,7 +116,7 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
                 className="form-input cursor-pointer"
                 required
               >
-                <option value="">Seleccionar cliente...</option>
+                <option value="">{t("schedule.selectClientPlaceholder")}</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -134,7 +135,7 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
 
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-2 block">
-              Tipo de evento
+              {t("schedule.eventTypeLabel")}
             </label>
             <div className="grid grid-cols-2 gap-2">
               {eventTypes.map((vt) => (
@@ -158,7 +159,7 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Fecha
+                {t("schedule.visitDateLabel")}
               </label>
               <input
                 type="date"
@@ -171,7 +172,7 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Hora
+                {t("schedule.visitTimeLabel")}
               </label>
               <input
                 type="time"
@@ -185,18 +186,18 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
 
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1 block">
-              Notas (opcional)
+              {t("schedule.visitNotesLabel")}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ej: Llevar planos del lote..."
+              placeholder={t("schedule.visitNotesPlaceholder")}
               className="form-input min-h-[80px] resize-none"
             />
           </div>
 
           <Button type="submit" className="w-full cursor-pointer" disabled={creating}>
-            {creating ? "Guardando…" : "Confirmar Visita"}
+            {creating ? t("common.saving") : t("schedule.confirmVisit")}
           </Button>
         </form>
       </DialogContent>

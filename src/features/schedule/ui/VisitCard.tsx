@@ -1,7 +1,7 @@
 import {
   VENTOR_SCHEDULE_STATUS_BADGE_CLASS,
-  VENTOR_SCHEDULE_STATUS_LABELS,
-  VENTOR_SCHEDULE_TYPE_LABELS,
+  VENTOR_SCHEDULE_STATUS_LABEL_KEYS,
+  VENTOR_SCHEDULE_TYPE_LABEL_KEYS,
 } from "@/features/schedule/lib/schedule.constants";
 import { patchVentorScheduleStatusRequest } from "@/features/schedule/store/scheduleSlice";
 import {
@@ -24,6 +24,7 @@ import {
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 function formatAssigneeUserId(userId: string): string {
   const trimmed = userId.trim();
@@ -60,6 +61,7 @@ const VisitCard = ({
   showScheduleAssignee = false,
   assigneeName,
 }: VisitCardProps) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const patching = useAppSelector((s) => s.schedule.patchingById[visit.id] ?? false);
 
@@ -69,9 +71,11 @@ const VisitCard = ({
       patchVentorScheduleStatusRequest({ eventId: visit.id, status })
     );
     if (patchVentorScheduleStatusRequest.rejected.match(res)) {
-      toast.error(res.payload ?? "No se pudo actualizar");
+      toast.error(res.payload ?? t("schedule.updateFailed"));
     }
   };
+
+  const statusKeys = Object.keys(VENTOR_SCHEDULE_STATUS_LABEL_KEYS) as VentorScheduleStatusApi[];
 
   return (
     <motion.div
@@ -92,7 +96,7 @@ const VisitCard = ({
             <p className="text-xs text-muted-foreground truncate">{visit.projectName}</p>
             {showScheduleAssignee ? (
               <p className="text-[11px] text-muted-foreground/90 mt-0.5">
-                Asesor:{" "}
+                {t("schedule.assigneePrefix")}{" "}
                 <span className="tabular-nums">
                   {assigneeName?.trim() || formatAssigneeUserId(visit.scheduleOwnerUserId)}
                 </span>
@@ -104,7 +108,7 @@ const VisitCard = ({
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${VENTOR_SCHEDULE_STATUS_BADGE_CLASS[visit.status]}`}
           >
-            {VENTOR_SCHEDULE_STATUS_LABELS[visit.status]}
+            {t(VENTOR_SCHEDULE_STATUS_LABEL_KEYS[visit.status])}
           </span>
           <Select
             value={visit.status}
@@ -113,18 +117,16 @@ const VisitCard = ({
           >
             <SelectTrigger
               className="h-8 w-[140px] text-xs cursor-pointer"
-              aria-label="Cambiar estado de la visita"
+              aria-label={t("schedule.changeVisitStatusAria")}
             >
-              <SelectValue placeholder="Estado" />
+              <SelectValue placeholder={t("schedule.statusPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              {(Object.keys(VENTOR_SCHEDULE_STATUS_LABELS) as VentorScheduleStatusApi[]).map(
-                (st) => (
-                  <SelectItem key={st} value={st} className="text-xs cursor-pointer">
-                    {VENTOR_SCHEDULE_STATUS_LABELS[st]}
-                  </SelectItem>
-                )
-              )}
+              {statusKeys.map((st) => (
+                <SelectItem key={st} value={st} className="text-xs cursor-pointer">
+                  {t(VENTOR_SCHEDULE_STATUS_LABEL_KEYS[st])}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -137,7 +139,7 @@ const VisitCard = ({
         </span>
         <span className="flex items-center gap-1 min-w-0">
           <MapPin className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">{VENTOR_SCHEDULE_TYPE_LABELS[visit.eventType]}</span>
+          <span className="truncate">{t(VENTOR_SCHEDULE_TYPE_LABEL_KEYS[visit.eventType])}</span>
         </span>
       </div>
 
