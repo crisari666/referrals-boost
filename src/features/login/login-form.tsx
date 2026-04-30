@@ -1,5 +1,6 @@
 import { type FormEvent } from "react";
 import { LogIn, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,14 +22,15 @@ export function LoginForm({
   onPasswordChange,
   onSubmit,
 }: LoginFormProps) {
+  const { t } = useTranslation();
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="userOrEmail">Usuario o correo</Label>
+        <Label htmlFor="userOrEmail">{t("auth.userOrEmail")}</Label>
         <Input
           id="userOrEmail"
           type="text"
-          placeholder="Usuario o correo electrónico"
+          placeholder={t("auth.userOrEmailPlaceholder")}
           value={userOrEmail}
           onChange={(e) => onUserOrEmailChange(e.target.value)}
           required
@@ -37,7 +39,7 @@ export function LoginForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Contraseña</Label>
+        <Label htmlFor="password">{t("auth.password")}</Label>
         <Input
           id="password"
           type="password"
@@ -59,7 +61,7 @@ export function LoginForm({
         ) : (
           <LogIn className="w-4 h-4 mr-2" />
         )}
-        {isLoading ? "Verificando…" : "Iniciar sesión"}
+        {isLoading ? t("auth.verifying") : t("auth.signIn")}
       </Button>
     </form>
   );

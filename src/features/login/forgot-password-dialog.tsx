@@ -12,12 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "@/store";
-import {
-  clearForgotPasswordState,
-  FORGOT_PASSWORD_SUCCESS_MESSAGE,
-  requestForgotPassword,
-} from "@/store/authSlice";
+import { clearForgotPasswordState, requestForgotPassword } from "@/store/authSlice";
 
 type ForgotPasswordDialogProps = {
   open: boolean;
@@ -25,6 +22,7 @@ type ForgotPasswordDialogProps = {
 };
 
 export function ForgotPasswordDialog({ open, onOpenChange }: ForgotPasswordDialogProps) {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [email, setEmail] = useState("");
   const forgotPasswordIsLoading = useAppSelector((s) => s.auth.forgotPasswordIsLoading);
@@ -60,22 +58,20 @@ export function ForgotPasswordDialog({ open, onOpenChange }: ForgotPasswordDialo
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Recuperar contraseña</DialogTitle>
-          <DialogDescription>
-            Ingresa el correo con el que registraste tu cuenta de vendedor.
-          </DialogDescription>
+          <DialogTitle>{t("auth.forgotTitle")}</DialogTitle>
+          <DialogDescription>{t("auth.forgotDescription")}</DialogDescription>
         </DialogHeader>
         {forgotPasswordSubmitted ? (
-          <p className="text-sm text-foreground leading-relaxed">{FORGOT_PASSWORD_SUCCESS_MESSAGE}</p>
+          <p className="text-sm text-foreground leading-relaxed">{t("auth.forgotPasswordSuccess")}</p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="forgot-email">Correo electrónico</Label>
+              <Label htmlFor="forgot-email">{t("auth.forgotEmailLabel")}</Label>
               <Input
                 id="forgot-email"
                 type="email"
                 autoComplete="email"
-                placeholder="correo@ejemplo.com"
+                placeholder={t("auth.forgotEmailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -89,16 +85,16 @@ export function ForgotPasswordDialog({ open, onOpenChange }: ForgotPasswordDialo
             ) : null}
             <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={handleClose} disabled={forgotPasswordIsLoading}>
-                Cancelar
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={forgotPasswordIsLoading} className="cursor-pointer">
                 {forgotPasswordIsLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Enviando…
+                    {t("common.sending")}
                   </>
                 ) : (
-                  "Enviar"
+                  t("common.send")
                 )}
               </Button>
             </DialogFooter>
@@ -107,7 +103,7 @@ export function ForgotPasswordDialog({ open, onOpenChange }: ForgotPasswordDialo
         {forgotPasswordSubmitted ? (
           <DialogFooter>
             <Button type="button" onClick={handleClose} className="w-full sm:w-auto cursor-pointer">
-              Cerrar
+              {t("common.close")}
             </Button>
           </DialogFooter>
         ) : null}
