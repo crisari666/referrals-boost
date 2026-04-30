@@ -1,6 +1,17 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare, CalendarDays, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  User,
+  Sparkles,
+  MessageSquare,
+  CalendarDays,
+  LogOut,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { CrmSocketListener } from "@/components/crm-socket-listener";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Badge } from "@/components/ui/badge";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logout } from "@/store/authSlice";
@@ -12,28 +23,29 @@ import {
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { useEffect, useMemo } from "react";
+import type { LucideIcon } from "lucide-react";
 
 interface NavItem {
   path: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  labelKey: string;
+  icon: LucideIcon;
   roles?: UserRole[];
   physicalOnly?: boolean;
 }
 
 const allNavItems: NavItem[] = [
-  { path: "/", label: "Inicio", icon: LayoutDashboard },
-  { path: "/projects", label: "Proyectos", icon: Building2 },
-  { path: "/clients", label: "Clientes", icon: Users },
+  { path: "/", labelKey: "layout.navHome", icon: LayoutDashboard },
+  { path: "/projects", labelKey: "layout.navProjects", icon: Building2 },
+  { path: "/clients", labelKey: "layout.navClients", icon: Users },
   {
     path: "/schedule",
-    label: "Agenda",
+    labelKey: "layout.navAgenda",
     icon: CalendarDays,
     roles: ["asesor_fisico", "admin", "main_lead"],
   },
-  { path: "/assistant", label: "Asistente", icon: Sparkles },
-  { path: "/whatsapp", label: "WhatsApp", icon: MessageSquare, physicalOnly: true },
-  { path: "/profile", label: "Perfil", icon: User },
+  { path: "/assistant", labelKey: "layout.navAssistant", icon: Sparkles },
+  { path: "/whatsapp", labelKey: "layout.navWhatsapp", icon: MessageSquare, physicalOnly: true },
+  { path: "/profile", labelKey: "layout.navProfile", icon: User },
 ];
 
 interface LayoutProps {
@@ -41,6 +53,7 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -50,13 +63,10 @@ const Layout = ({ children }: LayoutProps) => {
   const todayYmd = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
   const scheduleNavEligible = Boolean(
     userRole &&
-      (userRole === "asesor_fisico" ||
-        userRole === "admin" ||
-        userRole === "main_lead")
+      (userRole === "asesor_fisico" || userRole === "admin" || userRole === "main_lead"),
   );
   const todayPendingCount = useAppSelector(
-    (s) =>
-      (s.schedule.byDay[todayYmd] ?? []).filter((e) => e.status === "pending").length
+    (s) => (s.schedule.byDay[todayYmd] ?? []).filter((e) => e.status === "pending").length,
   );
 
   useEffect(() => {
@@ -82,19 +92,24 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0 md:pl-64">
       <CrmSocketListener />
-      {/* Desktop sidebar */}
+      <div className="fixed top-2 right-2 z-50 md:hidden">
+        <LanguageSwitcher />
+      </div>
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 flex-col bg-card border-r border-border z-40">
-        <div className="p-6">
-          <h1 className="text-xl font-extrabold text-foreground">
-            La<span className="text-primary">Ceiba</span>
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">Panel de Vendedores</p>
+        <div className="p-6 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-xl font-extrabold text-foreground">
+              La<span className="text-primary">Ceiba</span>
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1">{t("layout.panelSubtitle")}</p>
+          </div>
+          <LanguageSwitcher />
         </div>
         <nav className="flex-1 px-3 space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
-            const showAgendaBadge =
-              item.path === "/schedule" && todayPendingCount > 0;
+            const showAgendaBadge = item.path === "/schedule" && todayPendingCount > 0;
+            const label = t(item.labelKey);
             return (
               <Link
                 key={item.path}
@@ -106,12 +121,12 @@ const Layout = ({ children }: LayoutProps) => {
                 }`}
               >
                 <item.icon className="w-5 h-5 shrink-0" />
-                <span className="flex-1">{item.label}</span>
+                <span className="flex-1">{label}</span>
                 {showAgendaBadge ? (
                   <Badge
                     variant="destructive"
                     className="h-5 min-w-5 px-1.5 text-[10px] tabular-nums cursor-pointer"
-                    aria-label={`${todayPendingCount} visitas pendientes hoy`}
+                    aria-label={t("layout.badgeVisitsToday", { count: todayPendingCount })}
                   >
                     {todayPendingCount > 99 ? "99+" : todayPendingCount}
                   </Badge>
@@ -128,22 +143,22 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           )}
           <button
+            type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors w-full cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
-            Cerrar sesión
+            {t("layout.logout")}
           </button>
         </div>
       </aside>
 
-      {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40 px-2 py-1">
         <div className="flex items-center justify-around">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
-            const showAgendaBadge =
-              item.path === "/schedule" && todayPendingCount > 0;
+            const showAgendaBadge = item.path === "/schedule" && todayPendingCount > 0;
+            const label = t(item.labelKey);
             return (
               <Link
                 key={item.path}
@@ -167,7 +182,7 @@ const Layout = ({ children }: LayoutProps) => {
                     <Badge
                       variant="destructive"
                       className="absolute -right-2 -top-2 h-4 min-w-4 px-0.5 p-0 flex items-center justify-center text-[9px] tabular-nums"
-                      aria-label={`${todayPendingCount} pendientes hoy`}
+                      aria-label={t("layout.badgePendingToday", { count: todayPendingCount })}
                     >
                       {todayPendingCount > 9 ? "9+" : todayPendingCount}
                     </Badge>
@@ -178,7 +193,7 @@ const Layout = ({ children }: LayoutProps) => {
                     isActive ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
-                  {item.label}
+                  {label}
                 </span>
               </Link>
             );
@@ -186,7 +201,6 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </nav>
 
-      {/* Main content */}
       <main className="min-h-screen">
         <motion.div
           key={location.pathname}
