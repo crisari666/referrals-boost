@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import i18n from "@/i18n";
 import { useAppDispatch } from "@/store";
 import { websocketService } from "@/shared/services/websocket.service";
 import { WHATSAPP_MS_ORIGIN } from "@/services/whatsappService";
@@ -81,12 +82,12 @@ const WhatsappSocketListener = ({ sessionId }: WhatsappSocketListenerProps) => {
 
     const unsubscribeAuthFailure = websocketService.on<AuthFailurePayload>("auth_failure", (data) => {
       if (data.sessionId !== sessionId) return;
-      dispatch(sessionError({ message: data.error || "Error de autenticación en WhatsApp" }));
+      dispatch(sessionError({ message: data.error || i18n.t("whatsapp.authFailureDefault") }));
     });
 
     const unsubscribeSessionClosed = websocketService.on<SessionClosedPayload>("sessionClosed", (data) => {
       if (data.sessionId !== sessionId) return;
-      dispatch(sessionError({ message: "Sesión de WhatsApp cerrada" }));
+      dispatch(sessionError({ message: i18n.t("whatsapp.sessionClosed") }));
     });
 
     const unsubscribeNewMessage = websocketService.on<NewMessagePayload>("new_message", (data) => {

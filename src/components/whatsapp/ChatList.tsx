@@ -1,38 +1,37 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { format } from "date-fns";
+import { LogOut, MessageSquare } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { fetchChats, setActiveChat, disconnect } from "@/store/whatsappSlice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, MessageSquare } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { getDateFnsLocale } from "@/i18n/date-locale";
 
 const ChatList = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { chats, chatsLoading, activeChat } = useAppSelector((s) => s.whatsapp);
   const phone = useAppSelector((s) => s.auth.user?.phone);
-
+  const dateLocale = getDateFnsLocale();
   useEffect(() => {
     if (!phone) return;
     dispatch(fetchChats(phone));
   }, [dispatch, phone]);
-
   const handleSelectChat = (chatId: string) => {
     dispatch(setActiveChat(chatId));
   };
-
   const handleDisconnect = () => {
     if (!phone) return;
     dispatch(disconnect(phone));
   };
-
   if (chatsLoading) {
     return (
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-foreground">Cargando chats...</h3>
+          <h3 className="font-bold text-foreground">{t("whatsapp.chatsLoading")}</h3>
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 p-3">
@@ -46,13 +45,12 @@ const ChatList = () => {
       </div>
     );
   }
-
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-primary" />
-          <h3 className="font-bold text-foreground">Chats</h3>
+          <h3 className="font-bold text-foreground">{t("whatsapp.chatsTitle")}</h3>
           <Badge variant="secondary" className="text-xs">{chats.length}</Badge>
         </div>
         <Button
@@ -61,7 +59,7 @@ const ChatList = () => {
           onClick={handleDisconnect}
           disabled={!phone}
           className="text-destructive hover:text-destructive disabled:opacity-50"
-          title="Eliminar sesión"
+          title={t("whatsapp.removeSession")}
         >
           <LogOut className="w-4 h-4" />
         </Button>
@@ -82,7 +80,7 @@ const ChatList = () => {
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm text-foreground truncate">{chat.contactName}</span>
                 <span className="text-xs text-muted-foreground shrink-0">
-                  {format(new Date(chat.lastMessageTime), "HH:mm", { locale: es })}
+                  {format(new Date(chat.lastMessageTime), "HH:mm", { locale: dateLocale })}
                 </span>
               </div>
               <div className="flex items-center justify-between mt-0.5">
