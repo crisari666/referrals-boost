@@ -1,8 +1,10 @@
 import { useParams, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAppSelector } from "@/store";
 import { ArrowLeft, MapPin, Layers, Share2, Download, CheckCircle, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { getIntlLocaleTag } from "@/i18n/intl-locale";
 
 function decodeHtml(html: string): string {
   if (!html) return "";
@@ -12,26 +14,33 @@ function decodeHtml(html: string): string {
 }
 
 const ProjectDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
+  const intlLocale = getIntlLocaleTag();
   const project = useAppSelector((state) =>
     state.projects.list.find((p) => p.id === id)
   );
-
   if (!project) {
     return (
       <div className="p-8 text-center">
-        <p className="text-muted-foreground">Proyecto no encontrado</p>
+        <p className="text-muted-foreground">{t("projects.detailNotFound")}</p>
         <Link to="/projects" className="text-primary font-medium text-sm mt-2 inline-block">
-          Volver al catálogo
+          {t("projects.detailBackCatalog")}
         </Link>
       </div>
     );
   }
-
-  const whatsappMsg = encodeURIComponent(
-    `¡Hola! 👋 Te comparto información sobre *${project.title}* en ${project.location}. Lotes desde $${project.priceFrom.toLocaleString()}. ¿Te interesa saber más?`
-  );
-
+  const priceFormatted = project.priceFrom.toLocaleString(intlLocale);
+  const whatsappBody = t("projects.whatsappShareBody", {
+    title: project.title,
+    location: project.location,
+    price: `$${priceFormatted}`,
+  });
+  const whatsappMsg = encodeURIComponent(whatsappBody);
+  const commissionTotal =
+    project.commissionType === "%"
+      ? project.priceFrom * project.commission / 100
+      : project.commission;
   return (
     <div className="max-w-4xl mx-auto">
       <div className="relative h-56 md:h-72">
@@ -44,7 +53,6 @@ const ProjectDetail = () => {
           <ArrowLeft className="w-4 h-4 text-foreground" />
         </Link>
       </div>
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -59,37 +67,33 @@ const ProjectDetail = () => {
             className="text-sm text-muted-foreground leading-relaxed prose prose-sm prose-invert max-w-none [&_a]:text-primary [&_a]:underline"
             dangerouslySetInnerHTML={{ __html: decodeHtml(project.description ?? "") }}
           />
-
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-secondary rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground">Desde</p>
-              <p className="font-extrabold text-foreground text-sm">${project.priceFrom.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">{t("projects.modalFrom")}</p>
+              <p className="font-extrabold text-foreground text-sm">${project.priceFrom.toLocaleString(intlLocale)}</p>
             </div>
             <div className="bg-primary/10 rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground">Comisión</p>
+              <p className="text-xs text-muted-foreground">{t("projects.modalCommission")}</p>
               <p className="font-extrabold text-primary text-sm">
-                {project.commissionType === "%" ? `${project.commission}%` : `$${project.commission.toLocaleString()}`}
+                {project.commissionType === "%" ? `${project.commission}%` : `$${project.commission.toLocaleString(intlLocale)}`}
               </p>
             </div>
             <div className="bg-accent/10 rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground">Valor Total COP</p>
+              <p className="text-xs text-muted-foreground">{t("projects.detailTotalValueCop")}</p>
               <p className="font-extrabold text-foreground text-sm">
-                {project.commissionType === "%"
-                  ? (project.priceFrom * project.commission / 100).toLocaleString("es-CO")
-                  : project.commission.toLocaleString("es-CO")}
+                {commissionTotal.toLocaleString(intlLocale)}
               </p>
             </div>
             <div className="bg-secondary rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground">Lotes</p>
+              <p className="text-xs text-muted-foreground">{t("projects.detailLotsLabel")}</p>
               <p className="font-extrabold text-foreground text-sm flex items-center justify-center gap-1">
                 <Layers className="w-3 h-3" /> {project.lotsAvailable}
               </p>
             </div>
           </div>
         </div>
-
         <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
-          <h2 className="font-bold text-foreground mb-3">Amenidades</h2>
+          <h2 className="font-bold text-foreground mb-3">{t("projects.detailAmenities")}</h2>
           <div className="grid grid-cols-2 gap-2">
             {project.amenities.map((am) => (
               <div key={am} className="flex items-center gap-2 text-sm text-foreground">
@@ -99,7 +103,6 @@ const ProjectDetail = () => {
             ))}
           </div>
         </div>
-
         <div className="grid grid-cols-2 gap-3">
           <a
             href={`https://wa.me/?text=${whatsappMsg}`}
@@ -107,13 +110,13 @@ const ProjectDetail = () => {
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 gradient-success text-primary-foreground font-bold py-3 rounded-xl text-sm"
           >
-            <Share2 className="w-4 h-4" /> Compartir por WhatsApp
+            <Share2 className="w-4 h-4" /> {t("projects.detailShareWhatsapp")}
           </a>
           <Button variant="outline" className="rounded-xl py-3 h-auto">
-            <Video className="w-4 h-4 mr-2" /> Descargar Video
+            <Video className="w-4 h-4 mr-2" /> {t("projects.detailDownloadVideo")}
           </Button>
           <Button variant="outline" className="rounded-xl py-3 h-auto col-span-2">
-            <Download className="w-4 h-4 mr-2" /> Descargar PDF
+            <Download className="w-4 h-4 mr-2" /> {t("projects.detailDownloadPdf")}
           </Button>
         </div>
       </motion.div>

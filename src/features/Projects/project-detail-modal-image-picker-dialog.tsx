@@ -1,7 +1,7 @@
 import { Download, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PROJECT_DETAIL_MODAL_LABELS as LABELS } from './project-detail-modal-labels';
+import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 
 export type ImagePickerDialogMode = 'download' | 'share';
 
@@ -22,6 +22,7 @@ const ProjectDetailModalImagePickerDialog = ({
   onOpenChange,
   onRequestSharePreview,
 }: ProjectDetailModalImagePickerDialogProps) => {
+  const LABELS = useProjectDetailModalLabels();
   return (
     <Dialog
       open={open}

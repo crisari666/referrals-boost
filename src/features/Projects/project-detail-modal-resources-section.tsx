@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
 import { Download, FileText, Images, Share2, Video } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import type { Project } from '@/data/mockData';
 import { getStoredAuthToken } from '@/lib/auth-token';
 import { getProjectResourceUrl } from '@/services/projectsService';
 import ProjectDetailModalImagePickerDialog from './project-detail-modal-image-picker-dialog';
-import { PROJECT_DETAIL_MODAL_LABELS as LABELS } from './project-detail-modal-labels';
+import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 import ProjectResourceRowActions from './project-resource-row-actions';
 import ProjectResourceShareSheet, { type ProjectResourceShareSheetResource } from './project-resource-share-sheet';
 
@@ -14,6 +15,8 @@ interface ProjectDetailModalResourcesSectionProps {
 }
 
 const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResourcesSectionProps) => {
+  const { t } = useTranslation();
+  const LABELS = useProjectDetailModalLabels();
   const [imageDialogMode, setImageDialogMode] = useState<'download' | 'share' | null>(null);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareResource, setShareResource] = useState<ProjectResourceShareSheetResource | null>(null);
@@ -22,7 +25,7 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
   const reelVideoUrl = project.reelVideo ? getProjectResourceUrl(project.reelVideo) : '';
   const brochureUrl = project.brochure ? getProjectResourceUrl(project.brochure) : '';
   const planeUrl = project.plane ? getProjectResourceUrl(project.plane) : '';
-  const shareMessage = `Mira este recurso de ${project.title}`;
+  const shareMessage = t('projects.shareResourceMessage', { title: project.title });
   const token = getStoredAuthToken();
   const authHeaders = token ? { token } : undefined;
 

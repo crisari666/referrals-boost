@@ -1,14 +1,23 @@
 import { Share2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Project } from '@/data/mockData';
-import { PROJECT_DETAIL_MODAL_LABELS as LABELS } from './project-detail-modal-labels';
+import { getIntlLocaleTag } from '@/i18n/intl-locale';
+import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 
 interface ProjectDetailModalWhatsappSectionProps {
   project: Project;
 }
 
 const ProjectDetailModalWhatsappSection = ({ project }: ProjectDetailModalWhatsappSectionProps) => {
+  const { t } = useTranslation();
+  const LABELS = useProjectDetailModalLabels();
+  const priceFormatted = `$${project.priceFrom.toLocaleString(getIntlLocaleTag())}`;
   const whatsappMsg = encodeURIComponent(
-    `¡Hola! 👋 Te comparto información sobre *${project.title}* en ${project.location}. Lotes desde $${project.priceFrom.toLocaleString()}. ¿Te interesa saber más?`
+    t('projects.whatsappShareBody', {
+      title: project.title,
+      location: project.location,
+      price: priceFormatted,
+    }),
   );
 
   return (

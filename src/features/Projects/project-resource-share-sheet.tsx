@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Download, Loader2, Share2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { WhatsappShareButton } from 'react-share';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { PROJECT_DETAIL_MODAL_LABELS as LABELS } from './project-detail-modal-labels';
+import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 import {
   getFilenameFromUrl,
   getMimeTypeFromFilename,
@@ -76,6 +77,8 @@ async function readResponseAsBlobWithProgress(
 }
 
 const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }: ProjectResourceShareSheetProps) => {
+  const { t } = useTranslation();
+  const LABELS = useProjectDetailModalLabels();
   const { toast } = useToast();
   const [prefetchedFile, setPrefetchedFile] = useState<File | null>(null);
   const [prefetching, setPrefetching] = useState(false);
@@ -131,12 +134,12 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
       cancelled = true;
       ac.abort();
     };
-  }, [open, resource, authHeaders, toast]);
+  }, [open, resource, authHeaders, toast, LABELS]);
 
   const handleDownload = useCallback(async () => {
     if (!resource) return;
     const filename = getFilenameFromUrl(resource.fetchUrl, resource.filename);
-    const shouldDownload = window.confirm(`Do you want to download "${filename}"?`);
+    const shouldDownload = window.confirm(t('projects.downloadConfirm', { filename }));
     if (!shouldDownload) return;
 
     try {
@@ -172,13 +175,11 @@ const ProjectResourceShareSheet = ({ open, onOpenChange, resource, authHeaders }
       anchor.remove();
       setTimeout(() => {
         if (!document.hidden) {
-          window.alert(
-            'Download was blocked by the file server. Please ask backend to enable CORS/download headers for this resource.',
-          );
+          window.alert(t('projects.downloadBlocked'));
         }
       }, 700);
     }
-  }, [authHeaders, prefetchedFile, resource]);
+  }, [authHeaders, prefetchedFile, resource, t]);
 
   const handleNativeShare = useCallback(async () => {
     if (!resource || !canUseNativeShare) return;

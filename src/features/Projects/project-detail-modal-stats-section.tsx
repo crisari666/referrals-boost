@@ -1,12 +1,16 @@
 import { Layers } from 'lucide-react';
 import type { Project } from '@/data/mockData';
-import { PROJECT_DETAIL_MODAL_LABELS as LABELS } from './project-detail-modal-labels';
+import { getIntlLocaleTag } from '@/i18n/intl-locale';
+import { useProjectDetailModalLabels } from './project-detail-modal-labels';
+import { useTranslation } from 'react-i18next';
 
 interface ProjectDetailModalStatsSectionProps {
   project: Project;
 }
 
 const ProjectDetailModalStatsSection = ({ project }: ProjectDetailModalStatsSectionProps) => {
+  const LABELS = useProjectDetailModalLabels();
+  const { t } = useTranslation();
   const commissionValue =
     project.commissionType === '%' ? Math.round((project.priceFrom * project.commission) / 100) : project.commission;
 
@@ -24,13 +28,15 @@ const ProjectDetailModalStatsSection = ({ project }: ProjectDetailModalStatsSect
       </div>
       <div className='rounded-xl bg-accent/10 p-3 text-center'>
         <p className='text-xs text-muted-foreground'>{LABELS.valorComision}</p>
-        <p className='text-sm font-extrabold text-foreground'>COP {commissionValue.toLocaleString('es-CO')}</p>
+        <p className='text-sm font-extrabold text-foreground'>
+          COP {commissionValue.toLocaleString(getIntlLocaleTag())}
+        </p>
       </div>
       <div className='rounded-xl bg-secondary p-3 text-center'>
         <p className='text-xs text-muted-foreground'>{LABELS.lotes}</p>
         <p className='flex items-center justify-center gap-1 text-sm font-extrabold text-foreground'>
           <Layers className='h-3 w-3' />
-          {project.lotsAvailable} de {project.totalLots}
+          {t('projects.lotsOfTotal', { available: project.lotsAvailable, total: project.totalLots })}
         </p>
       </div>
     </div>

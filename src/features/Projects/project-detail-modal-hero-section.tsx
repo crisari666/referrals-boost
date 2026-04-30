@@ -1,12 +1,13 @@
 import { MapPin } from 'lucide-react';
 import type { Project } from '@/data/mockData';
-import { PROJECT_DETAIL_MODAL_LABELS as LABELS } from './project-detail-modal-labels';
+import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 
 interface ProjectDetailModalHeroSectionProps {
   project: Project;
 }
 
 const ProjectDetailModalHeroSection = ({ project }: ProjectDetailModalHeroSectionProps) => {
+  const LABELS = useProjectDetailModalLabels();
   return (
     <>
       {project.image && (

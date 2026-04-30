@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "@/store";
 import ProjectCard from "./ProjectCard";
 import ProjectDetailModal from "./ProjectDetailModal";
@@ -6,6 +7,7 @@ import type { Project } from "@/data/mockData";
 import { fetchProjects } from "@/store/projectsSlice";
 
 const Projects = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { list: projects, isLoading, error } = useAppSelector((state) => state.projects);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -31,11 +33,11 @@ const Projects = () => {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-foreground">Proyectos</h1>
-        <p className="text-sm text-muted-foreground mt-1">Catálogo de desarrollos disponibles</p>
+        <h1 className="text-2xl font-extrabold text-foreground">{t("projects.pageTitle")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("projects.pageSubtitle")}</p>
       </div>
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando proyectos...</p>
+        <p className="text-sm text-muted-foreground">{t("projects.loading")}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {projects.map((project, i) => (
