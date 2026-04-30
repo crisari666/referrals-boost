@@ -1,13 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import i18n from "@/i18n";
 import { APP_CONSTANTS } from "@/constants/app-constants";
 import * as authService from "@/services/authService";
 import * as profileService from "@/services/profileService";
 import { USER_LEVEL_MAIN_LEAD } from "@/constants/user-level";
 import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
-
-export const FORGOT_PASSWORD_SUCCESS_MESSAGE =
-  "Si tu correo se encuentra registrado, revisa tu bandeja de entrada";
 
 export type { AuthUser, UserRole } from "@/types/auth";
 
@@ -117,7 +115,7 @@ export const refreshOwnProfile = createAsyncThunk<
     const message =
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
-        : "No se pudo actualizar los datos de sesión.";
+        : i18n.t("auth.sessionRefreshFailed");
     return rejectWithValue(message);
   }
 });
@@ -137,7 +135,7 @@ export const loginUser = createAsyncThunk<
       const msg =
         raw.length > 0 && raw.toLowerCase() !== "success"
           ? raw
-          : "No se pudo iniciar sesión. Verifica usuario y contraseña.";
+          : i18n.t("auth.loginFailedGeneric");
       return rejectWithValue(msg);
     }
     return mapApiUserToAuthUser(response.result);
@@ -145,7 +143,7 @@ export const loginUser = createAsyncThunk<
     const message =
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
-        : "Error de conexión. Intenta de nuevo.";
+        : i18n.t("auth.connectionError");
     return rejectWithValue(message);
   }
 });
@@ -160,19 +158,19 @@ export const requestForgotPassword = createAsyncThunk<
       email: payload.email.trim(),
     });
     if (response.message !== "success" || response.error != null) {
-      return rejectWithValue("No se pudo enviar la solicitud. Intenta de nuevo.");
+      return rejectWithValue(i18n.t("auth.forgotRequestFailed"));
     }
   } catch (err: unknown) {
     if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === "object") {
       const data = err.response.data as { error?: string };
       if (typeof data.error === "string" && data.error.length > 0) {
-        return rejectWithValue("Revisa el formato del correo o intenta de nuevo.");
+        return rejectWithValue(i18n.t("auth.forgotEmailInvalid"));
       }
     }
     const message =
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
-        : "Error de conexión. Intenta de nuevo.";
+        : i18n.t("auth.connectionError");
     return rejectWithValue(message);
   }
 });
@@ -218,7 +216,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload ?? "Error desconocido";
+        state.error = action.payload ?? i18n.t("common.unknownError");
       })
       .addCase(refreshOwnProfile.fulfilled, (state, action) => {
         if (state.user != null) {
@@ -242,7 +240,7 @@ const authSlice = createSlice({
       .addCase(requestForgotPassword.rejected, (state, action) => {
         state.forgotPasswordIsLoading = false;
         state.forgotPasswordSubmitted = false;
-        state.forgotPasswordError = action.payload ?? "Error desconocido";
+        state.forgotPasswordError = action.payload ?? i18n.t("common.unknownError");
       });
   },
 });

@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit';
 import { isAxiosError } from 'axios';
+import i18n from '@/i18n';
 import {
   fetchCampaignByCode,
   submitSignupRegistration,
@@ -10,9 +11,6 @@ import type {
   SignupRegistrationPayload,
 } from '@/features/signup-campaign/signup-campaign-types';
 import type { RootState } from '@/store';
-
-const SIGNUP_SUCCESS_MESSAGE_ES =
-  'Hemos enviado el contrato de corretaje a tu bandeja de entrada para que realice la firma digital';
 
 type LoadRejectPayload = {
   message: string;
@@ -45,13 +43,13 @@ export const loadSignupCampaignByCode = createAsyncThunk<
       const status = err.response?.status;
       if (status === 404) {
         return rejectWithValue({
-          message: 'Este enlace de registro no existe.',
+          message: i18n.t('signup.linkNotFound'),
           kind: 'not_found',
         });
       }
     }
     return rejectWithValue({
-      message: 'No se pudo cargar la información de la campaña.',
+      message: i18n.t('signup.loadFailed'),
       kind: 'unknown',
     });
   }
@@ -66,19 +64,19 @@ export const submitSignupCampaignRegistration = createAsyncThunk<
   async ({ code, payload }, { rejectWithValue }) => {
     try {
       const response = await submitSignupRegistration(code, payload);
-      return { message: response.message ?? SIGNUP_SUCCESS_MESSAGE_ES };
+      return { message: response.message ?? i18n.t('signup.contractSentBanner') };
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         const status = err.response?.status;
         const data = err.response?.data as { message?: string } | undefined;
         if (status === 410) {
           return rejectWithValue({
-            message: 'Este enlace de registro ya no está disponible.',
+            message: i18n.t('signup.linkUnavailable'),
           });
         }
         if (status === 409) {
           return rejectWithValue({
-            message: 'Este correo ya está registrado.',
+            message: i18n.t('signup.emailRegistered'),
           });
         }
         if (data?.message) {
@@ -86,7 +84,7 @@ export const submitSignupCampaignRegistration = createAsyncThunk<
         }
       }
       return rejectWithValue({
-        message: 'No pudimos enviar tu registro. Inténtalo nuevamente.',
+        message: i18n.t('signup.submitFailed'),
       });
     }
   }

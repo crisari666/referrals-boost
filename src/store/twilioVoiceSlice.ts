@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import i18n from '@/i18n';
 import * as voipTokenService from '@/services/voipTokenService';
 import * as twilioNumberService from '@/services/twilioNumberService';
 import { disconnectActiveCall, registerTwilioDevice } from '@/lib/twilio-voice-runtime';
@@ -43,7 +44,7 @@ export const ensureVoiceSession = createAsyncThunk(
     const { auth } = getState() as { auth: { user: AuthUser | null } };
     const email = auth.user?.email;
     if (!email) {
-      throw new Error('No hay sesión');
+      throw new Error(i18n.t('twilio.noSession'));
     }
     const [tokenResult, numberResult] = await Promise.all([
       voipTokenService.fetchVoipAccessToken(email),
@@ -120,7 +121,7 @@ const twilioVoiceSlice = createSlice({
         state.numberStatus = 'error';
         state.registrationStatus = 'error';
         state.tokenError =
-          action.error.message ?? String(action.payload ?? 'Error al preparar VoIP');
+          action.error.message ?? String(action.payload ?? i18n.t('twilio.prepareError'));
       });
   },
 });

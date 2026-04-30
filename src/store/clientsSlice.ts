@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import i18n from "@/i18n";
 import { toast } from "sonner";
 import { z } from "zod";
 import { clients as initialClients, type Client, type ClientStatus } from "@/data/mockData";
@@ -29,15 +30,17 @@ const emptyVendorEditForm: EditClientFormState = {
   projectInterest: "",
 };
 
-const editClientSchema = z.object({
-  name: z.string().trim().min(1, "El nombre es obligatorio").max(100),
-  email: z.string().trim().email("Correo inválido").max(255),
-  whatsapp: z.string().trim().min(1, "WhatsApp es obligatorio").max(40),
-  phone: z.string().trim().min(1, "El teléfono es obligatorio").max(40),
-  documentType: z.string().optional(),
-  document: z.string().trim().max(30).optional(),
-  projectInterest: z.string().optional().or(z.literal("")),
-});
+function getEditClientSchema() {
+  return z.object({
+    name: z.string().trim().min(1, i18n.t("validation.nameRequired")).max(100),
+    email: z.string().trim().email(i18n.t("validation.emailInvalid")).max(255),
+    whatsapp: z.string().trim().min(1, i18n.t("validation.whatsappRequired")).max(40),
+    phone: z.string().trim().min(1, i18n.t("validation.phoneRequired")).max(40),
+    documentType: z.string().optional(),
+    document: z.string().trim().max(30).optional(),
+    projectInterest: z.string().optional().or(z.literal("")),
+  });
+}
 
 function buildEditFormFromCustomer(c: CreationDetailCustomer): EditClientFormState {
   const fullName = [c.name, c.lastName].filter(Boolean).join(" ").trim() || c.name;
@@ -70,7 +73,7 @@ export const fetchVendorCustomerSteps = createAsyncThunk<VendorCustomerStep[], v
       const message =
         err && typeof err === "object" && "message" in err
           ? String((err as { message: string }).message)
-          : "No se pudieron cargar las etapas.";
+          : i18n.t("clients.storeStepsLoadFailed");
       return rejectWithValue(message);
     }
   }
@@ -84,14 +87,14 @@ export const fetchVendorCustomerCreationDetail = createAsyncThunk<
   try {
     const res = await clientsService.getCustomerCreationDetail(customerId);
     if (res.error || res.result === null || !res.result.customer) {
-      return rejectWithValue(res.error || "Cliente no encontrado");
+      return rejectWithValue(res.error || i18n.t("clients.storeCustomerNotFound"));
     }
     return res.result;
   } catch (err: unknown) {
     const message =
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
-        : "No se pudo cargar el cliente.";
+        : i18n.t("clients.storeCustomerLoadFailed");
     return rejectWithValue(message);
   }
 });
@@ -104,9 +107,9 @@ export const patchVendorCustomerStepRequest = createAsyncThunk<
   try {
     await clientsService.patchMsCustomerStep(customerId, stepId);
     await dispatch(fetchVendorCustomerCreationDetail(customerId)).unwrap();
-    toast.success("Etapa actualizada");
+    toast.success(i18n.t("clients.storeStepUpdatedToast"));
   } catch (err: unknown) {
-    toast.error("No se pudo actualizar la etapa");
+    toast.error(i18n.t("clients.storeStepUpdateFailed"));
     const message =
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
@@ -128,7 +131,7 @@ export const submitVendorCustomerEdit = createAsyncThunk<
   if (!vendorCreationDetailCustomerId) {
     return rejectWithValue("missing-customer");
   }
-  const parsed = editClientSchema.safeParse(vendorCustomerEdit.form);
+  const parsed = getEditClientSchema().safeParse(vendorCustomerEdit.form);
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
     parsed.error.errors.forEach((e) => {
@@ -162,9 +165,9 @@ export const submitVendorCustomerEdit = createAsyncThunk<
   try {
     await clientsService.updateMsCustomer(vendorCreationDetailCustomerId, body);
     await dispatch(fetchVendorCustomerCreationDetail(vendorCreationDetailCustomerId)).unwrap();
-    toast.success("Cliente actualizado");
+    toast.success(i18n.t("clients.storeCustomerUpdatedToast"));
   } catch {
-    toast.error("No se pudo guardar los cambios");
+    toast.error(i18n.t("clients.storeCustomerSaveFailed"));
     return rejectWithValue("update-failed");
   }
 });
@@ -188,7 +191,7 @@ export const addCustomerNoteRequest = createAsyncThunk<
     const message =
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
-        : "No se pudo agregar la nota.";
+        : i18n.t("clients.storeNoteAddFailed");
     return rejectWithValue(message);
   }
 });
@@ -204,7 +207,7 @@ export const fetchCustomerEventsRequest = createAsyncThunk<
     const message =
       err && typeof err === 'object' && 'message' in err
         ? String((err as { message: string }).message)
-        : 'No se pudieron cargar los eventos.';
+        : i18n.t("clients.storeEventsLoadFailed");
     return rejectWithValue(message);
   }
 });
@@ -220,7 +223,7 @@ export const addCustomerEventRequest = createAsyncThunk<
     const message =
       err && typeof err === 'object' && 'message' in err
         ? String((err as { message: string }).message)
-        : 'No se pudo crear el evento.';
+        : i18n.t("clients.storeEventCreateFailed");
     return rejectWithValue(message);
   }
 });
@@ -400,7 +403,7 @@ const clientsSlice = createSlice({
         state.customerEventsStatus = "failed";
         state.customerEvents = [];
         state.customerEventsError =
-          action.payload ?? action.error.message ?? "No se pudieron cargar los eventos.";
+          action.payload ?? action.error.message ?? i18n.t("clients.storeEventsLoadFailed");
       })
       .addCase(addCustomerEventRequest.pending, (state) => {
         state.createEventLoading = true;
@@ -413,7 +416,7 @@ const clientsSlice = createSlice({
       .addCase(addCustomerEventRequest.rejected, (state, action) => {
         state.createEventLoading = false;
         state.createEventError =
-          action.payload ?? action.error.message ?? "No se pudo crear el evento.";
+          action.payload ?? action.error.message ?? i18n.t("clients.storeEventCreateFailed");
       })
       .addCase(submitVendorCustomerEdit.pending, (state) => {
         state.vendorCustomerEdit.submitting = true;

@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import i18n from "@/i18n";
 import * as whatsappService from "@/services/whatsappService";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -202,7 +203,7 @@ const whatsappSlice = createSlice({
           msg.originalContent = msg.content;
           msg.isDeleted = true;
           msg.deletedAt = deletedAt;
-          msg.content = "Este mensaje fue eliminado";
+          msg.content = i18n.t("whatsapp.messageDeleted");
         }
       }
     },
@@ -252,7 +253,7 @@ const whatsappSlice = createSlice({
     });
     builder.addCase(requestQrCode.rejected, (state, action) => {
       state.connectionStatus = "error";
-      state.errorMessage = action.error.message || "Error al solicitar código QR";
+      state.errorMessage = action.error.message || i18n.t("whatsapp.qrRequestError");
     });
 
     // SYNC CONNECTION
@@ -264,12 +265,12 @@ const whatsappSlice = createSlice({
         state.connectionStatus = "connected";
       } else {
         state.connectionStatus = "error";
-        state.errorMessage = "No se pudo sincronizar. Intente escanear de nuevo.";
+        state.errorMessage = i18n.t("whatsapp.syncFailed");
       }
     });
     builder.addCase(syncConnection.rejected, (state, action) => {
       state.connectionStatus = "error";
-      state.errorMessage = action.error.message || "Error de sincronización";
+      state.errorMessage = action.error.message || i18n.t("whatsapp.syncError");
     });
 
     // FETCH CHATS
