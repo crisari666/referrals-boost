@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import Field from "./Field";
 import type { DocumentType } from "@/data/mockData";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -8,9 +9,8 @@ import { useEffect } from "react";
 
 const DOCUMENT_TYPES: DocumentType[] = ["INE", "Pasaporte", "CURP", "RFC", "Otro"];
 
-/** Backend duplicate-phone / conflict (409), not Zod client validation. */
 function isServerDuplicatePhoneMessage(message: string): boolean {
-  return /ya existe|registrado|duplicate key/i.test(message);
+  return /ya existe|registrado|duplicate key|already exists|registered/i.test(message);
 }
 
 export interface AddClientFormState {
@@ -41,6 +41,7 @@ const AddClientModal = ({
   updateField,
   onSubmit,
 }: AddClientModalProps) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -69,8 +70,8 @@ const AddClientModal = ({
             className="bg-card w-full md:max-w-md md:rounded-2xl rounded-t-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-foreground">Nuevo Cliente</h2>
-              <button onClick={onClose} className="p-1 rounded-lg hover:bg-secondary/50">
+              <h2 className="text-lg font-bold text-foreground">{t("clients.newClientTitle")}</h2>
+              <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-secondary/50 cursor-pointer">
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
@@ -84,59 +85,100 @@ const AddClientModal = ({
               </p>
             ) : null}
 
-            <Field label="Nombre *" error={errors.name}>
-              <input value={form.name} onChange={(e) => updateField("name", e.target.value)} placeholder="Nombre completo" className="form-input" />
+            <Field label={t("clients.nameLabel")} error={errors.name}>
+              <input
+                value={form.name}
+                onChange={(e) => updateField("name", e.target.value)}
+                placeholder={t("clients.fullNamePlaceholder")}
+                className="form-input"
+              />
             </Field>
 
-            <Field label="Correo electrónico *" error={errors.email}>
-              <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} placeholder="correo@ejemplo.com" className="form-input" />
+            <Field label={t("clients.emailLabel")} error={errors.email}>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => updateField("email", e.target.value)}
+                placeholder={t("clients.emailPlaceholder")}
+                className="form-input"
+              />
             </Field>
 
-            <Field label="WhatsApp *" error={errors.whatsapp}>
-              <input type="tel" value={form.whatsapp} onChange={(e) => updateField("whatsapp", e.target.value)} placeholder="+52 999 123 4567" className="form-input" />
+            <Field label={t("clients.whatsappLabel")} error={errors.whatsapp}>
+              <input
+                type="tel"
+                value={form.whatsapp}
+                onChange={(e) => updateField("whatsapp", e.target.value)}
+                placeholder={t("clients.phonePlaceholder")}
+                className="form-input"
+              />
             </Field>
 
-            <Field label="Teléfono *" error={errors.phone}>
-              <input type="tel" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} placeholder="+52 999 123 4567" className="form-input" />
+            <Field label={t("clients.phoneLabel")} error={errors.phone}>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => updateField("phone", e.target.value)}
+                placeholder={t("clients.phonePlaceholder")}
+                className="form-input"
+              />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Tipo de documento" error={errors.documentType}>
-                <select value={form.documentType} onChange={(e) => updateField("documentType", e.target.value)} className="form-input">
-                  <option value="">Seleccionar</option>
+              <Field label={t("clients.documentType")} error={errors.documentType}>
+                <select
+                  value={form.documentType}
+                  onChange={(e) => updateField("documentType", e.target.value)}
+                  className="form-input"
+                >
+                  <option value="">{t("common.selectPlaceholder")}</option>
                   {DOCUMENT_TYPES.map((dt) => (
-                    <option key={dt} value={dt}>{dt}</option>
+                    <option key={dt} value={dt}>
+                      {dt}
+                    </option>
                   ))}
                 </select>
               </Field>
-              <Field label="Documento" error={errors.document}>
-                <input value={form.document} onChange={(e) => updateField("document", e.target.value)} placeholder="Número" className="form-input" />
+              <Field label={t("clients.documentNumber")} error={errors.document}>
+                <input
+                  value={form.document}
+                  onChange={(e) => updateField("document", e.target.value)}
+                  placeholder={t("clients.documentNumberPlaceholder")}
+                  className="form-input"
+                />
               </Field>
             </div>
 
-            <Field label="Proyecto de interés" error={errors.projectInterest}>
-              <select value={form.projectInterest} onChange={(e) => updateField("projectInterest", e.target.value)} className="form-input">
-                <option value="">Sin proyecto asignado</option>
+            <Field label={t("clients.projectInterest")} error={errors.projectInterest}>
+              <select
+                value={form.projectInterest}
+                onChange={(e) => updateField("projectInterest", e.target.value)}
+                className="form-input"
+              >
+                <option value="">{t("clients.noProjectAssigned")}</option>
                 {projectList.map((p) => (
-                  <option key={p.id} value={p.id}>{p.title}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
                 ))}
               </select>
             </Field>
 
-            <Field label="Descripción del cliente *" error={errors.description}>
+            <Field label={t("clients.descriptionLabel")} error={errors.description}>
               <textarea
                 value={form.description}
                 onChange={(e) => updateField("description", e.target.value)}
-                placeholder="Describe la situación o notas iniciales del cliente"
+                placeholder={t("clients.descriptionPlaceholder")}
                 className="form-input min-h-[96px] resize-y"
               />
             </Field>
 
             <button
+              type="button"
               onClick={onSubmit}
-              className="w-full gradient-commission text-primary-foreground font-bold py-3 rounded-xl shadow-md text-sm"
+              className="w-full gradient-commission text-primary-foreground font-bold py-3 rounded-xl shadow-md text-sm cursor-pointer"
             >
-              Agregar Cliente
+              {t("clients.addClientSubmit")}
             </button>
           </motion.div>
         </motion.div>

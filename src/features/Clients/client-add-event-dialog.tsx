@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Loader2, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,14 +20,19 @@ type ClientAddEventDialogProps = {
   customerId: string;
 };
 
-const eventTypeOptions: Array<{ value: CustomerEventType; label: string }> = [
-  { value: 'WHATSAPP_CALL', label: 'Llamada por WhatsApp' },
-  { value: 'WHATSAPP_MESSAGE', label: 'Mensaje por WhatsApp' },
-  { value: 'PHONE_CALL', label: 'Llamada telefonica' },
-  { value: 'VIDEO_CALL', label: 'Videollamada' },
-];
+const EVENT_TYPE_KEYS: Partial<Record<CustomerEventType, string>> = {
+  WHATSAPP_CALL: 'clients.eventTypeWhatsappCall',
+  WHATSAPP_MESSAGE: 'clients.eventTypeWhatsappMessage',
+  PHONE_CALL: 'clients.eventTypePhoneCall',
+  VIDEO_CALL: 'clients.eventTypeVideoCall',
+  CALL_CRM: 'clients.eventTypeCallCrm',
+  CUSTOM_SENT_LAND: 'clients.eventTypeCustomSentLand',
+  CUSTOMER_CANCELLED_VISIT_LAND: 'clients.eventTypeCustomerCancelledVisitLand',
+  CUSTOMER_VISIT_LAND: 'clients.eventTypeCustomerVisitLand',
+};
 
 export function ClientAddEventDialog({ customerId }: ClientAddEventDialogProps) {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [eventType, setEventType] = useState<CustomerEventType>('WHATSAPP_MESSAGE');
@@ -34,25 +40,33 @@ export function ClientAddEventDialog({ customerId }: ClientAddEventDialogProps) 
   const [score, setScore] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const eventTypeOptions = useMemo(() => {
+    const entries = Object.entries(EVENT_TYPE_KEYS) as [CustomerEventType, string][];
+    return entries.map(([value, key]) => ({
+      value,
+      label: t(key),
+    }));
+  }, [t]);
+
   const submitDisabled = useMemo(
     () => submitting || description.trim() === '' || score.trim() === '',
-    [description, score, submitting]
+    [description, score, submitting],
   );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmedDescription = description.trim();
     if (!trimmedDescription) {
-      toast.error('Ingresa una descripción.');
+      toast.error(t('clients.eventDescRequired'));
       return;
     }
     if (score.trim() === '') {
-      toast.error('Puntaje requerido.');
+      toast.error(t('clients.eventScoreRequired'));
       return;
     }
     const parsedScore = Number(score);
     if (!Number.isFinite(parsedScore) || parsedScore < 0 || parsedScore > 100) {
-      toast.error('Puntaje debe estar entre 0 y 100.');
+      toast.error(t('clients.eventScoreRange'));
       return;
     }
     setSubmitting(true);
@@ -65,15 +79,15 @@ export function ClientAddEventDialog({ customerId }: ClientAddEventDialogProps) 
             description: trimmedDescription,
             score: parsedScore,
           },
-        })
+        }),
       ).unwrap();
       setDescription('');
       setScore('');
       setEventType('WHATSAPP_MESSAGE');
       setOpen(false);
-      toast.success('Evento creado.');
+      toast.success(t('clients.eventCreatedToast'));
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'No se pudo crear el evento.';
+      const message = error instanceof Error ? error.message : t('clients.eventCreateFailed');
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -89,19 +103,17 @@ export function ClientAddEventDialog({ customerId }: ClientAddEventDialogProps) 
         onClick={() => setOpen(true)}
       >
         <Plus className="w-4 h-4" />
-        Agregar evento
+        {t('clients.addEventButton')}
       </Button>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Agregar evento</DialogTitle>
-          <DialogDescription>
-            Guarda evento con tipo, puntaje de interes y descripcion.
-          </DialogDescription>
+          <DialogTitle>{t('clients.addEventTitle')}</DialogTitle>
+          <DialogDescription>{t('clients.addEventDialogDescription')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <select
             value={eventType}
-            onChange={(event) => setEventType(event.target.value as CustomerEventType)}
+            onChange={(e) => setEventType(e.target.value as CustomerEventType)}
             className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
             required
             disabled={submitting}
@@ -118,16 +130,16 @@ export function ClientAddEventDialog({ customerId }: ClientAddEventDialogProps) 
             max={100}
             step={1}
             value={score}
-            onChange={(event) => setScore(event.target.value)}
+            onChange={(e) => setScore(e.target.value)}
             className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
-            placeholder="Puntaje (0-100)"
+            placeholder={t('clients.scorePlaceholder')}
             disabled={submitting}
             required
           />
           <Textarea
             value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Descripcion"
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t('clients.descriptionShortLabel')}
             rows={3}
             maxLength={5000}
             disabled={submitting}
@@ -135,16 +147,16 @@ export function ClientAddEventDialog({ customerId }: ClientAddEventDialogProps) 
           />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button type="submit" className="gradient-commission text-primary-foreground" disabled={submitDisabled}>
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Guardando...
+                  {t('common.saving')}
                 </>
               ) : (
-                'Guardar evento'
+                t('clients.saveEvent')
               )}
             </Button>
           </DialogFooter>

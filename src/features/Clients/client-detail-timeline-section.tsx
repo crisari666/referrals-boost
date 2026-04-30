@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import type { Client } from '@/data/mockData';
 import { useAppDispatch, useAppSelector } from '@/store';
@@ -13,6 +14,7 @@ export type ClientDetailTimelineSectionProps = {
 };
 
 export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTimelineSectionProps) {
+  const { t } = useTranslation();
   const { id: routeId } = useParams();
   const dispatch = useAppDispatch();
   const apiLogs = useAppSelector((s) => {
@@ -41,7 +43,7 @@ export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTime
       className="bg-card rounded-2xl p-5 border border-border shadow-sm"
     >
       <h3 className="font-bold text-foreground mb-4">
-        {isMock ? 'Historial de Interacciones' : 'Línea de situaciones'}
+        {isMock ? t('clients.timelineMockTitle') : t('clients.timelineApiTitle')}
       </h3>
       {!isMock && routeId && isPhysicalUser && (
         <div className="mb-4">
@@ -99,7 +101,8 @@ export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTime
               </div>
               <div className="pb-4 min-w-0">
                 <p className="text-xs text-muted-foreground">
-                  {formatDetailDate(event.createdAt)} · {event.eventType} · Score {event.score ?? '-'}
+                  {formatDetailDate(event.createdAt)} · {event.eventType} · {t('clients.scoreLabel')}{' '}
+                  {event.score ?? '-'}
                 </p>
                 <p className="text-sm text-foreground mt-0.5 whitespace-pre-wrap">{event.description}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">{event.userId}</p>
@@ -109,7 +112,7 @@ export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTime
         </div>
       )}
       {!hasMockTimeline && !hasApiTimeline && !hasEventsTimeline && (
-        <p className="text-sm text-muted-foreground">Sin registros en el historial.</p>
+        <p className="text-sm text-muted-foreground">{t('clients.timelineEmpty')}</p>
       )}
     </motion.div>
   );

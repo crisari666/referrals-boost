@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import ClientRow from './ClientRow';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchProjects } from '@/store/projectsSlice';
@@ -9,6 +10,7 @@ export type ClientsListPanelProps = {
 };
 
 export function ClientsListPanel({ loadingList }: ClientsListPanelProps) {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const projectsList = useAppSelector((s) => s.projects.list);
   const clients = useAppSelector(selectFilteredClients);
@@ -27,7 +29,7 @@ export function ClientsListPanel({ loadingList }: ClientsListPanelProps) {
 
   if (loadingList) {
     return (
-      <p className="text-center text-muted-foreground py-12 text-sm">Cargando clientes...</p>
+      <p className="text-center text-muted-foreground py-12 text-sm">{t('clients.loadingList')}</p>
     );
   }
 
@@ -37,7 +39,7 @@ export function ClientsListPanel({ loadingList }: ClientsListPanelProps) {
         <ClientRow key={client.id} client={client} index={i} projectTitles={projectTitles} />
       ))}
       {clients.length === 0 && (
-        <p className="text-center text-muted-foreground py-12 text-sm">No se encontraron clientes</p>
+        <p className="text-center text-muted-foreground py-12 text-sm">{t('clients.emptyList')}</p>
       )}
     </>
   );

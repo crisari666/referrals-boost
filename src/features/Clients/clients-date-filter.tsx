@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
   type ClientsDateFilterKind,
@@ -5,17 +7,21 @@ import {
   setListDateFilterKind,
 } from '@/store/clientsSlice';
 
-const dateFilterTabs: { id: ClientsDateFilterKind; label: string }[] = [
-  { id: 'all', label: 'Todos' },
-  { id: 'today', label: 'Hoy' },
-  { id: 'yesterday', label: 'Ayer' },
-  { id: 'custom', label: 'Fecha' },
-];
-
 export function ClientsDateFilter() {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const dateFilterKind = useAppSelector((state) => state.clients.listDateFilterKind);
   const customDateFilter = useAppSelector((state) => state.clients.listCustomDateFilter);
+
+  const dateFilterTabs = useMemo(
+    (): { id: ClientsDateFilterKind; label: string }[] => [
+      { id: 'all', label: t('clients.dateFilterAll') },
+      { id: 'today', label: t('clients.dateFilterToday') },
+      { id: 'yesterday', label: t('clients.dateFilterYesterday') },
+      { id: 'custom', label: t('clients.dateFilterCustom') },
+    ],
+    [t],
+  );
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

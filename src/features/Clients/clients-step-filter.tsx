@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { setListStepFilterId } from '@/store/clientsSlice';
 import { ChevronDown, Filter } from 'lucide-react';
 
 export function ClientsStepFilter() {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const steps = useAppSelector((s) => s.clients.vendorStepCatalog);
   const selectedId = useAppSelector((s) => s.clients.listStepFilterId);
@@ -22,7 +24,7 @@ export function ClientsStepFilter() {
     <div className="relative shrink-0 min-w-[10.5rem] max-w-[40%] sm:max-w-none">
       <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
       <select
-        aria-label="Filtrar por etapa"
+        aria-label={t('clients.filterByStepAria')}
         value={selectedId ?? ''}
         onChange={(e) => {
           const v = e.target.value;
@@ -30,8 +32,8 @@ export function ClientsStepFilter() {
         }}
         className="w-full appearance-none bg-card border border-border rounded-xl pl-10 pr-10 py-3 text-sm text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
       >
-        <option value="">Todas las etapas</option>
-        <option value="__without_step__">Nuevos</option>
+        <option value="">{t('clients.allSteps')}</option>
+        <option value="__without_step__">{t('clients.newWithoutStep')}</option>
         {options.map((s) => (
           <option key={s.id} value={s.id}>
             {s.name}

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Loader2, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +20,7 @@ type ClientAddNoteDialogProps = {
 };
 
 export function ClientAddNoteDialog({ customerId }: ClientAddNoteDialogProps) {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
@@ -28,7 +30,7 @@ export function ClientAddNoteDialog({ customerId }: ClientAddNoteDialogProps) {
     e.preventDefault();
     const trimmed = noteText.trim();
     if (!trimmed) {
-      toast.error('Escribe una nota antes de guardar.');
+      toast.error(t('clients.noteRequiredToast'));
       return;
     }
     setSubmitting(true);
@@ -36,10 +38,9 @@ export function ClientAddNoteDialog({ customerId }: ClientAddNoteDialogProps) {
       await dispatch(addCustomerNoteRequest({ customerId, note: trimmed })).unwrap();
       setNoteText('');
       setOpen(false);
-      toast.success('Nota agregada');
+      toast.success(t('clients.noteAddedToast'));
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'No se pudo agregar la nota.';
+      const message = error instanceof Error ? error.message : t('clients.storeNoteAddFailed');
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -55,45 +56,34 @@ export function ClientAddNoteDialog({ customerId }: ClientAddNoteDialogProps) {
         onClick={() => setOpen(true)}
       >
         <Plus className="w-4 h-4" />
-        Agregar nota
+        {t('clients.addNoteTitle')}
       </Button>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Agregar nota</DialogTitle>
-          <DialogDescription>
-            Guarda un comentario para este cliente.
-          </DialogDescription>
+          <DialogTitle>{t('clients.addNoteTitle')}</DialogTitle>
+          <DialogDescription>{t('clients.addNoteDescription')}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
-            placeholder="Escribe la nota del cliente..."
+            placeholder={t('clients.addNotePlaceholder')}
             rows={5}
             maxLength={1500}
             disabled={submitting}
           />
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={submitting}
-            >
-              Cancelar
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
+              {t('common.cancel')}
             </Button>
-            <Button
-              type="submit"
-              className="gradient-commission text-primary-foreground"
-              disabled={submitting}
-            >
+            <Button type="submit" className="gradient-commission text-primary-foreground" disabled={submitting}>
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Guardando...
+                  {t('common.saving')}
                 </>
               ) : (
-                'Guardar nota'
+                t('clients.saveNote')
               )}
             </Button>
           </DialogFooter>

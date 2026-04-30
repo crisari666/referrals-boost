@@ -1,3 +1,5 @@
+import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { addClient, setClientList, fetchVendorCustomerSteps } from '@/store/clientsSlice';
 import {
@@ -91,16 +93,18 @@ export function mapCreationCustomerToClient(
   };
 }
 
-const clientSchema = z.object({
-  name: z.string().trim().min(1, 'El nombre es obligatorio').max(100),
-  email: z.string().trim().email('Correo inválido').max(255),
-  whatsapp: z.string().trim().min(1, 'WhatsApp es obligatorio').max(40),
-  phone: z.string().trim().min(1, 'El teléfono es obligatorio').max(40),
-  documentType: z.string().optional(),
-  document: z.string().trim().max(30).optional(),
-  projectInterest: z.string().optional().or(z.literal('')),
-  description: z.string().trim().min(1, 'La descripción es obligatoria'),
-});
+function getClientSchema() {
+  return z.object({
+    name: z.string().trim().min(1, i18n.t('validation.nameRequired')).max(100),
+    email: z.string().trim().email(i18n.t('validation.emailInvalid')).max(255),
+    whatsapp: z.string().trim().min(1, i18n.t('validation.whatsappRequired')).max(40),
+    phone: z.string().trim().min(1, i18n.t('validation.phoneRequired')).max(40),
+    documentType: z.string().optional(),
+    document: z.string().trim().max(30).optional(),
+    projectInterest: z.string().optional().or(z.literal('')),
+    description: z.string().trim().min(1, i18n.t('validation.descriptionRequired')),
+  });
+}
 
 const emptyForm: AddClientFormState = {
   name: '',
@@ -114,6 +118,7 @@ const emptyForm: AddClientFormState = {
 };
 
 export function useClient() {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const clientList = useAppSelector((state) => state.clients.list);
   const authUser = useAppSelector((state) => state.auth.user);
@@ -153,7 +158,7 @@ export function useClient() {
   };
 
   const handleSubmit = async () => {
-    const result = clientSchema.safeParse(form);
+    const result = getClientSchema().safeParse(form);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.errors.forEach((e) => {
@@ -210,8 +215,8 @@ export function useClient() {
         interactions: [
           {
             date: dateStr,
-            type: 'Alta',
-            detail: 'Cliente registrado en la plataforma',
+            type: t('clients.interactionTypeRegister'),
+            detail: t('clients.interactionDetailRegister'),
           },
         ],
       };
@@ -220,21 +225,21 @@ export function useClient() {
       setShowModal(false);
       setForm(emptyForm);
       setErrors({});
-      toast.success(`Cliente "${newClient.name}" agregado exitosamente`);
+      toast.success(t('clients.clientAddedToast', { name: newClient.name }));
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
         const apiMsg = parseNestJsMessage(err.response.data)?.trim();
         const dup =
           apiMsg && apiMsg.length > 0
             ? apiMsg
-            : 'Este número de teléfono ya está registrado.';
+            : t('clients.phoneDuplicateDefault');
         setErrors({ phone: dup });
         return;
       }
       const message =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: string }).message)
-          : 'No se pudo crear el cliente. Intenta de nuevo.';
+          : t('clients.createClientFailed');
       toast.error(message);
     }
   };

@@ -1,16 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ChevronDown, Check, Pencil } from 'lucide-react';
 import { ClientContactActions } from './client-contact-actions';
-import {
-  statusLabels,
-  statusColors,
-  type ClientStatus,
-  type Client,
-  projects as mockProjectsCatalog,
-} from '@/data/mockData';
+import { statusColors, type ClientStatus, type Client, projects as mockProjectsCatalog } from '@/data/mockData';
 import { formatDetailDate } from './client-detail-formatters';
 import { ClientDetailStepSelect } from './client-detail-step-select';
 import { useAppDispatch, useAppSelector } from '@/store';
@@ -23,6 +18,14 @@ const statusOrder: ClientStatus[] = [
   'pago_reserva',
   'cerrado',
 ];
+
+const CLIENT_STATUS_I18N_KEY: Record<ClientStatus, string> = {
+  nuevo: 'clients.statusNuevo',
+  interesado: 'clients.statusInteresado',
+  agendo_cita: 'clients.statusAgendoCita',
+  pago_reserva: 'clients.statusPagoReserva',
+  cerrado: 'clients.statusCerrado',
+};
 
 export type ClientDetailProfileCardProps = {
   client: Client;
@@ -37,6 +40,7 @@ export function ClientDetailProfileCard({
   isMock,
   isPhysical,
 }: ClientDetailProfileCardProps) {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { id: routeId } = useParams();
   const projectsList = useAppSelector((s) => s.projects.list);
@@ -78,7 +82,7 @@ export function ClientDetailProfileCard({
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="font-bold text-foreground text-lg">{client.name}</h2>
-            <p className="text-sm text-muted-foreground">{projectTitle ?? 'Sin proyecto'}</p>
+            <p className="text-sm text-muted-foreground">{projectTitle ?? t('clients.noProject')}</p>
             {apiCustomer?.email && (
               <p className="text-xs text-muted-foreground mt-1 truncate">{apiCustomer.phone}</p>
             )}
@@ -92,7 +96,7 @@ export function ClientDetailProfileCard({
             )}
             {apiCustomer?.createdAt && (
               <p className="text-xs text-muted-foreground mt-1">
-                Alta: {formatDetailDate(apiCustomer.createdAt)}
+                {t('clients.registeredLabel')} {formatDetailDate(apiCustomer.createdAt)}
               </p>
             )}
           </div>
@@ -100,7 +104,7 @@ export function ClientDetailProfileCard({
         {showEditCustomer ? (
           <button
             type="button"
-            aria-label="Editar cliente"
+            aria-label={t('clients.editClientAria')}
             onClick={() => dispatch(openVendorCustomerEditModal())}
             className="shrink-0 p-2 rounded-xl border border-border bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
           >
@@ -123,11 +127,11 @@ export function ClientDetailProfileCard({
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-secondary/30 transition-colors hover:bg-secondary/50 cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground font-medium">Estado:</span>
+                <span className="text-xs text-muted-foreground font-medium">{t('clients.statusLabel')}</span>
                 <span
                   className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusColors[currentStatus]}`}
                 >
-                  {statusLabels[currentStatus]}
+                  {t(CLIENT_STATUS_I18N_KEY[currentStatus])}
                 </span>
               </div>
               <ChevronDown
@@ -151,14 +155,16 @@ export function ClientDetailProfileCard({
                       onClick={() => {
                         setCurrentStatus(s);
                         setStatusOpen(false);
-                        toast.success(`Estado actualizado a "${statusLabels[s]}"`);
+                        toast.success(
+                          t('clients.statusUpdatedToast', { status: t(CLIENT_STATUS_I18N_KEY[s]) }),
+                        );
                       }}
                       className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/40 transition-colors cursor-pointer"
                     >
                       <span
                         className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusColors[s]}`}
                       >
-                        {statusLabels[s]}
+                        {t(CLIENT_STATUS_I18N_KEY[s])}
                       </span>
                       {currentStatus === s && <Check className="w-4 h-4 text-accent" />}
                     </button>
@@ -169,11 +175,11 @@ export function ClientDetailProfileCard({
           </>
         ) : (
           <div className="w-full flex items-center gap-2 px-4 py-3 rounded-xl border border-border bg-secondary/20">
-            <span className="text-xs text-muted-foreground font-medium">Estado:</span>
+            <span className="text-xs text-muted-foreground font-medium">{t('clients.statusLabel')}</span>
             <span
               className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusColors[currentStatus]}`}
             >
-              {statusLabels[currentStatus]}
+              {t(CLIENT_STATUS_I18N_KEY[currentStatus])}
             </span>
           </div>
         )}

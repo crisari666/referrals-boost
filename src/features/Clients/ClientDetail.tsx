@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { clients, type Client } from '@/data/mockData';
 import { useEffect, useMemo, useLayoutEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store';
@@ -16,6 +17,7 @@ import { ClientDetailTimelineSection } from './client-detail-timeline-section';
 import { EditClientModal } from './EditClientModal';
 
 const ClientDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const authUser = useAppSelector((s) => s.auth.user);
   const vendorCreationDetailStatus = useAppSelector((s) => s.clients.vendorCreationDetailStatus);
@@ -66,9 +68,9 @@ const ClientDetail = () => {
   if (!id || (!loading && !client)) {
     return (
       <div className="p-8 text-center">
-        <p className="text-muted-foreground">Cliente no encontrado</p>
+        <p className="text-muted-foreground">{t('clients.notFound')}</p>
         <Link to="/clients" className="text-primary font-medium text-sm mt-2 inline-block">
-          Volver a clientes
+          {t('clients.backToClients')}
         </Link>
       </div>
     );
@@ -77,7 +79,7 @@ const ClientDetail = () => {
   if (loading || !client) {
     return (
       <div className="p-8 text-center">
-        <p className="text-muted-foreground text-sm">Cargando cliente...</p>
+        <p className="text-muted-foreground text-sm">{t('clients.loadingDetail')}</p>
       </div>
     );
   }
