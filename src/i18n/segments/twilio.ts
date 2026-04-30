@@ -1,0 +1,26 @@
+export const twilioSegment = {
+  es: {
+    noSession: "No hay sesión",
+    prepareError: "Error al preparar VoIP",
+    invalidSession: "Sesión no válida",
+    noTwilioNumber: "No hay número Twilio asignado",
+    voipNotReady: "VoIP aún no está listo",
+    voipPhoneNotReady: "Teléfono VoIP no listo",
+    voipTokenInvalid: "Respuesta de token VoIP inválida",
+    twilioNumberFetchFailed: "No se pudo obtener el número Twilio del usuario",
+    callStartFailed: "No se pudo iniciar la llamada",
+    missingVoipEnv: "Falta VITE_URL_VOIP_SERVER en el entorno",
+  },
+  en: {
+    noSession: "No session",
+    prepareError: "Could not prepare VoIP",
+    invalidSession: "Invalid session",
+    noTwilioNumber: "No Twilio number assigned",
+    voipNotReady: "VoIP is not ready yet",
+    voipPhoneNotReady: "VoIP phone not ready",
+    voipTokenInvalid: "Invalid VoIP token response",
+    twilioNumberFetchFailed: "Could not fetch user Twilio number",
+    callStartFailed: "Could not start the call",
+    missingVoipEnv: "VITE_URL_VOIP_SERVER is missing in the environment",
+  },
+} as const;

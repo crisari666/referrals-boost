@@ -1,0 +1,28 @@
+export const layoutSegment = {
+  es: {
+    navHome: "Inicio",
+    navProjects: "Proyectos",
+    navClients: "Clientes",
+    navAgenda: "Agenda",
+    navAssistant: "Asistente",
+    navWhatsapp: "WhatsApp",
+    navProfile: "Perfil",
+    panelSubtitle: "Panel de Vendedores",
+    logout: "Cerrar sesión",
+    badgeVisitsToday: "{{count}} visitas pendientes hoy",
+    badgePendingToday: "{{count}} pendientes hoy",
+  },
+  en: {
+    navHome: "Home",
+    navProjects: "Projects",
+    navClients: "Clients",
+    navAgenda: "Schedule",
+    navAssistant: "Assistant",
+    navWhatsapp: "WhatsApp",
+    navProfile: "Profile",
+    panelSubtitle: "Sales panel",
+    logout: "Log out",
+    badgeVisitsToday: "{{count}} pending visits today",
+    badgePendingToday: "{{count}} pending today",
+  },
+} as const;
