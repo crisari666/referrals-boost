@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +12,7 @@ import {
 } from '@/services/agentFirstAccessService';
 import { useAppDispatch } from '@/store';
 import { loginUser } from '@/store/authSlice';
+import { LanguageSwitcher } from '@/components/language-switcher';
 
 const DEFAULT_LAT = 4.6;
 const DEFAULT_LNG = -74.0;
@@ -18,6 +20,7 @@ const DEFAULT_LNG = -74.0;
 type Phase = 'loading' | 'invalid' | 'ready' | 'submitting';
 
 const FirstAccessPage = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
   const dispatch = useAppDispatch();
@@ -65,11 +68,11 @@ const FirstAccessPage = () => {
       e.preventDefault();
       setFormError(null);
       if (password.length < 8) {
-        setFormError('La contraseña debe tener al menos 8 caracteres.');
+        setFormError(t('firstAccess.passwordMinError'));
         return;
       }
       if (password !== confirm) {
-        setFormError('Las contraseñas no coinciden.');
+        setFormError(t('firstAccess.passwordMismatch'));
         return;
       }
       setPhase('submitting');
@@ -90,16 +93,19 @@ const FirstAccessPage = () => {
         const msg =
           err && typeof err === 'object' && 'message' in err
             ? String((err as { message: string }).message)
-            : 'No se pudo guardar la contraseña. Intenta de nuevo.';
+            : t('firstAccess.savePasswordFailed');
         setFormError(msg);
       }
     },
-    [confirm, dispatch, navigate, password, token],
+    [confirm, dispatch, navigate, password, t, token],
   );
 
   if (phase === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
@@ -108,12 +114,15 @@ const FirstAccessPage = () => {
   if (phase === 'invalid') {
     const copy =
       invalidReason === 'expired'
-        ? 'Este enlace expiró. Solicita un nuevo correo de acceso al administrador.'
+        ? t('firstAccess.invalidExpired')
         : invalidReason === 'used'
-          ? 'Este enlace ya fue utilizado. Si ya definiste tu contraseña, inicia sesión.'
-          : 'Enlace inválido. Verifica el enlace o solicita uno nuevo al administrador.';
+          ? t('firstAccess.invalidUsed')
+          : t('firstAccess.invalidDefault');
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -124,10 +133,10 @@ const FirstAccessPage = () => {
             alt="La Ceiba"
             className="mx-auto h-24 w-auto object-contain"
           />
-          <h1 className="text-xl font-bold text-foreground">Enlace no disponible</h1>
+          <h1 className="text-xl font-bold text-foreground">{t('firstAccess.unavailableTitle')}</h1>
           <p className="text-sm text-muted-foreground">{copy}</p>
           <Button variant="outline" className="mt-2" onClick={() => navigate('/login')}>
-            Ir al inicio de sesión
+            {t('firstAccess.goLogin')}
           </Button>
         </motion.div>
       </div>
@@ -135,7 +144,10 @@ const FirstAccessPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-10 relative">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -147,14 +159,14 @@ const FirstAccessPage = () => {
             alt="Holding Inmobiliario La Ceiba"
             className="mx-auto h-24 w-auto object-contain"
           />
-          <h1 className="text-xl font-bold text-foreground">Define tu contraseña</h1>
+          <h1 className="text-xl font-bold text-foreground">{t('firstAccess.definePasswordTitle')}</h1>
           <p className="text-sm text-muted-foreground">
-            Cuenta: <span className="font-medium text-foreground">{maskedEmail}</span>
+            {t('firstAccess.accountLabel')} <span className="font-medium text-foreground">{maskedEmail}</span>
           </p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="new-pass">Nueva contraseña</Label>
+            <Label htmlFor="new-pass">{t('firstAccess.newPassword')}</Label>
             <Input
               id="new-pass"
               type="password"
@@ -166,7 +178,7 @@ const FirstAccessPage = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirm-pass">Confirmar contraseña</Label>
+            <Label htmlFor="confirm-pass">{t('firstAccess.confirmPassword')}</Label>
             <Input
               id="confirm-pass"
               type="password"
@@ -190,10 +202,10 @@ const FirstAccessPage = () => {
             {phase === 'submitting' ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Guardando…
+                {t('firstAccess.saving')}
               </>
             ) : (
-              'Guardar e ingresar'
+              t('firstAccess.saveAndEnter')
             )}
           </Button>
         </form>

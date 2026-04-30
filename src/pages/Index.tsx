@@ -1,24 +1,29 @@
 import { DollarSign, Users, Target, TrendingUp, Trophy, Medal } from "lucide-react";
 import StatsCard from "@/components/StatsCard";
-import { currentSeller, motivationalPhrases, topSellers, clients } from "@/data/mockData";
+import { currentSeller, topSellers, clients } from "@/data/mockData";
 import { motion } from "framer-motion";
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchVendorDashboard } from "@/store/vendorDashboardSlice";
 import { ACHIEVEMENTS_GOALS_USERNAME } from "@/constants/app-constants";
 import { displayUserName } from "@/lib/display-user-name";
+import { getIntlLocaleTag } from "@/i18n/intl-locale";
 import { useAppDispatch, useAppSelector, type RootState } from "@/store";
 
 const VENDOR_LEVEL = 4;
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s: RootState) => s.auth.user);
   const vendorDashboard = useAppSelector((s: RootState) => s.vendorDashboard);
+  const localeTag = getIntlLocaleTag();
 
-  const phrase = useMemo(
-    () => motivationalPhrases[Math.floor(Math.random() * motivationalPhrases.length)],
-    []
-  );
+  const phrase = useMemo(() => {
+    const keys = ["dashboard.phrase1", "dashboard.phrase2", "dashboard.phrase3", "dashboard.phrase4"] as const;
+    const key = keys[Math.floor(Math.random() * keys.length)];
+    return t(key);
+  }, [t]);
 
   const isVendor = user?.level === VENDOR_LEVEL;
   const api = vendorDashboard.data;
@@ -36,8 +41,7 @@ const Dashboard = () => {
   const clientsConverted = isVendor && api ? api.customerConversion : currentSeller.clientsConverted;
   const monthGoal = isVendor && api ? api.monthlyGoal : currentSeller.monthGoal;
 
-  const goalPercent =
-    monthGoal > 0 ? Math.round((monthCommissions / monthGoal) * 100) : 0;
+  const goalPercent = monthGoal > 0 ? Math.round((monthCommissions / monthGoal) * 100) : 0;
 
   const recentClients = clients
     .filter((c) => c.status === "pago_reserva" || c.status === "cerrado")
@@ -46,54 +50,53 @@ const Dashboard = () => {
   const userName = user ? displayUserName(user.name, user.lastName) : currentSeller.name;
   const showGoalsAchievements = user?.user === ACHIEVEMENTS_GOALS_USERNAME;
 
+  const fmtMoney = (n: number) => `$${n.toLocaleString(localeTag)}`;
+
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="space-y-1"
       >
-        <p className="text-sm text-muted-foreground">👋 Bienvenido de vuelta</p>
+        <p className="text-sm text-muted-foreground">{t("dashboard.welcomeBack")}</p>
         <h1 className="text-2xl font-extrabold text-foreground">{userName}</h1>
         <p className="text-sm text-primary font-medium">{phrase}</p>
       </motion.div>
 
-      {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3">
         <StatsCard
-          title="Comisiones Mes"
-          value={`$${monthCommissions.toLocaleString()}`}
+          title={t("dashboard.commissionsMonth")}
+          value={fmtMoney(monthCommissions)}
           icon={DollarSign}
           gradient="commission"
           delay={0.1}
         />
         <StatsCard
-          title="Total Histórico"
-          value={`$${totalCommissions.toLocaleString()}`}
+          title={t("dashboard.totalHistoric")}
+          value={fmtMoney(totalCommissions)}
           icon={TrendingUp}
           gradient="gold"
           delay={0.15}
         />
         <StatsCard
-          title="En Seguimiento"
+          title={t("dashboard.inFollowUp")}
           value={String(clientsTracking)}
-          subtitle="clientes activos"
+          subtitle={t("dashboard.activeClientsSubtitle")}
           icon={Users}
           gradient="info"
           delay={0.2}
         />
         <StatsCard
-          title="Conversiones"
+          title={t("dashboard.conversions")}
           value={String(clientsConverted)}
-          subtitle="visitaron oficina"
+          subtitle={t("dashboard.visitedOfficeSubtitle")}
           icon={Target}
           gradient="success"
           delay={0.25}
         />
       </div>
 
-      {/* Monthly goal */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -102,11 +105,13 @@ const Dashboard = () => {
       >
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Meta Mensual</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              {t("dashboard.monthlyGoalLabel")}
+            </p>
             <p className="text-lg font-extrabold text-foreground">
-              ${monthCommissions.toLocaleString()}{" "}
+              {fmtMoney(monthCommissions)}{" "}
               <span className="text-sm font-medium text-muted-foreground">
-                / ${monthGoal.toLocaleString()}
+                / {fmtMoney(monthGoal)}
               </span>
             </p>
           </div>
@@ -122,7 +127,6 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* Ranking */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -131,7 +135,7 @@ const Dashboard = () => {
       >
         <div className="flex items-center gap-2 mb-4">
           <Trophy className="w-5 h-5 text-warning" />
-          <h2 className="font-bold text-foreground">Ranking Top Vendedores</h2>
+          <h2 className="font-bold text-foreground">{t("dashboard.rankingTitle")}</h2>
         </div>
         <div className="space-y-3">
           {topSellers.map((seller, i) => (
@@ -141,16 +145,20 @@ const Dashboard = () => {
                 seller.name === userName ? "bg-primary/10 border border-primary/20" : "bg-secondary/50"
               }`}
             >
-              <span className="text-lg font-extrabold text-muted-foreground w-6">
-                {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
+              <span className="text-lg font-extrabold text-muted-foreground w-8 tabular-nums">
+                {i + 1}
               </span>
               <div className="flex-1">
-                <p className={`text-sm font-semibold ${seller.name === userName ? "text-primary" : "text-foreground"}`}>
+                <p
+                  className={`text-sm font-semibold ${seller.name === userName ? "text-primary" : "text-foreground"}`}
+                >
                   {seller.name}
                 </p>
-                <p className="text-xs text-muted-foreground">Nivel {seller.level}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("dashboard.levelLabel", { level: seller.level })}
+                </p>
               </div>
-              <p className="font-bold text-sm text-foreground">${seller.commissions.toLocaleString()}</p>
+              <p className="font-bold text-sm text-foreground">{fmtMoney(seller.commissions)}</p>
             </div>
           ))}
         </div>
@@ -165,7 +173,7 @@ const Dashboard = () => {
         >
           <div className="flex items-center gap-2 mb-4">
             <Medal className="w-5 h-5 text-primary" />
-            <h2 className="font-bold text-foreground">Logros</h2>
+            <h2 className="font-bold text-foreground">{t("dashboard.achievementsTitle")}</h2>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {currentSeller.achievements.map((ach) => (
@@ -181,7 +189,7 @@ const Dashboard = () => {
                 <div>
                   <p className="text-xs font-semibold text-foreground">{ach.title}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {ach.unlocked ? "✅ Desbloqueado" : "🔒 Bloqueado"}
+                    {ach.unlocked ? t("dashboard.achievementUnlocked") : t("dashboard.achievementLocked")}
                   </p>
                 </div>
               </div>
