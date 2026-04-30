@@ -25,8 +25,18 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
+function formatAssigneeUserId(userId: string): string {
+  const trimmed = userId.trim();
+  if (trimmed.length <= 10) {
+    return trimmed;
+  }
+  return `…${trimmed.slice(-8)}`;
+}
+
 interface VisitCardProps {
   visit: ScheduleVisitRow;
+  showScheduleAssignee?: boolean;
+  assigneeName?: string;
 }
 
 function EventTypeIcon({ type }: { type: VentorScheduleEventTypeApi }) {
@@ -45,7 +55,11 @@ function EventTypeIcon({ type }: { type: VentorScheduleEventTypeApi }) {
   }
 }
 
-const VisitCard = ({ visit }: VisitCardProps) => {
+const VisitCard = ({
+  visit,
+  showScheduleAssignee = false,
+  assigneeName,
+}: VisitCardProps) => {
   const dispatch = useAppDispatch();
   const patching = useAppSelector((s) => s.schedule.patchingById[visit.id] ?? false);
 
@@ -76,6 +90,14 @@ const VisitCard = ({ visit }: VisitCardProps) => {
               {visit.clientName}
             </Link>
             <p className="text-xs text-muted-foreground truncate">{visit.projectName}</p>
+            {showScheduleAssignee ? (
+              <p className="text-[11px] text-muted-foreground/90 mt-0.5">
+                Asesor:{" "}
+                <span className="tabular-nums">
+                  {assigneeName?.trim() || formatAssigneeUserId(visit.scheduleOwnerUserId)}
+                </span>
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">

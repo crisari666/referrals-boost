@@ -5,6 +5,12 @@
 import * as http from "@/lib/http";
 import { customersMsUrl, withCustomersMsAuth } from "@/services/clientsService";
 
+/** Query `view` for GET `ventor-schedule/by-day` (customers-ms). */
+export const VENTOR_SCHEDULE_BY_DAY_VIEW = {
+  Self: "self",
+  MainLeadOnLand: "main_lead_on_land",
+} as const;
+
 export type VentorScheduleEventTypeApi =
   | "virtual"
   | "office"
@@ -47,6 +53,16 @@ export async function listVentorScheduleByDay(
     ...withCustomersMsAuth(),
     url: customersMsUrl("ventor-schedule/by-day"),
     params: { date: dateYmd },
+  });
+}
+
+export async function listMainLeadOnLandScheduleByDay(
+  dateYmd: string
+): Promise<VentorScheduleEventApi[]> {
+  return http.get<VentorScheduleEventApi[]>("", {
+    ...withCustomersMsAuth(),
+    url: customersMsUrl("ventor-schedule/by-day"),
+    params: { date: dateYmd, view: VENTOR_SCHEDULE_BY_DAY_VIEW.MainLeadOnLand },
   });
 }
 

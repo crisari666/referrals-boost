@@ -67,6 +67,24 @@ export const fetchVentorScheduleByDay = createAsyncThunk<
   }
 });
 
+export const fetchMainLeadOnLandScheduleByDay = createAsyncThunk<
+  { dateYmd: string; events: VentorScheduleEventApi[] },
+  string,
+  { rejectValue: string }
+>("schedule/fetchMainLeadOnLandByDay", async (dateYmd, { rejectWithValue }) => {
+  try {
+    const events =
+      await scheduleService.listMainLeadOnLandScheduleByDay(dateYmd);
+    return { dateYmd, events };
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "No se pudo cargar la agenda.";
+    return rejectWithValue(message);
+  }
+});
+
 export const createVentorScheduleEventRequest = createAsyncThunk<
   VentorScheduleEventApi,
   CreateVentorSchedulePayload,
@@ -122,6 +140,22 @@ const scheduleSlice = createSlice({
         state.byDay[dateYmd] = events;
       })
       .addCase(fetchVentorScheduleByDay.rejected, (state, action) => {
+        const dateYmd = action.meta.arg;
+        state.dayLoading[dateYmd] = false;
+        state.dayError[dateYmd] =
+          action.payload ?? action.error.message ?? "Error";
+      })
+      .addCase(fetchMainLeadOnLandScheduleByDay.pending, (state, action) => {
+        const dateYmd = action.meta.arg;
+        state.dayLoading[dateYmd] = true;
+        state.dayError[dateYmd] = undefined;
+      })
+      .addCase(fetchMainLeadOnLandScheduleByDay.fulfilled, (state, action) => {
+        const { dateYmd, events } = action.payload;
+        state.dayLoading[dateYmd] = false;
+        state.byDay[dateYmd] = events;
+      })
+      .addCase(fetchMainLeadOnLandScheduleByDay.rejected, (state, action) => {
         const dateYmd = action.meta.arg;
         state.dayLoading[dateYmd] = false;
         state.dayError[dateYmd] =

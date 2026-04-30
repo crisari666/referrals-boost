@@ -29,6 +29,7 @@ export function mapVentorEventToVisitRow(
     (lastPid ? lastPid : "—");
   return {
     id: ev.id,
+    scheduleOwnerUserId: ev.userId,
     customerId: ev.customerId,
     clientName: ev.customer?.displayName?.trim() || "Cliente",
     projectName,

@@ -8,9 +8,16 @@ import { CalendarDays } from "lucide-react";
 interface ScheduleDayListProps {
   selectedDate: Date;
   visits: ScheduleVisitRow[];
+  showScheduleAssignee?: boolean;
+  assigneeNamesById?: Record<string, string>;
 }
 
-const ScheduleDayList = ({ selectedDate, visits }: ScheduleDayListProps) => {
+const ScheduleDayList = ({
+  selectedDate,
+  visits,
+  showScheduleAssignee = false,
+  assigneeNamesById = {},
+}: ScheduleDayListProps) => {
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-foreground capitalize">
@@ -21,7 +28,12 @@ const ScheduleDayList = ({ selectedDate, visits }: ScheduleDayListProps) => {
         {visits.length > 0 ? (
           <div className="space-y-3">
             {visits.map((visit) => (
-              <VisitCard key={visit.id} visit={visit} />
+              <VisitCard
+                key={visit.id}
+                visit={visit}
+                showScheduleAssignee={showScheduleAssignee}
+                assigneeName={assigneeNamesById[visit.scheduleOwnerUserId]}
+              />
             ))}
           </div>
         ) : (

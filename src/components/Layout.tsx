@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logout } from "@/store/authSlice";
 import type { UserRole } from "@/store/authSlice";
-import { fetchVentorScheduleByDay } from "@/features/schedule/store/scheduleSlice";
+import {
+  fetchMainLeadOnLandScheduleByDay,
+  fetchVentorScheduleByDay,
+} from "@/features/schedule/store/scheduleSlice";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { useEffect, useMemo } from "react";
@@ -22,7 +25,12 @@ const allNavItems: NavItem[] = [
   { path: "/", label: "Inicio", icon: LayoutDashboard },
   { path: "/projects", label: "Proyectos", icon: Building2 },
   { path: "/clients", label: "Clientes", icon: Users },
-  { path: "/schedule", label: "Agenda", icon: CalendarDays, roles: ["asesor_fisico", "admin"] },
+  {
+    path: "/schedule",
+    label: "Agenda",
+    icon: CalendarDays,
+    roles: ["asesor_fisico", "admin", "main_lead"],
+  },
   { path: "/assistant", label: "Asistente", icon: Sparkles },
   { path: "/whatsapp", label: "WhatsApp", icon: MessageSquare, physicalOnly: true },
   { path: "/profile", label: "Perfil", icon: User },
@@ -40,8 +48,12 @@ const Layout = ({ children }: LayoutProps) => {
   const userRole = user?.role as UserRole | undefined;
 
   const todayYmd = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
-  const scheduleNavEligible =
-    Boolean(userRole && (userRole === "asesor_fisico" || userRole === "admin"));
+  const scheduleNavEligible = Boolean(
+    userRole &&
+      (userRole === "asesor_fisico" ||
+        userRole === "admin" ||
+        userRole === "main_lead")
+  );
   const todayPendingCount = useAppSelector(
     (s) =>
       (s.schedule.byDay[todayYmd] ?? []).filter((e) => e.status === "pending").length
@@ -49,8 +61,12 @@ const Layout = ({ children }: LayoutProps) => {
 
   useEffect(() => {
     if (!scheduleNavEligible) return;
+    if (userRole === "main_lead") {
+      void dispatch(fetchMainLeadOnLandScheduleByDay(todayYmd));
+      return;
+    }
     void dispatch(fetchVentorScheduleByDay(todayYmd));
-  }, [dispatch, scheduleNavEligible, todayYmd]);
+  }, [dispatch, scheduleNavEligible, todayYmd, userRole]);
 
   const navItems = allNavItems.filter((item) => {
     if (item.physicalOnly && !user?.physical) return false;

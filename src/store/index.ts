@@ -3,6 +3,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import whatsappReducer from "./whatsappSlice";
 import authReducer from "./authSlice";
 import scheduleReducer from "@/features/schedule/store/scheduleSlice";
+import scheduleAssigneesReducer from "@/features/schedule/store/schedule-assignees-slice";
 import clientsReducer from "./clientsSlice";
 import projectsReducer from "./projectsSlice";
 import profileReducer from "./profileSlice";
@@ -16,6 +17,7 @@ export const store = configureStore({
     whatsapp: whatsappReducer,
     auth: authReducer,
     schedule: scheduleReducer,
+    scheduleAssignees: scheduleAssigneesReducer,
     clients: clientsReducer,
     projects: projectsReducer,
     profile: profileReducer,

@@ -3,6 +3,7 @@ import axios from "axios";
 import { APP_CONSTANTS } from "@/constants/app-constants";
 import * as authService from "@/services/authService";
 import * as profileService from "@/services/profileService";
+import { USER_LEVEL_MAIN_LEAD } from "@/constants/user-level";
 import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
 
 export const FORGOT_PASSWORD_SUCCESS_MESSAGE =
@@ -20,8 +21,23 @@ function isApiUserLoginResult(value: unknown): value is ApiUser {
   );
 }
 
+function deriveUserRole(
+  api: Pick<ApiUser, "root" | "physical" | "level">
+): UserRole {
+  if (api.root) {
+    return "admin";
+  }
+  if (api.level === USER_LEVEL_MAIN_LEAD) {
+    return "main_lead";
+  }
+  if (api.physical) {
+    return "asesor_fisico";
+  }
+  return "asesor_referido";
+}
+
 function mapApiUserToAuthUser(api: ApiUser): AuthUser {
-  const role: UserRole = api.root ? "admin" : api.physical ? "asesor_fisico" : "asesor_referido";
+  const role: UserRole = deriveUserRole(api);
   return {
     id: api._id,
     user: api.user,
@@ -68,7 +84,15 @@ function getInitialAuthState(): AuthState {
     if (!user?.token) return { ...base, user: null, isAuthenticated: false };
     const normalized: AuthUser = {
       ...user,
-      physical: typeof user.physical === "boolean" ? user.physical : user.role === "asesor_fisico",
+      physical:
+        typeof user.physical === "boolean"
+          ? user.physical
+          : user.role === "asesor_fisico",
+      role: deriveUserRole({
+        root: user.root,
+        physical: user.physical,
+        level: user.level,
+      }),
     };
     return { ...base, user: normalized, isAuthenticated: true };
   } catch {

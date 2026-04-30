@@ -57,7 +57,11 @@ export type ForgotPasswordResponse = {
   message: string;
 };
 
-export type UserRole = "asesor_referido" | "asesor_fisico" | "admin";
+export type UserRole =
+  | "asesor_referido"
+  | "asesor_fisico"
+  | "admin"
+  | "main_lead";
 
 /** User type used in the app (mapped from API result); includes token for authenticated requests */
 export type AuthUser = {
@@ -78,6 +82,6 @@ export type AuthUser = {
   updatedAt: string;
   /** From API login; physical sellers get VoIP/agenda/status edit and WhatsApp nav */
   physical: boolean;
-  /** Derived from API: root → admin, physical → asesor_fisico, else asesor_referido */
+  /** Derived from API: root → admin, level 2 → main_lead, physical → asesor_fisico, else asesor_referido */
   role: UserRole;
 };
