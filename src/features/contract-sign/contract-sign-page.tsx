@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SignatureCanvas from 'react-signature-canvas';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -26,6 +27,7 @@ import { UnsignedContractMainCard } from './unsigned-contract-main-card';
 import { UnsignedContractNoPreviewCard } from './unsigned-contract-no-preview-card';
 
 const ContractSignPage = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const paramName = getAgentContractSignQueryParam();
   const token = searchParams.get(paramName);
@@ -67,7 +69,7 @@ const ContractSignPage = () => {
     },
     onSuccess: () => {
       setSubmitError(null);
-      toast.success('Contrato firmado correctamente.');
+      toast.success(t('contract.signedSuccess'));
       setPreviewDraft((prev) => {
         if (prev?.url) URL.revokeObjectURL(prev.url);
         return null;
@@ -83,7 +85,7 @@ const ContractSignPage = () => {
           ? err.message
           : isAxiosError(err)
             ? (err.response?.data as { message?: string })?.message ?? err.message
-            : 'No se pudo enviar el documento firmado.';
+            : t('contract.uploadFailed');
       setSubmitError(msg);
       toast.error(msg);
     },
@@ -95,7 +97,7 @@ const ContractSignPage = () => {
   ) => {
     const pdfBytes = pdfQuery.data;
     if (!pdfBytes) {
-      toast.error('El PDF aún no está listo.');
+      toast.error(t('contract.pdfNotReady'));
       return;
     }
     setIsMergingPreview(true);
@@ -115,7 +117,7 @@ const ContractSignPage = () => {
       setSignDialogOpen(false);
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : 'No se pudo generar la vista previa del PDF.';
+        err instanceof Error ? err.message : t('contract.previewMergeFailed');
       setSubmitError(msg);
       toast.error(msg);
     } finally {
@@ -173,8 +175,8 @@ const ContractSignPage = () => {
       : undefined;
     const message =
       status === 404
-        ? 'Esta sesión de firma no existe o expiró.'
-        : 'No se pudo cargar la información del contrato.';
+        ? t('contract.sessionNotFound')
+        : t('contract.sessionLoadFailed');
     return <ContractSessionErrorState message={message} />;
   }
 

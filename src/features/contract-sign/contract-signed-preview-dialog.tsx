@@ -1,4 +1,5 @@
 import { ExternalLink, FileCheck, Loader2, Pencil } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -35,6 +36,7 @@ export const ContractSignedPreviewDialog = ({
   onSend,
   onEditSignature,
 }: ContractSignedPreviewDialogProps) => {
+  const { t } = useTranslation();
   const usesMobilePreview = isMobilePdfEmbed();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -42,33 +44,33 @@ export const ContractSignedPreviewDialog = ({
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <FileCheck className='h-5 w-5' />
-            Vista previa del contrato firmado
+            {t('contract.previewSignedTitle')}
           </DialogTitle>
           <DialogDescription>
-            Revisa el documento. Si todo es correcto, envíalo. Si no, vuelve atrás para cambiar la firma.
+            {t('contract.previewSignedDescription')}
           </DialogDescription>
         </DialogHeader>
         <div className='min-h-0 flex-1 overflow-hidden rounded-md border bg-muted/20'>
           {!pdfObjectUrl ? (
             <div className='flex h-64 items-center justify-center text-sm text-muted-foreground'>
-              Sin documento
+              {t('contract.previewNoDocument')}
             </div>
           ) : usesMobilePreview ? (
             <div className='flex h-[min(60vh,520px)] flex-col items-center justify-center gap-3 p-4'>
               <p className='text-center text-sm text-muted-foreground'>
-                En móvil, abre el PDF para validar la firma más reciente. Vuelve a esta página para enviar el documento.
+                {t('contract.previewMobileHint')}
               </p>
               <Button asChild type='button' className='gap-2'>
                 <a href={pdfObjectUrl} target='_blank' rel='noreferrer'>
                   <ExternalLink className='h-4 w-4' />
-                  Abrir vista previa
+                  {t('contract.previewOpenButton')}
                 </a>
               </Button>
             </div>
           ) : (
             <iframe
               key={pdfObjectUrl}
-              title='Vista previa del PDF firmado'
+              title={t('contract.previewIframeTitle')}
               src={pdfObjectUrl}
               className='h-[min(70vh,720px)] w-full border-0 bg-background'
             />
@@ -84,18 +86,18 @@ export const ContractSignedPreviewDialog = ({
             className='gap-2'
           >
             <Pencil className='h-4 w-4' />
-            Modificar firma
+            {t('contract.previewEditSignature')}
           </Button>
           <Button type='button' onClick={onSend} disabled={isSending || !pdfObjectUrl} className='gap-2'>
             {isSending ? (
               <>
                 <Loader2 className='h-4 w-4 animate-spin' />
-                Enviando…
+                {t('contract.previewSending')}
               </>
             ) : (
               <>
                 <FileCheck className='h-4 w-4' />
-                Enviar documento
+                {t('contract.previewSendDocument')}
               </>
             )}
           </Button>
