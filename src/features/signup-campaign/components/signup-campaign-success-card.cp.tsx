@@ -1,4 +1,5 @@
 import { CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -10,6 +11,7 @@ import { useAppSelector } from '@/store';
 import { selectSignupSuccessMessage } from '@/store/signupCampaignSlice';
 
 export const SignupCampaignSuccessCard = () => {
+  const { t } = useTranslation();
   const message = useAppSelector(selectSignupSuccessMessage);
   return (
     <div className='flex min-h-screen items-center justify-center bg-muted/30 p-4'>
@@ -18,14 +20,13 @@ export const SignupCampaignSuccessCard = () => {
           <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600'>
             <CheckCircle2 className='h-7 w-7' />
           </div>
-          <CardTitle className='text-xl'>¡Registro enviado!</CardTitle>
+          <CardTitle className='text-xl'>{t('signup.successTitle')}</CardTitle>
           <CardDescription>
-            {message ??
-              'Hemos enviado el contrato de corretaje a tu bandeja de entrada para que realice la firma digital'}
+            {message ?? t('signup.contractSentBanner')}
           </CardDescription>
         </CardHeader>
         <CardContent className='text-center text-sm text-muted-foreground'>
-          Revisa también tu carpeta de correo no deseado por si el mensaje cae allí.
+          {t('signup.successSpamHint')}
         </CardContent>
       </Card>
     </div>

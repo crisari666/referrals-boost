@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { TFunction } from 'i18next';
 import { Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,32 +30,35 @@ import {
   submitSignupCampaignRegistration,
 } from '@/store/signupCampaignSlice';
 
-const signupSchema = z.object({
-  name: z.string().trim().min(1, 'El nombre es obligatorio').max(60),
-  lastName: z.string().trim().min(1, 'El apellido es obligatorio').max(60),
-  document: z.string().trim().min(3, 'Documento inválido').max(40),
-  city: z.string().trim().min(2, 'La ciudad es obligatoria').max(60),
-  phone: z.string().trim().min(7, 'Teléfono inválido').max(25),
-  email: z
-    .string()
-    .trim()
-    .email('Correo inválido')
-    .max(120)
-    .transform((value) => value.toLowerCase()),
-});
+const buildSignupSchema = (translate: TFunction) =>
+  z.object({
+    name: z.string().trim().min(1, translate('signup.formNameRequired')).max(60),
+    lastName: z.string().trim().min(1, translate('signup.formLastNameRequired')).max(60),
+    document: z.string().trim().min(3, translate('signup.formDocumentInvalid')).max(40),
+    city: z.string().trim().min(2, translate('signup.formCityRequired')).max(60),
+    phone: z.string().trim().min(7, translate('signup.formPhoneInvalid')).max(25),
+    email: z
+      .string()
+      .trim()
+      .email(translate('signup.formEmailInvalid'))
+      .max(120)
+      .transform((value) => value.toLowerCase()),
+  });
 
-type SignupFormValues = z.infer<typeof signupSchema>;
+type SignupFormValues = z.infer<ReturnType<typeof buildSignupSchema>>;
 
 interface SignupCampaignFormProps {
   code: string;
 }
 
 export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const campaign = useAppSelector(selectSignupCampaign);
   const submitStatus = useAppSelector(selectSignupSubmitStatus);
   const submitError = useAppSelector(selectSignupSubmitError);
   const isSubmitting = submitStatus === 'submitting';
+  const signupSchema = useMemo(() => buildSignupSchema(t), [t]);
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -74,13 +80,13 @@ export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
       <Card className='w-full max-w-xl'>
         <CardHeader className='space-y-1'>
           <CardTitle className='text-xl'>
-            {campaign?.name ?? 'Registro de agentes'}
+            {campaign?.name ?? t('signup.formRegistrationTitleFallback')}
           </CardTitle>
           {campaign?.description ? (
             <CardDescription>{campaign.description}</CardDescription>
           ) : (
             <CardDescription>
-              Completa tus datos para iniciar tu proceso como agente.
+              {t('signup.formRegistrationDescriptionFallback')}
             </CardDescription>
           )}
         </CardHeader>
@@ -93,7 +99,7 @@ export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
                   name='name'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre</FormLabel>
+                      <FormLabel>{t('signup.formLabelName')}</FormLabel>
                       <FormControl>
                         <Input autoComplete='given-name' {...field} />
                       </FormControl>
@@ -106,7 +112,7 @@ export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
                   name='lastName'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Apellido</FormLabel>
+                      <FormLabel>{t('signup.formLabelLastName')}</FormLabel>
                       <FormControl>
                         <Input autoComplete='family-name' {...field} />
                       </FormControl>
@@ -120,7 +126,7 @@ export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
                 name='document'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Documento</FormLabel>
+                    <FormLabel>{t('signup.formLabelDocument')}</FormLabel>
                     <FormControl>
                       <Input
                         autoComplete='off'
@@ -138,7 +144,7 @@ export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
                   name='city'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ciudad</FormLabel>
+                      <FormLabel>{t('signup.formLabelCity')}</FormLabel>
                       <FormControl>
                         <Input autoComplete='address-level2' {...field} />
                       </FormControl>
@@ -151,7 +157,7 @@ export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
                   name='phone'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Teléfono</FormLabel>
+                      <FormLabel>{t('signup.formLabelPhone')}</FormLabel>
                       <FormControl>
                         <Input
                           type='tel'
@@ -170,7 +176,7 @@ export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
                 name='email'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Correo electrónico</FormLabel>
+                    <FormLabel>{t('signup.formLabelEmail')}</FormLabel>
                     <FormControl>
                       <Input
                         type='email'
@@ -196,10 +202,10 @@ export const SignupCampaignForm = ({ code }: SignupCampaignFormProps) => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Enviando…
+                    {t('common.sending')}
                   </>
                 ) : (
-                  'Enviar registro'
+                  t('signup.formSubmit')
                 )}
               </Button>
             </form>

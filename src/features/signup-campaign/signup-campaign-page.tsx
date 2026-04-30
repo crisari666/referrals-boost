@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -16,6 +17,7 @@ import { SignupCampaignLoading } from './components/signup-campaign-loading.cp';
 import { SignupCampaignSuccessCard } from './components/signup-campaign-success-card.cp';
 
 const SignupCampaignPage = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code')?.trim() ?? '';
   const dispatch = useAppDispatch();
@@ -44,11 +46,11 @@ const SignupCampaignPage = () => {
   if (loadStatus === 'error') {
     if (loadErrorKind === 'not_found') {
       return (
-        <SignupCampaignInvalidCard description='Este enlace de registro no existe o ya no está disponible.' />
+        <SignupCampaignInvalidCard description={t('signup.pageInvalidCombined')} />
       );
     }
     return (
-      <SignupCampaignInvalidCard description='No pudimos cargar la información de la campaña. Inténtalo de nuevo.' />
+      <SignupCampaignInvalidCard description={t('signup.pageLoadErrorRetry')} />
     );
   }
   if (campaign?.status !== 'active') {
