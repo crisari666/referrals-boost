@@ -113,6 +113,8 @@ export interface Client {
   projectInterest: string;
   status: ClientStatus;
   createdAt: string;
+  /** YYYY-MM-DD from CRM last event (customers-ms `lastUpdate`). */
+  lastUpdate?: string;
   assignedDate?: string;
   notes: string[];
   interactions: { date: string; type: string; detail: string }[];

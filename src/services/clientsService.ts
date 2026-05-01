@@ -230,6 +230,9 @@ function mapMsMineRowToCustomerByCreator(row: MsCustomerMineRow): CustomerByCrea
     assignedDate: row.assignedDate,
     createdAt: created,
     updatedAt: row.updatedAt ?? created,
+    ...(row.lastUpdate != null && String(row.lastUpdate).trim() !== ""
+      ? { lastUpdate: new Date(row.lastUpdate).toISOString() }
+      : {}),
     ...(row.customerStepId != null && String(row.customerStepId).trim() !== ""
       ? { customerStepId: String(row.customerStepId) }
       : {}),
@@ -248,10 +251,15 @@ export type * from "./clientsService.types";
  * Lists customers created by the authenticated user (customers MS `GET customer/mine`).
  * Wraps plain JSON array as `ApiResponse` for callers that expect monolith shape.
  */
-export async function getCustomersByCreator(): Promise<CustomersByCreatorResponse> {
+export type CustomerMineListSort = "createdAt" | "lastUpdate";
+
+export async function getCustomersByCreator(
+  sort: CustomerMineListSort = "createdAt"
+): Promise<CustomersByCreatorResponse> {
   const rows = await http.get<MsCustomerMineRow[]>("", {
     url: customersMsUrl("customer/mine"),
     ...withCustomersMsAuth(),
+    params: { sort },
   });
   const list = Array.isArray(rows) ? rows : [];
   return {

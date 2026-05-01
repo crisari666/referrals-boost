@@ -46,6 +46,17 @@ export type CreateVentorSchedulePayload = {
   note?: string;
 };
 
+export async function listVentorScheduleByCustomer(
+  customerId: string
+): Promise<VentorScheduleEventApi[]> {
+  return http.get<VentorScheduleEventApi[]>("", {
+    ...withCustomersMsAuth(),
+    url: customersMsUrl(
+      `ventor-schedule/by-customer/${encodeURIComponent(customerId)}`
+    ),
+  });
+}
+
 export async function listVentorScheduleByDay(
   dateYmd: string
 ): Promise<VentorScheduleEventApi[]> {

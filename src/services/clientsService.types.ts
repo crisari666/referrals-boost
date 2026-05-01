@@ -45,6 +45,8 @@ export type CustomerByCreator = {
   assignedDate?: string;
   createdAt: string;
   updatedAt: string;
+  /** ISO from customers-ms `Customer.lastUpdate` (CRM events). */
+  lastUpdate?: string;
   customerStepId?: string | null;
   interestedProjects?: {
     _id?: string;
@@ -195,6 +197,7 @@ export type MsCustomerDescriptionEntry = {
 export type MsCustomerMineRow = MsCustomerDocument & {
   createdAt?: string;
   updatedAt?: string;
+  lastUpdate?: string;
   createdBy?: string;
   assignedDate?: string;
   customerStepId?: string;
