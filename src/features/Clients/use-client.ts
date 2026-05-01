@@ -59,6 +59,9 @@ export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Cli
     projectInterest: lastProjectId,
     status: apiStatusToClient[c.status] ?? 'nuevo',
     createdAt: c.createdAt?.split('T')[0] ?? '',
+    ...(c.lastUpdate != null && String(c.lastUpdate).trim() !== ''
+      ? { lastUpdate: new Date(c.lastUpdate).toISOString().slice(0, 10) }
+      : {}),
     assignedDate: c.assignedDate?.split('T')[0] ?? undefined,
     notes: [],
     interactions: [],
@@ -121,6 +124,7 @@ export function useClient() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const clientList = useAppSelector((state) => state.clients.list);
+  const listSort = useAppSelector((state) => state.clients.listSort);
   const authUser = useAppSelector((state) => state.auth.user);
 
   const [showModal, setShowModal] = useState(false);
@@ -133,7 +137,7 @@ export function useClient() {
     setLoadingList(true);
     const stepsTask = dispatch(fetchVendorCustomerSteps());
     clientsService
-      .getCustomersByCreator()
+      .getCustomersByCreator(listSort)
       .then((res) => {
         if (cancelled || res.error) return;
         const apiList = (res.result ?? []).map(mapApiCustomerToClient);
@@ -150,7 +154,7 @@ export function useClient() {
       cancelled = true;
       stepsTask.abort();
     };
-  }, [dispatch, authUser]);
+  }, [dispatch, authUser, listSort]);
 
   const updateField = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }));

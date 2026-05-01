@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { clients as initialClients, type Client, type ClientStatus } from "@/data/mockData";
 import * as clientsService from "@/services/clientsService";
+import type { CustomerMineListSort } from "@/services/clientsService";
 import type {
   CreationDetailCustomer,
   CustomerEventItem,
@@ -15,8 +16,13 @@ import type {
 import type { EditClientFormState } from "@/features/Clients/EditClientModal";
 import type { RootState } from "@/store";
 import type { AddCustomerEventArgs, AddCustomerNoteArgs } from "./clients-slice.types";
+import type { VentorScheduleEventApi } from "@/services/scheduleService";
+import * as scheduleService from "@/services/scheduleService";
 
 export type ClientsDateFilterKind = "all" | "today" | "yesterday" | "custom";
+
+/** `GET customer/mine?sort=` — matches customers-ms `ListCustomerMineQueryDto`. */
+export type ClientsListSort = CustomerMineListSort;
 
 const WITHOUT_STEP_FILTER_ID = "__without_step__";
 
@@ -228,9 +234,26 @@ export const addCustomerEventRequest = createAsyncThunk<
   }
 });
 
+export const fetchVendorScheduleByCustomer = createAsyncThunk<
+  VentorScheduleEventApi[],
+  string,
+  { rejectValue: string }
+>("clients/fetchVendorScheduleByCustomer", async (customerId, { rejectWithValue }) => {
+  try {
+    return await scheduleService.listVentorScheduleByCustomer(customerId);
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : i18n.t("clients.storeScheduleLoadFailed");
+    return rejectWithValue(message);
+  }
+});
+
 export interface ClientsState {
   list: Client[];
   search: string;
+  listSort: ClientsListSort;
   vendorStepCatalog: VendorCustomerStep[];
   vendorStepCatalogStatus: "idle" | "loading" | "succeeded" | "failed";
   listStepFilterId: string | null;
@@ -250,11 +273,16 @@ export interface ClientsState {
   customerEventsError: string | null;
   createEventLoading: boolean;
   createEventError: string | null;
+  vendorScheduleEvents: VentorScheduleEventApi[];
+  vendorScheduleEventsCustomerId: string | null;
+  vendorScheduleEventsStatus: "idle" | "loading" | "succeeded" | "failed";
+  vendorScheduleEventsError: string | null;
 }
 
 const initialState: ClientsState = {
   list: initialClients,
   search: "",
+  listSort: "createdAt",
   vendorStepCatalog: [],
   vendorStepCatalogStatus: "idle",
   listStepFilterId: null,
@@ -274,6 +302,10 @@ const initialState: ClientsState = {
   customerEventsError: null,
   createEventLoading: false,
   createEventError: null,
+  vendorScheduleEvents: [],
+  vendorScheduleEventsCustomerId: null,
+  vendorScheduleEventsStatus: "idle",
+  vendorScheduleEventsError: null,
 };
 
 const clientsSlice = createSlice({
@@ -305,6 +337,9 @@ const clientsSlice = createSlice({
     setSearch(state, action: PayloadAction<string>) {
       state.search = action.payload;
     },
+    setListSort(state, action: PayloadAction<ClientsListSort>) {
+      state.listSort = action.payload;
+    },
     setClientList(state, action: PayloadAction<Client[]>) {
       state.list = action.payload;
     },
@@ -329,6 +364,10 @@ const clientsSlice = createSlice({
       state.customerEventsError = null;
       state.createEventError = null;
       state.createEventLoading = false;
+      state.vendorScheduleEvents = [];
+      state.vendorScheduleEventsCustomerId = null;
+      state.vendorScheduleEventsStatus = "idle";
+      state.vendorScheduleEventsError = null;
     },
     openVendorCustomerEditModal(state) {
       const c = state.vendorCreationDetail?.customer;
@@ -412,6 +451,12 @@ const clientsSlice = createSlice({
       .addCase(addCustomerEventRequest.fulfilled, (state, action) => {
         state.createEventLoading = false;
         state.customerEvents = [action.payload, ...state.customerEvents];
+        const cid = action.meta.arg.customerId;
+        const at = action.payload.createdAt;
+        const row = state.list.find((c) => c.id === cid);
+        if (row && at) {
+          row.lastUpdate = at.slice(0, 10);
+        }
       })
       .addCase(addCustomerEventRequest.rejected, (state, action) => {
         state.createEventLoading = false;
@@ -433,6 +478,22 @@ const clientsSlice = createSlice({
         if (p && typeof p === "object" && "formErrors" in p) {
           state.vendorCustomerEdit.errors = p.formErrors;
         }
+      })
+      .addCase(fetchVendorScheduleByCustomer.pending, (state, action) => {
+        state.vendorScheduleEventsStatus = "loading";
+        state.vendorScheduleEventsCustomerId = action.meta.arg;
+        state.vendorScheduleEvents = [];
+        state.vendorScheduleEventsError = null;
+      })
+      .addCase(fetchVendorScheduleByCustomer.fulfilled, (state, action) => {
+        state.vendorScheduleEventsStatus = "succeeded";
+        state.vendorScheduleEvents = action.payload;
+      })
+      .addCase(fetchVendorScheduleByCustomer.rejected, (state, action) => {
+        state.vendorScheduleEventsStatus = "failed";
+        state.vendorScheduleEvents = [];
+        state.vendorScheduleEventsError =
+          action.payload ?? action.error.message ?? i18n.t("clients.storeScheduleLoadFailed");
       });
   },
 });
@@ -445,6 +506,7 @@ export const {
   addClientNote,
   addClientInteraction,
   setSearch,
+  setListSort,
   setClientList,
   setListStepFilterId,
   setListDateFilterKind,
