@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import type { Client } from "@/data/mockData";
 import { statusLabels, statusColors } from "@/data/mockData";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useAppSelector } from "@/store";
 
 function stepBadgeStyle(color: string | undefined): CSSProperties | undefined {
@@ -18,6 +19,8 @@ interface ClientRowProps {
 }
 
 const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
+  const { t } = useTranslation();
+  const listSort = useAppSelector((s) => s.clients.listSort);
   const catalog = useAppSelector((s) => s.clients.vendorStepCatalog);
   const currentStep = useMemo(() => {
     if (!client.customerStepId) return null;
@@ -27,8 +30,16 @@ const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
   const projectTitle = projectTitles[client.projectInterest];
   const displayPhone =
     (client.phone?.trim() || client.whatsapp?.trim() || "").trim() || null;
-  const displayDate = (client.assignedDate?.trim() || client.createdAt?.trim() || "").slice(0, 10);
-  const dateLabel = client.assignedDate?.trim() ? "Asignado" : "Creado";
+  const displayDate =
+    listSort === "lastUpdate" && client.lastUpdate?.trim()
+      ? client.lastUpdate.trim().slice(0, 10)
+      : (client.assignedDate?.trim() || client.createdAt?.trim() || "").slice(0, 10);
+  const dateLabel =
+    listSort === "lastUpdate" && client.lastUpdate?.trim()
+      ? t("clients.rowDateLastActivity")
+      : client.assignedDate?.trim()
+        ? t("clients.rowDateAssigned")
+        : t("clients.rowDateCreated");
   const initials = client.name
     .split(" ")
     .map((n) => n[0])
@@ -43,7 +54,7 @@ const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
     >
       <Link
         to={`/clients/${client.id}`}
-        className="flex items-center gap-3 bg-card p-4 rounded-2xl border border-border hover:shadow-md transition-shadow"
+        className="flex items-center gap-3 bg-card p-4 rounded-2xl border border-border hover:shadow-md transition-shadow cursor-pointer"
       >
         <div className="w-11 h-11 rounded-full gradient-commission flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
           {initials}
