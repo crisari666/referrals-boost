@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import i18n from '@/i18n';
 import { askAgent } from '@/services/agentChatService';
-import { getProjectResourceUrl, getRagIngestAssetUrl } from '@/services/projectsService';
+import {
+  getProjectResourceUrl,
+  getRagIngestAssetUrl,
+  resolveAgentChatLinkHref,
+} from '@/services/projectsService';
 import type { AgentChatMediaFile, ChatHistoryMessage } from '@/types/agent-chat';
 import type { AssistantMessage, Resource, ResourceType } from '@/types/assistant';
 import {
@@ -47,7 +51,7 @@ function sourceToResource(src: string): Resource {
       previewUrl: type === 'image' ? trimmed : undefined,
     };
   }
-  const resolved = getProjectResourceUrl(trimmed);
+  const resolved = resolveAgentChatLinkHref(trimmed);
   if (resolved) {
     const type = inferResourceType(resolved);
     return {
@@ -94,6 +98,32 @@ function mediaFileToResource(file: AgentChatMediaFile): Resource {
     label,
     copyText: trimmed,
   };
+}
+
+function extractMarkdownHrefTargets(markdown: string): string[] {
+  const re = /\[([^\]]*)\]\(([^)\s]+)\)/g;
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(markdown)) !== null) {
+    out.push(m[2]);
+  }
+  return out;
+}
+
+function resolvedUrlsLinkedInMarkdown(markdown: string): Set<string> {
+  return new Set(
+    extractMarkdownHrefTargets(markdown)
+      .map((h) => resolveAgentChatLinkHref(h.trim()))
+      .filter((u): u is string => Boolean(u)),
+  );
+}
+
+function resourcesOmittingInlineLinks(
+  items: readonly Resource[],
+  inlineLinkedUrls: ReadonlySet<string>,
+): Resource[] {
+  if (inlineLinkedUrls.size === 0) return [...items];
+  return items.filter((r) => !(r.openUrl && inlineLinkedUrls.has(r.openUrl)));
 }
 
 function buildHistory(messages: AssistantMessage[]): ChatHistoryMessage[] {
@@ -155,7 +185,11 @@ export function useAgentChat() {
       const data = await askAgent({ question: trimmed, chatHistory });
       const fromSources = data.sources.map((s) => sourceToResource(s));
       const fromMedia = mediaProjectsToResources(data.media, mediaFileToResource);
-      const merged = dedupeResources([...fromSources, ...fromMedia]);
+      const inlineLinked = resolvedUrlsLinkedInMarkdown(data.output);
+      const merged = resourcesOmittingInlineLinks(
+        dedupeResources([...fromSources, ...fromMedia]),
+        inlineLinked,
+      );
       const resources = merged.length > 0 ? merged : undefined;
       setMessages((prev) => [
         ...prev,

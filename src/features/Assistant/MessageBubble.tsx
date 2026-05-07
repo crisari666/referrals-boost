@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { Bot, User } from 'lucide-react';
 import type { ProjectResourceShareSheetResource } from '@/features/Projects/project-resource-share-sheet';
 import type { AssistantMessage } from '@/types/assistant';
+import { resolveAgentChatLinkHref } from '@/services/projectsService';
 import AssistantMessageResources from './components/assistant-message-resources.cp';
 
 interface MessageBubbleProps {
@@ -10,19 +11,41 @@ interface MessageBubbleProps {
   onAssistantResourceShare: (payload: ProjectResourceShareSheetResource) => void;
 }
 
-const RichText = ({ text }: { text: string }) => (
-  <>
-    {text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-      part.startsWith("**") && part.endsWith("**") ? (
-        <strong key={i}>{part.slice(2, -2)}</strong>
-      ) : part.startsWith("*") && part.endsWith("*") ? (
-        <em key={i}>{part.slice(1, -1)}</em>
-      ) : (
-        <span key={i}>{part}</span>
-      )
-    )}
-  </>
-);
+const RichText = ({ text }: { text: string }) => {
+  const segments = text.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*|\[[^\]]+\]\([^)]+\))/g);
+  return (
+    <>
+      {segments.map((part, i) => {
+        const linkMatch = part.match(/^\[([^\]]*)\]\(([^)]+)\)$/);
+        if (linkMatch) {
+          const href = resolveAgentChatLinkHref(linkMatch[2].trim());
+          const label = linkMatch[1]?.trim() || linkMatch[2];
+          if (href) {
+            return (
+              <a
+                key={i}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary underline underline-offset-2 break-all"
+              >
+                {label}
+              </a>
+            );
+          }
+          return <span key={i}>{part}</span>;
+        }
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return <strong key={i}>{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+          return <em key={i}>{part.slice(1, -1)}</em>;
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
+};
 
 const AssistantMessageBubble = ({ message, onAssistantResourceShare }: MessageBubbleProps) => {
   const isUser = message.role === "user";
