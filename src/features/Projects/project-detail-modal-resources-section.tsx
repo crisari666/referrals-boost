@@ -1,11 +1,12 @@
-import { useCallback, useState } from 'react';
-import { Download, FileText, Images, Share2, Video } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { Download, FileText, Images, Scale, Share2, Video } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import type { Project } from '@/data/mockData';
 import { getStoredAuthToken } from '@/lib/auth-token';
-import { getProjectResourceUrl } from '@/services/projectsService';
+import { getProjectResourceUrl, getRagIngestAssetUrl } from '@/services/projectsService';
 import ProjectDetailModalImagePickerDialog from './project-detail-modal-image-picker-dialog';
+import ProjectDetailModalLegalDocumentsDialog from './project-detail-modal-legal-documents-dialog';
 import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 import ProjectResourceRowActions from './project-resource-row-actions';
 import ProjectResourceShareSheet, { type ProjectResourceShareSheetResource } from './project-resource-share-sheet';
@@ -18,10 +19,21 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
   const { t } = useTranslation();
   const LABELS = useProjectDetailModalLabels();
   const [imageDialogMode, setImageDialogMode] = useState<'download' | 'share' | null>(null);
+  const [legalDialogMode, setLegalDialogMode] = useState<'download' | 'share' | null>(null);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareResource, setShareResource] = useState<ProjectResourceShareSheetResource | null>(null);
 
   const imageUrls = (project.images ?? []).map((name) => getProjectResourceUrl(name)).filter(Boolean);
+  const legalDocumentRows = useMemo(() => {
+    const docs = project.legalDocuments ?? [];
+    return docs
+      .map((d) => {
+        const url = getRagIngestAssetUrl(d.fileName);
+        if (!url) return null;
+        return { label: t(d.labelKey), url, fileName: d.fileName };
+      })
+      .filter((row): row is { label: string; url: string; fileName: string } => row !== null);
+  }, [project.legalDocuments, t]);
   const reelVideoUrl = project.reelVideo ? getProjectResourceUrl(project.reelVideo) : '';
   const brochureUrl = project.brochure ? getProjectResourceUrl(project.brochure) : '';
   const planeUrl = project.plane ? getProjectResourceUrl(project.plane) : '';
@@ -82,6 +94,28 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
       fetchUrl: url,
       filename: `${project.title}-imagen-${index + 1}.jpg`,
       previewKind: 'image',
+      shareTitle: project.title,
+      shareText: shareMessage,
+    });
+  };
+
+  const buildLegalShareFilename = (storageName: string): string => {
+    const base = storageName.replace(/^.*\//, '').trim() || 'documento';
+    if (base.includes('.')) {
+      return `${project.title}-${base}`;
+    }
+    return `${project.title}-${base}.pdf`;
+  };
+
+  const openLegalShareFromPicker = (url: string, index: number) => {
+    const row = legalDocumentRows[index];
+    if (!row) return;
+    setLegalDialogMode(null);
+    openShareSheet({
+      previewUrl: url,
+      fetchUrl: url,
+      filename: buildLegalShareFilename(row.fileName),
+      previewKind: 'pdf',
       shareTitle: project.title,
       shareText: shareMessage,
     });
@@ -162,6 +196,35 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
             onSharePreview={openPlaneShare}
           />
         </div>
+
+        <div className='flex items-center justify-between gap-2 rounded-xl border p-3'>
+          <div className='flex min-w-0 items-center gap-2 text-sm font-medium'>
+            <Scale className='h-4 w-4 shrink-0' />
+            {LABELS.documentosLegales}
+          </div>
+          <div className='flex shrink-0 items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='cursor-pointer'
+              disabled={legalDocumentRows.length === 0}
+              onClick={() => setLegalDialogMode('download')}
+            >
+              <Download className='h-4 w-4' /> {LABELS.descargar}
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='cursor-pointer'
+              disabled={legalDocumentRows.length === 0}
+              onClick={() => setLegalDialogMode('share')}
+            >
+              <Share2 className='h-4 w-4' /> {LABELS.compartir}
+            </Button>
+          </div>
+        </div>
       </div>
 
       <ProjectDetailModalImagePickerDialog
@@ -173,6 +236,17 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
           if (!nextOpen) setImageDialogMode(null);
         }}
         onRequestSharePreview={(url, index) => openImageShareFromPicker(url, index)}
+      />
+
+      <ProjectDetailModalLegalDocumentsDialog
+        open={legalDialogMode !== null}
+        mode={legalDialogMode}
+        documents={legalDocumentRows}
+        title={LABELS.seleccionarDocumentoLegal}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setLegalDialogMode(null);
+        }}
+        onRequestSharePreview={(url, index) => openLegalShareFromPicker(url, index)}
       />
 
       <ProjectResourceShareSheet

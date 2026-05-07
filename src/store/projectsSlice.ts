@@ -1,7 +1,22 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import * as projectsService from "@/services/projectsService";
-import type { Project } from "@/data/mockData";
+import type { Project, ProjectLegalDocumentId } from "@/data/mockData";
 import type { ApiProject } from "@/types/project";
+
+function mapLegalDocuments(api: ApiProject): Project["legalDocuments"] {
+  const items: NonNullable<Project["legalDocuments"]> = [];
+  const push = (id: ProjectLegalDocumentId, labelKey: string, value?: string) => {
+    const fileName = (value ?? "").trim();
+    if (fileName.length > 0) {
+      items.push({ id, labelKey, fileName });
+    }
+  };
+  push("legalRut", "projects.legalDocRut", api.legalRut);
+  push("legalBusinessRegistration", "projects.legalDocBusinessRegistration", api.legalBusinessRegistration);
+  push("legalBankCertificate", "projects.legalDocBankCertificate", api.legalBankCertificate);
+  push("legalLibertarianCertificate", "projects.legalDocLibertarianCertificate", api.legalLibertarianCertificate);
+  return items.length > 0 ? items : undefined;
+}
 
 function mapApiProjectToProject(api: ApiProject): Project {
   const cityStateCountry = [api.city, api.state, api.country].filter(Boolean).join(", ");
@@ -29,6 +44,7 @@ function mapApiProjectToProject(api: ApiProject): Project {
     reelVideo: api.reelVideo ?? "",
     brochure: api.brochure ?? "",
     plane: api.plane ?? "",
+    legalDocuments: mapLegalDocuments(api),
   };
 }
 

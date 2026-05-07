@@ -13,6 +13,8 @@ type ProjectDetailModalLabels = {
   imagen: string;
   brochure: string;
   planoPdf: string;
+  documentosLegales: string;
+  seleccionarDocumentoLegal: string;
   compartir: string;
   descargar: string;
   seleccionarImagen: string;
@@ -42,6 +44,8 @@ export function useProjectDetailModalLabels(): ProjectDetailModalLabels {
       imagen: t("projects.modalImage"),
       brochure: t("projects.modalBrochure"),
       planoPdf: t("projects.modalPdf"),
+      documentosLegales: t("projects.legalDocuments"),
+      seleccionarDocumentoLegal: t("projects.legalDocumentsSelect"),
       compartir: t("projects.modalShare"),
       descargar: t("projects.modalDownload"),
       seleccionarImagen: t("projects.modalSelectImage"),

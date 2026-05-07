@@ -31,6 +31,18 @@ export const motivationalPhrases = [
 
 export type ProjectStatus = "available" | "high-demand" | "limited";
 
+export type ProjectLegalDocumentId =
+  | "legalRut"
+  | "legalBusinessRegistration"
+  | "legalBankCertificate"
+  | "legalLibertarianCertificate";
+
+export interface ProjectLegalDocumentEntry {
+  id: ProjectLegalDocumentId;
+  labelKey: string;
+  fileName: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -50,6 +62,7 @@ export interface Project {
   reelVideo?: string;
   brochure?: string;
   plane?: string;
+  legalDocuments?: ProjectLegalDocumentEntry[];
 }
 
 export const projects: Project[] = [

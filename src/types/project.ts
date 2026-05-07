@@ -22,6 +22,11 @@ export type ApiProject = {
   reelVideo?: string;
   brochure?: string;
   plane?: string;
+  /** RAG uploads (`/uploads/rag/...`), same as omega_rag project schema. */
+  legalRut?: string;
+  legalBusinessRegistration?: string;
+  legalBankCertificate?: string;
+  legalLibertarianCertificate?: string;
   cardProject?: string;
   deleted?: boolean;
   createdAt: string;
