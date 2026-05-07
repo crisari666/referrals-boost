@@ -12,7 +12,11 @@ export type AgentChatMediaKind =
   | 'verticalVideo'
   | 'reelVideo'
   | 'plane'
-  | 'brochure';
+  | 'brochure'
+  | 'legalRut'
+  | 'legalBusinessRegistration'
+  | 'legalBankCertificate'
+  | 'legalLibertarianCertificate';
 
 export interface AgentChatMediaFile {
   kind: AgentChatMediaKind;

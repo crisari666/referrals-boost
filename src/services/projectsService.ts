@@ -20,6 +20,13 @@ export function getProjectResourceUrl(fileName: string): string {
   return getProjectImageUrl(fileName);
 }
 
+export function getRagIngestAssetUrl(fileName: string): string {
+  if (!fileName) return "";
+  const name = fileName.replace(/^\//, "");
+  if (!UPLOADS_BASE) return "";
+  return `${UPLOADS_BASE}/rag/${name}`;
+}
+
 export type ProjectResourceDownloadAttribute =
   | "brochure"
   | "plane"

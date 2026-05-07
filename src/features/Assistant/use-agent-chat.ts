@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import i18n from '@/i18n';
 import { askAgent } from '@/services/agentChatService';
-import { getProjectResourceUrl } from '@/services/projectsService';
-import type { ChatHistoryMessage } from '@/types/agent-chat';
+import { getProjectResourceUrl, getRagIngestAssetUrl } from '@/services/projectsService';
+import type { AgentChatMediaFile, ChatHistoryMessage } from '@/types/agent-chat';
 import type { AssistantMessage, Resource, ResourceType } from '@/types/assistant';
 import {
   dedupeResources,
@@ -27,6 +27,13 @@ function inferResourceType(ref: string): ResourceType {
   return 'link';
 }
 
+const LEGAL_RAG_MEDIA_KINDS = new Set<AgentChatMediaFile['kind']>([
+  'legalRut',
+  'legalBusinessRegistration',
+  'legalBankCertificate',
+  'legalLibertarianCertificate',
+]);
+
 function sourceToResource(src: string): Resource {
   const trimmed = src.trim();
   const label =
@@ -41,6 +48,38 @@ function sourceToResource(src: string): Resource {
     };
   }
   const resolved = getProjectResourceUrl(trimmed);
+  if (resolved) {
+    const type = inferResourceType(resolved);
+    return {
+      type,
+      label,
+      openUrl: resolved,
+      previewUrl: type === 'image' ? resolved : undefined,
+    };
+  }
+  return {
+    type: inferResourceType(trimmed),
+    label,
+    copyText: trimmed,
+  };
+}
+
+function mediaFileToResource(file: AgentChatMediaFile): Resource {
+  const trimmed = file.filename.trim();
+  const label =
+    trimmed.split('/').pop()?.split('?')[0]?.trim() || trimmed || i18n.t('assistant.sourceFallback');
+  if (/^https?:\/\//i.test(trimmed)) {
+    const type = inferResourceType(trimmed);
+    return {
+      type,
+      label,
+      openUrl: trimmed,
+      previewUrl: type === 'image' ? trimmed : undefined,
+    };
+  }
+  const resolved = LEGAL_RAG_MEDIA_KINDS.has(file.kind)
+    ? getRagIngestAssetUrl(trimmed)
+    : getProjectResourceUrl(trimmed);
   if (resolved) {
     const type = inferResourceType(resolved);
     return {
@@ -115,7 +154,7 @@ export function useAgentChat() {
     try {
       const data = await askAgent({ question: trimmed, chatHistory });
       const fromSources = data.sources.map((s) => sourceToResource(s));
-      const fromMedia = mediaProjectsToResources(data.media, sourceToResource);
+      const fromMedia = mediaProjectsToResources(data.media, mediaFileToResource);
       const merged = dedupeResources([...fromSources, ...fromMedia]);
       const resources = merged.length > 0 ? merged : undefined;
       setMessages((prev) => [
