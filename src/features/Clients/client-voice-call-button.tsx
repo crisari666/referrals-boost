@@ -6,9 +6,10 @@ import { startOutboundCall } from './start-outbound-voice-call';
 export type ClientVoiceCallButtonProps = {
   clientId: string;
   phoneDigits: string;
+  isInternational?: boolean;
 };
 
-export function ClientVoiceCallButton({ clientId, phoneDigits }: ClientVoiceCallButtonProps) {
+export function ClientVoiceCallButton({ clientId, phoneDigits, isInternational }: ClientVoiceCallButtonProps) {
   const dispatch = useAppDispatch();
   const tokenStatus = useAppSelector((s) => s.twilioVoice.tokenStatus);
   const numberStatus = useAppSelector((s) => s.twilioVoice.numberStatus);
@@ -25,7 +26,7 @@ export function ClientVoiceCallButton({ clientId, phoneDigits }: ClientVoiceCall
 
   const handleClick = () => {
     void dispatch(
-      startOutboundCall({ toDigits: phoneDigits, customerId: clientId })
+      startOutboundCall({ toDigits: phoneDigits, customerId: clientId, isInternational })
     ).catch((e: unknown) => {
       const msg = e instanceof Error ? e.message : 'No se pudo iniciar la llamada';
       toast.error(msg);

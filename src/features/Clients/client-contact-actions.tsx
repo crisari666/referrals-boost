@@ -78,7 +78,7 @@ export function ClientContactActions({ client, clientId, isPhysical }: ClientCon
           </div>
         )}
 
-        <ClientVoiceCallButton clientId={clientId} phoneDigits={client.phone ?? ''} />
+        <ClientVoiceCallButton clientId={clientId} phoneDigits={client.phone ?? ''} isInternational={client.isInternational} />
 
         <ScheduleDialog
           clientId={clientId}

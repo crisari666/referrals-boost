@@ -27,3 +27,22 @@ export async function fetchUserTwilioNumber(): Promise<UserTwilioNumberResult> {
   }
   return data.result;
 }
+
+export type UserTwilioNumbersResponse = {
+  result: {
+    regular: UserTwilioNumberResult | null;
+    international: UserTwilioNumberResult | null;
+  };
+  message: string;
+};
+
+export async function fetchUserTwilioNumbers(): Promise<{
+  regular: UserTwilioNumberResult | null;
+  international: UserTwilioNumberResult | null;
+}> {
+  const data = await http.get<UserTwilioNumbersResponse>('twilio-numbers/user-numbers');
+  return {
+    regular: data?.result?.regular ?? null,
+    international: data?.result?.international ?? null,
+  };
+}

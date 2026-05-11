@@ -18,6 +18,8 @@ export interface TwilioVoiceState {
   tokenError: string | null;
   userNumber: string | null;
   friendlyNumber: string | null;
+  userInternationalNumber: string | null;
+  friendlyInternationalNumber: string | null;
   numberStatus: SessionFieldStatus;
   registrationStatus: RegistrationStatus;
   callPhase: CallPhase;
@@ -31,6 +33,8 @@ const initialState: TwilioVoiceState = {
   tokenError: null,
   userNumber: null,
   friendlyNumber: null,
+  userInternationalNumber: null,
+  friendlyInternationalNumber: null,
   numberStatus: 'idle',
   registrationStatus: 'idle',
   callPhase: 'idle',
@@ -46,15 +50,21 @@ export const ensureVoiceSession = createAsyncThunk(
     if (!email) {
       throw new Error(i18n.t('twilio.noSession'));
     }
-    const [tokenResult, numberResult] = await Promise.all([
+    const [tokenResult, numbersResult] = await Promise.all([
       voipTokenService.fetchVoipAccessToken(email),
-      twilioNumberService.fetchUserTwilioNumber(),
+      twilioNumberService.fetchUserTwilioNumbers(),
     ]);
+    const regularNumber = numbersResult.regular?.number ?? null;
+    if (!regularNumber) {
+      throw new Error(i18n.t('twilio.twilioNumberFetchFailed'));
+    }
     await registerTwilioDevice(tokenResult.tokenJWT);
     return {
       tokenJWT: tokenResult.tokenJWT,
-      userNumber: numberResult.number,
-      friendlyNumber: numberResult.friendlyNumber,
+      userNumber: regularNumber,
+      friendlyNumber: numbersResult.regular?.friendlyNumber ?? null,
+      userInternationalNumber: numbersResult.international?.number ?? null,
+      friendlyInternationalNumber: numbersResult.international?.friendlyNumber ?? null,
     };
   }
 );
@@ -93,6 +103,8 @@ const twilioVoiceSlice = createSlice({
       state.tokenError = null;
       state.userNumber = null;
       state.friendlyNumber = null;
+      state.userInternationalNumber = null;
+      state.friendlyInternationalNumber = null;
       state.numberStatus = 'idle';
       state.registrationStatus = 'idle';
       state.callPhase = 'idle';
@@ -115,6 +127,8 @@ const twilioVoiceSlice = createSlice({
         state.tokenJWT = action.payload.tokenJWT;
         state.userNumber = action.payload.userNumber;
         state.friendlyNumber = action.payload.friendlyNumber;
+        state.userInternationalNumber = action.payload.userInternationalNumber;
+        state.friendlyInternationalNumber = action.payload.friendlyInternationalNumber;
       })
       .addCase(ensureVoiceSession.rejected, (state, action) => {
         state.tokenStatus = 'error';

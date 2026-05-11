@@ -5,11 +5,10 @@ import { connectOutboundCall } from '@/lib/twilio-voice-runtime';
 import { digitsToE164 } from './phone-e164';
 
 export const startOutboundCall =
-  (payload: { toDigits: string; customerId: string }) =>
+  (payload: { toDigits: string; customerId: string; isInternational?: boolean }) =>
   async (dispatch: AppDispatch, getState: () => RootState): Promise<void> => {
     const { auth, twilioVoice } = getState();
     const userId = auth.user?.id;
-    const userNumber = twilioVoice.userNumber;
     const digits = payload.toDigits.replace(/\D/g, '');
     if (!userId) {
       const msg = i18n.t('twilio.invalidSession');
@@ -17,14 +16,21 @@ export const startOutboundCall =
       dispatch(setCallPhase('error'));
       throw new Error(msg);
     }
-    if (!userNumber) {
-      const msg = i18n.t('twilio.noTwilioNumber');
+    if (twilioVoice.registrationStatus !== 'registered') {
+      const msg = i18n.t('twilio.voipNotReady');
       dispatch(setCallError(msg));
       dispatch(setCallPhase('error'));
       throw new Error(msg);
     }
-    if (twilioVoice.registrationStatus !== 'registered') {
-      const msg = i18n.t('twilio.voipNotReady');
+    const isIntl = payload.isInternational === true;
+    console.log({payload})
+    const callerNumber = isIntl
+      ? twilioVoice.userInternationalNumber
+      : twilioVoice.userNumber;
+    if (!callerNumber) {
+      const msg = isIntl
+        ? i18n.t('twilio.noInternationalNumber')
+        : i18n.t('twilio.noTwilioNumber');
       dispatch(setCallError(msg));
       dispatch(setCallPhase('error'));
       throw new Error(msg);
@@ -36,7 +42,7 @@ export const startOutboundCall =
     try {
       await connectOutboundCall({
         to: toE164,
-        callerId: userNumber.startsWith('+') ? userNumber : `+${userNumber}`,
+        callerId: callerNumber.startsWith('+') ? callerNumber : `+${callerNumber}`,
         userId,
         customerId: payload.customerId,
       });

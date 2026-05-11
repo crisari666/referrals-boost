@@ -132,6 +132,7 @@ export interface Client {
   notes: string[];
   interactions: { date: string; type: string; detail: string }[];
   customerStepId?: string | null;
+  isInternational?: boolean;
 }
 
 export const clients: Client[] = [

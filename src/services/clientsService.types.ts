@@ -48,6 +48,7 @@ export type CustomerByCreator = {
   /** ISO from customers-ms `Customer.lastUpdate` (CRM events). */
   lastUpdate?: string;
   customerStepId?: string | null;
+  isInternational?: boolean;
   interestedProjects?: {
     _id?: string;
     projectId: string;
@@ -86,6 +87,7 @@ export type CreationDetailCustomer = {
   address?: string;
   status: number;
   customerStepId?: string;
+  isInternational?: boolean;
 };
 
 export type CreationDetailNote = {
@@ -201,6 +203,7 @@ export type MsCustomerMineRow = MsCustomerDocument & {
   createdBy?: string;
   assignedDate?: string;
   customerStepId?: string;
+  isInternational?: boolean;
   description?: (string | MsCustomerDescriptionEntry)[];
   interestedProjects?: {
     _id?: string;
@@ -230,6 +233,7 @@ export type UpdateMsCustomerPayload = {
   email?: string;
   document?: string;
   documentType?: "cc" | "passport";
+  isInternational?: boolean;
   interestedProjects?: { projectId: string; date?: string }[];
 };
 

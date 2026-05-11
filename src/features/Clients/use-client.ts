@@ -68,6 +68,7 @@ export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Cli
     ...(c.customerStepId != null && String(c.customerStepId).trim() !== ''
       ? { customerStepId: String(c.customerStepId) }
       : {}),
+    ...(c.isInternational === true && { isInternational: true }),
   };
 }
 
@@ -93,6 +94,7 @@ export function mapCreationCustomerToClient(
     ...(c.customerStepId != null && String(c.customerStepId).trim() !== ''
       ? { customerStepId: String(c.customerStepId) }
       : {}),
+    ...(c.isInternational === true && { isInternational: true }),
   };
 }
 

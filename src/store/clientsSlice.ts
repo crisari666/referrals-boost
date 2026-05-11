@@ -34,6 +34,7 @@ const emptyVendorEditForm: EditClientFormState = {
   documentType: "",
   document: "",
   projectInterest: "",
+  isInternational: false,
 };
 
 function getEditClientSchema() {
@@ -67,6 +68,7 @@ function buildEditFormFromCustomer(c: CreationDetailCustomer): EditClientFormSta
     documentType: documentTypeUi,
     document: c.document ?? "",
     projectInterest: lastProject,
+    isInternational: c.isInternational === true,
   };
 }
 
@@ -159,6 +161,7 @@ export const submitVendorCustomerEdit = createAsyncThunk<
       ? { document: parsed.data.document.trim() }
       : { document: "" }),
     ...(docType ? { documentType: docType } : {}),
+    isInternational: vendorCustomerEdit.form.isInternational === true,
     interestedProjects: parsed.data.projectInterest?.trim()
       ? [
           {
@@ -382,9 +385,9 @@ const clientsSlice = createSlice({
       state.vendorCustomerEdit.errors = {};
       state.vendorCustomerEdit.submitting = false;
     },
-    setVendorCustomerEditField(state, action: PayloadAction<{ field: string; value: string }>) {
+    setVendorCustomerEditField(state, action: PayloadAction<{ field: string; value: string | boolean }>) {
       const { field, value } = action.payload;
-      (state.vendorCustomerEdit.form as Record<string, string>)[field] = value;
+      (state.vendorCustomerEdit.form as Record<string, string | boolean>)[field] = value;
       state.vendorCustomerEdit.errors[field] = "";
     },
     setVendorCustomerEditErrors(state, action: PayloadAction<Record<string, string>>) {

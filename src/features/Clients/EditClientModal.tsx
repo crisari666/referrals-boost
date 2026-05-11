@@ -22,6 +22,7 @@ export type EditClientFormState = {
   documentType: string;
   document: string;
   projectInterest: string;
+  isInternational: boolean;
 };
 
 export function EditClientModal() {
@@ -41,7 +42,7 @@ export function EditClientModal() {
     dispatch(closeVendorCustomerEditModal());
   };
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: string, value: string | boolean) => {
     dispatch(setVendorCustomerEditField({ field, value }));
   };
 
@@ -141,6 +142,29 @@ export function EditClientModal() {
                 />
               </Field>
             </div>
+
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <div
+                role="switch"
+                aria-checked={form.isInternational}
+                tabIndex={0}
+                onClick={() => updateField('isInternational', !form.isInternational)}
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    updateField('isInternational', !form.isInternational);
+                  }
+                }}
+                className={`relative w-10 h-6 rounded-full transition-colors ${form.isInternational ? 'bg-accent' : 'bg-muted'}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.isInternational ? 'translate-x-4' : 'translate-x-0'}`}
+                />
+              </div>
+              <span className="text-sm font-medium text-foreground">
+                {t('clients.internationalCustomer')}
+              </span>
+            </label>
 
             <Field label={t('clients.projectInterest')} error={errors.projectInterest}>
               <select

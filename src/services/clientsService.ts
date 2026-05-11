@@ -175,6 +175,7 @@ function mapMsRowToCreationDetailCustomer(
     createdAt: row.createdAt,
     userCreator: row.createdBy,
     status: 0,
+    isInternational: row.isInternational === true,
     ...(row.customerStepId !== undefined &&
       row.customerStepId !== null && {
         customerStepId: String(row.customerStepId),
@@ -239,6 +240,7 @@ function mapMsMineRowToCustomerByCreator(row: MsCustomerMineRow): CustomerByCrea
     ...(row.interestedProjects && row.interestedProjects.length > 0
       ? { interestedProjects: row.interestedProjects }
       : {}),
+    ...(row.isInternational === true && { isInternational: true }),
   };
 }
 
