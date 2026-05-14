@@ -187,6 +187,7 @@ export function useClient() {
         whatsapp: result.data.whatsapp.trim(),
         phone: result.data.phone.trim(),
         notes: [result.data.description.trim()],
+        isReferral: authUser !== null && !authUser.physical,
         ...(result.data.documentType?.trim()
           ? { documentType: result.data.documentType.trim() }
           : {}),
