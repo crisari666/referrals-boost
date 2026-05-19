@@ -11,6 +11,7 @@ import vendorDashboardReducer from "./vendorDashboardSlice";
 import crmPresenceReducer from "./crmPresenceSlice";
 import twilioVoiceReducer from "./twilioVoiceSlice";
 import signupCampaignReducer from "./signupCampaignSlice";
+import trainingSessionsReducer from "@/features/training-sessions/store/training-sessions-slice";
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +26,7 @@ export const store = configureStore({
     crmPresence: crmPresenceReducer,
     twilioVoice: twilioVoiceReducer,
     signupCampaign: signupCampaignReducer,
+    trainingSessions: trainingSessionsReducer,
   },
 });
 

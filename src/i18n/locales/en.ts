@@ -14,6 +14,7 @@ import { signupSegment } from "@/i18n/segments/signup";
 import { twilioSegment } from "@/i18n/segments/twilio";
 import { uiSegment } from "@/i18n/segments/ui";
 import { validationSegment } from "@/i18n/segments/validation";
+import { trainingSessionsSegment } from "@/i18n/segments/training-sessions";
 import { whatsappSegment } from "@/i18n/segments/whatsapp";
 
 const en = {
@@ -34,6 +35,7 @@ const en = {
   notFound: notFoundSegment.en,
   firstAccess: firstAccessSegment.en,
   ui: uiSegment.en,
+  trainingSessions: trainingSessionsSegment.en,
 };
 
 export default en;

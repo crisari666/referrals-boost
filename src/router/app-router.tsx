@@ -15,6 +15,7 @@ import ContractSign from '@/pages/ContractSign';
 import Schedule from '@/pages/Schedule';
 import WhatsAppSync from '@/pages/WhatsAppSync';
 import { SignupCampaignPage } from '@/features/signup-campaign';
+import { TrainingSessionsPage } from '@/features/training-sessions/pages/training-sessions-page';
 
 const Protected = ({ children }: { children: ReactNode }) => (
   <ProtectedRoute>
@@ -37,6 +38,7 @@ const AppRouter = () => (
     <Route path='/whatsapp' element={<Protected><WhatsAppSync /></Protected>} />
     <Route path='/schedule' element={<Protected><Schedule /></Protected>} />
     <Route path='/profile' element={<Protected><Profile /></Protected>} />
+    <Route path='/training-sessions' element={<Protected><TrainingSessionsPage /></Protected>} />
     <Route path='*' element={<NotFound />} />
   </Routes>
 );
