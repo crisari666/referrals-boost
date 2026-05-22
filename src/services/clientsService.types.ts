@@ -272,3 +272,14 @@ export type CreateCustomerEventPayload = {
   description: string;
   score?: number;
 };
+
+export type CustomerMetaLeadMappedFieldItem = {
+  label: string;
+  value: string;
+};
+
+export type CustomerMetaLeadMappedFieldsResponse = {
+  hasLead: boolean;
+  leadgenId?: string;
+  items: CustomerMetaLeadMappedFieldItem[];
+};

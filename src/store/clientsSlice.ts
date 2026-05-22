@@ -12,6 +12,7 @@ import type {
   CustomerCreationDetailPayload,
   UpdateMsCustomerPayload,
   VendorCustomerStep,
+  CustomerMetaLeadMappedFieldsResponse,
 } from "@/services/clientsService.types";
 import type { EditClientFormState } from "@/features/Clients/EditClientModal";
 import type { RootState } from "@/store";
@@ -86,6 +87,22 @@ export const fetchVendorCustomerSteps = createAsyncThunk<VendorCustomerStep[], v
     }
   }
 );
+
+export const fetchCustomerMetaLeadMappedFields = createAsyncThunk<
+  CustomerMetaLeadMappedFieldsResponse,
+  string,
+  { rejectValue: string }
+>("clients/fetchCustomerMetaLeadMappedFields", async (customerId, { rejectWithValue }) => {
+  try {
+    return await clientsService.getCustomerMetaLeadMappedFields(customerId);
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : i18n.t("clients.metaLeadLoadFailed");
+    return rejectWithValue(message);
+  }
+});
 
 export const fetchVendorCustomerCreationDetail = createAsyncThunk<
   CustomerCreationDetailPayload,
@@ -280,6 +297,10 @@ export interface ClientsState {
   vendorScheduleEventsCustomerId: string | null;
   vendorScheduleEventsStatus: "idle" | "loading" | "succeeded" | "failed";
   vendorScheduleEventsError: string | null;
+  metaLeadMappedFields: CustomerMetaLeadMappedFieldsResponse | null;
+  metaLeadMappedFieldsCustomerId: string | null;
+  metaLeadMappedFieldsStatus: "idle" | "loading" | "succeeded" | "failed";
+  metaLeadMappedFieldsError: string | null;
 }
 
 const initialState: ClientsState = {
@@ -309,6 +330,10 @@ const initialState: ClientsState = {
   vendorScheduleEventsCustomerId: null,
   vendorScheduleEventsStatus: "idle",
   vendorScheduleEventsError: null,
+  metaLeadMappedFields: null,
+  metaLeadMappedFieldsCustomerId: null,
+  metaLeadMappedFieldsStatus: "idle",
+  metaLeadMappedFieldsError: null,
 };
 
 const clientsSlice = createSlice({
@@ -371,6 +396,10 @@ const clientsSlice = createSlice({
       state.vendorScheduleEventsCustomerId = null;
       state.vendorScheduleEventsStatus = "idle";
       state.vendorScheduleEventsError = null;
+      state.metaLeadMappedFields = null;
+      state.metaLeadMappedFieldsCustomerId = null;
+      state.metaLeadMappedFieldsStatus = "idle";
+      state.metaLeadMappedFieldsError = null;
     },
     openVendorCustomerEditModal(state) {
       const c = state.vendorCreationDetail?.customer;
@@ -497,6 +526,22 @@ const clientsSlice = createSlice({
         state.vendorScheduleEvents = [];
         state.vendorScheduleEventsError =
           action.payload ?? action.error.message ?? i18n.t("clients.storeScheduleLoadFailed");
+      })
+      .addCase(fetchCustomerMetaLeadMappedFields.pending, (state, action) => {
+        state.metaLeadMappedFieldsStatus = "loading";
+        state.metaLeadMappedFieldsCustomerId = action.meta.arg;
+        state.metaLeadMappedFields = null;
+        state.metaLeadMappedFieldsError = null;
+      })
+      .addCase(fetchCustomerMetaLeadMappedFields.fulfilled, (state, action) => {
+        state.metaLeadMappedFieldsStatus = "succeeded";
+        state.metaLeadMappedFields = action.payload;
+      })
+      .addCase(fetchCustomerMetaLeadMappedFields.rejected, (state, action) => {
+        state.metaLeadMappedFieldsStatus = "failed";
+        state.metaLeadMappedFields = null;
+        state.metaLeadMappedFieldsError =
+          action.payload ?? action.error.message ?? i18n.t("clients.metaLeadLoadFailed");
       });
   },
 });

@@ -14,6 +14,7 @@ import { ClientDetailHeader } from './client-detail-header';
 import { ClientDetailProfileCard } from './client-detail-profile-card';
 import { ClientDetailNotesSection } from './client-detail-notes-section';
 import { ClientDetailTimelineSection } from './client-detail-timeline-section';
+import { ClientDetailMetaLeadFieldsSection } from './client-detail-meta-lead-fields-section';
 import { EditClientModal } from './EditClientModal';
 
 const ClientDetail = () => {
@@ -104,8 +105,10 @@ const ClientDetail = () => {
         isMock={Boolean(mockClient)}
         isPhysical={isPhysical}
       />
+      {isPhysical && !mockClient ? <ClientDetailMetaLeadFieldsSection /> : null}
 
       <ClientDetailNotesSection isMock={Boolean(mockClient)} mockNotes={client.notes} />
+
 
       <ClientDetailTimelineSection isMock={Boolean(mockClient)} client={client} />
 

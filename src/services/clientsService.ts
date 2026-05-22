@@ -18,6 +18,7 @@ import type {
   CreateCustomerEventPayload,
   CustomerEventItem,
   CustomerEventListResponse,
+  CustomerMetaLeadMappedFieldsResponse,
   CreationDetailCustomer,
   CreationDetailNote,
   CustomerByCreator,
@@ -301,6 +302,18 @@ export function getCustomerById(customerId: string) {
  * Customer detail for vendor UI: customers MS `GET customer/:customerId`,
  * mapped to legacy `creation-detail` payload (no situation logs from MS yet).
  */
+/** `GET customer/:customerId/meta-lead-mapped-fields` — Meta Lead Ads form fields. */
+export async function getCustomerMetaLeadMappedFields(
+  customerId: string
+): Promise<CustomerMetaLeadMappedFieldsResponse> {
+  return http.get('', {
+    url: customersMsUrl(
+      `customer/${encodeURIComponent(customerId)}/meta-lead-mapped-fields`
+    ),
+    ...withCustomersMsAuth(),
+  });
+}
+
 export async function getCustomerCreationDetail(
   customerId: string
 ): Promise<CustomerCreationDetailResponse> {
