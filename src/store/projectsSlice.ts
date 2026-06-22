@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import * as projectsService from "@/services/projectsService";
-import type { Project, ProjectLegalDocumentId } from "@/data/mockData";
+import type { Project, ProjectLegalDocumentId } from '@/features/Projects/types/project.type';
 import type { ApiProject } from "@/types/project";
 
 function mapLegalDocuments(api: ApiProject): Project["legalDocuments"] {

@@ -1,6 +1,6 @@
 import { Share2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { Project } from '@/data/mockData';
+import type { Project } from '@/features/Projects/types/project.type';
 import { getIntlLocaleTag } from '@/i18n/intl-locale';
 import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 

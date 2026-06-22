@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Project } from "@/data/mockData";
+import type { Project } from '@/features/Projects/types/project.type';
 
 interface ProjectDetailModalProps {
   project: Project | null;

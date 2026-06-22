@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { MessageCircle, CalendarPlus } from 'lucide-react';
 import ScheduleDialog from "@/features/schedule/ui/ScheduleDialog";
-import type { Client } from '@/data/mockData';
+import type { Client } from '@/features/Clients/types/client.type';
 import { useAppDispatch } from '@/store';
 import {
   ensureVoiceSession,

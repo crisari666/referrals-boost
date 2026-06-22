@@ -1,4 +1,4 @@
-import type { Project } from "@/data/mockData";
+import type { Project } from '@/features/Projects/types/project.type';
 import type { VentorScheduleEventApi } from "@/services/scheduleService";
 import type { ScheduleVisitRow } from "@/types/schedule";
 

@@ -1,5 +1,5 @@
 import { Layers } from 'lucide-react';
-import type { Project } from '@/data/mockData';
+import type { Project } from '@/features/Projects/types/project.type';
 import { getIntlLocaleTag } from '@/i18n/intl-locale';
 import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 import { useTranslation } from 'react-i18next';

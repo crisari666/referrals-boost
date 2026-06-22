@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { useMemo, type CSSProperties } from "react";
 import { ChevronRight } from "lucide-react";
-import type { Client } from "@/data/mockData";
-import { statusLabels, statusColors } from "@/data/mockData";
+import type { Client } from '@/features/Clients/types/client.type';
+import { CLIENT_STATUS_I18N_KEY, statusColors } from '@/features/Clients/client-status-styles';
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useAppSelector } from "@/store";
@@ -95,7 +95,7 @@ const ClientRow = ({ client, index = 0, projectTitles }: ClientRowProps) => {
           <span
             className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${statusColors[client.status]}`}
           >
-            {statusLabels[client.status]}
+            {t(CLIENT_STATUS_I18N_KEY[client.status])}
           </span>
         )}
         <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "@/store";
 import ProjectCard from "./ProjectCard";
 import ProjectDetailModal from "./ProjectDetailModal";
-import type { Project } from "@/data/mockData";
+import type { Project } from '@/features/Projects/types/project.type';
 import { fetchProjects } from "@/store/projectsSlice";
 
 const Projects = () => {

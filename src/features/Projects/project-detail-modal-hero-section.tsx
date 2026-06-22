@@ -1,5 +1,5 @@
 import { MapPin } from 'lucide-react';
-import type { Project } from '@/data/mockData';
+import type { Project } from '@/features/Projects/types/project.type';
 import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 
 interface ProjectDetailModalHeroSectionProps {

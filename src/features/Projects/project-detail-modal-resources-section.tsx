@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Download, FileText, Images, Scale, Share2, Video } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import type { Project } from '@/data/mockData';
+import type { Project } from '@/features/Projects/types/project.type';
 import { getStoredAuthToken } from '@/lib/auth-token';
 import { getProjectResourceUrl, getRagIngestAssetUrl } from '@/services/projectsService';
 import ProjectDetailModalImagePickerDialog from './project-detail-modal-image-picker-dialog';

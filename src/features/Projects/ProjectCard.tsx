@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { MapPin, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { Project } from "@/data/mockData";
+import type { Project } from '@/features/Projects/types/project.type';
 import { motion } from "framer-motion";
 import { getIntlLocaleTag } from "@/i18n/intl-locale";
 

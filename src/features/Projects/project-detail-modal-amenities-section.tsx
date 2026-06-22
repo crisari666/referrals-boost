@@ -1,5 +1,5 @@
 import { CheckCircle } from 'lucide-react';
-import type { Project } from '@/data/mockData';
+import type { Project } from '@/features/Projects/types/project.type';
 
 interface ProjectDetailModalAmenitiesSectionProps {
   project: Project;
