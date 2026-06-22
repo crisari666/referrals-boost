@@ -2,36 +2,20 @@ import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector, useAppDispatch } from '@/store';
 import { addClient, setClientList, fetchVendorCustomerSteps } from '@/store/clientsSlice';
-import {
-  clients as mockClients,
-  type Client,
-  type ClientStatus,
-  type DocumentType,
-} from '@/data/mockData';
+import type { Client, ClientStatus } from '@/features/Clients/types/client.type';
 import * as clientsService from '@/services/clientsService';
-import type { AuthUser } from '@/types/auth';
 import type { AddClientFormState } from './AddClientModal';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import axios from 'axios';
-
-function parseNestJsMessage(data: unknown): string | null {
-  if (!data || typeof data !== 'object') return null;
-  const m = (data as { message?: unknown }).message;
-  if (typeof m === 'string') return m;
-  if (Array.isArray(m)) return m.filter(Boolean).map(String).join(', ');
-  return null;
-}
-
-const MOCK_CLIENTS_DEMO_LOGIN = 'kdev999';
-
-export function shouldIncludeMockClientsForUser(user: AuthUser | null): boolean {
-  if (!user) return false;
-  const login = user.user.toLowerCase();
-  const localPart = user.email.split('@')[0]?.toLowerCase() ?? '';
-  return login === MOCK_CLIENTS_DEMO_LOGIN || localPart === MOCK_CLIENTS_DEMO_LOGIN;
-}
+import { COUNTRY_CODES, DEFAULT_COUNTRY } from '@/lib/country-codes';
+import type { CountryCode } from '@/lib/country-codes';
+import { buildMsPhone, isValidLocalPhone } from '@/lib/phone-e164';
+import {
+  buildConflictFieldErrors,
+  getHttpErrorMessage,
+} from '@/lib/parse-api-error';
 
 const apiStatusToClient: Record<number, ClientStatus> = {
   0: 'nuevo',
@@ -40,6 +24,10 @@ const apiStatusToClient: Record<number, ClientStatus> = {
   3: 'pago_reserva',
   4: 'cerrado',
 };
+
+function resolveCountryByCode(code: string): CountryCode {
+  return COUNTRY_CODES.find((country) => country.code === code) ?? DEFAULT_COUNTRY;
+}
 
 export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Client {
   const name = [c.name, c.lastName].filter(Boolean).join(' ').trim() || c.name;
@@ -74,7 +62,7 @@ export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Cli
 
 export function mapCreationCustomerToClient(
   customerId: string,
-  c: clientsService.CreationDetailCustomer
+  c: clientsService.CreationDetailCustomer,
 ): Client {
   const name = [c.name, c.lastName].filter(Boolean).join(' ').trim() || c.name;
   const items = c.interestProyect ?? [];
@@ -99,16 +87,56 @@ export function mapCreationCustomerToClient(
 }
 
 function getClientSchema() {
-  return z.object({
-    name: z.string().trim().min(1, i18n.t('validation.nameRequired')).max(100),
-    email: z.string().trim().email(i18n.t('validation.emailInvalid')).max(255),
-    whatsapp: z.string().trim().min(1, i18n.t('validation.whatsappRequired')).max(40),
-    phone: z.string().trim().min(1, i18n.t('validation.phoneRequired')).max(40),
-    documentType: z.string().optional(),
-    document: z.string().trim().max(30).optional(),
-    projectInterest: z.string().optional().or(z.literal('')),
-    description: z.string().trim().min(1, i18n.t('validation.descriptionRequired')),
-  });
+  return z
+    .object({
+      name: z.string().trim().min(1, i18n.t('validation.nameRequired')).max(100),
+      email: z.string().trim().email(i18n.t('validation.emailInvalid')).max(255),
+      whatsapp: z.string().trim().min(1, i18n.t('validation.whatsappRequired')).max(20),
+      phone: z.string().trim().max(20),
+      whatsappCountryCode: z.string().min(2),
+      phoneCountryCode: z.string().min(2),
+      sameAsWhatsapp: z.boolean(),
+      documentType: z.string().optional(),
+      document: z.string().trim().max(30).optional(),
+      projectInterest: z.string().optional().or(z.literal('')),
+      description: z.string().trim().min(1, i18n.t('validation.descriptionRequired')),
+    })
+    .superRefine((data, ctx) => {
+      if (!isValidLocalPhone(data.whatsapp)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: i18n.t('validation.whatsappInvalid'),
+          path: ['whatsapp'],
+        });
+      }
+      if (!data.sameAsWhatsapp) {
+        if (!data.phone.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: i18n.t('validation.phoneRequired'),
+            path: ['phone'],
+          });
+        } else if (!isValidLocalPhone(data.phone)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: i18n.t('validation.phoneInvalid'),
+            path: ['phone'],
+          });
+        }
+        const whatsappCountry = resolveCountryByCode(data.whatsappCountryCode);
+        const phoneCountry = resolveCountryByCode(data.phoneCountryCode);
+        if (
+          buildMsPhone(whatsappCountry, data.whatsapp) ===
+          buildMsPhone(phoneCountry, data.phone)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: i18n.t('validation.phoneSameAsWhatsapp'),
+            path: ['phone'],
+          });
+        }
+      }
+    });
 }
 
 const emptyForm: AddClientFormState = {
@@ -116,6 +144,9 @@ const emptyForm: AddClientFormState = {
   email: '',
   whatsapp: '',
   phone: '',
+  whatsappCountryCode: DEFAULT_COUNTRY.code,
+  phoneCountryCode: DEFAULT_COUNTRY.code,
+  sameAsWhatsapp: true,
   documentType: '',
   document: '',
   projectInterest: '',
@@ -143,10 +174,7 @@ export function useClient() {
       .then((res) => {
         if (cancelled || res.error) return;
         const apiList = (res.result ?? []).map(mapApiCustomerToClient);
-        const combined = shouldIncludeMockClientsForUser(authUser)
-          ? [...mockClients, ...apiList]
-          : apiList;
-        dispatch(setClientList(combined));
+        dispatch(setClientList(apiList));
       })
       .catch(() => {})
       .finally(() => {
@@ -158,7 +186,7 @@ export function useClient() {
     };
   }, [dispatch, authUser, listSort]);
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: string, value: string | boolean) => {
     setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: '' }));
   };
@@ -180,12 +208,18 @@ export function useClient() {
         result.data.projectInterest?.trim()
           ? [{ proyect: result.data.projectInterest.trim(), date: dateStr }]
           : undefined;
+      const whatsappCountry = resolveCountryByCode(result.data.whatsappCountryCode);
+      const phoneCountry = resolveCountryByCode(result.data.phoneCountryCode);
+      const whatsappMs = buildMsPhone(whatsappCountry, result.data.whatsapp);
+      const phoneMs = result.data.sameAsWhatsapp
+        ? whatsappMs
+        : buildMsPhone(phoneCountry, result.data.phone);
 
       const payload: clientsService.CreateVendorCustomerPayload = {
         name: result.data.name.trim(),
         email: result.data.email.trim(),
-        whatsapp: result.data.whatsapp.trim(),
-        phone: result.data.phone.trim(),
+        whatsapp: whatsappMs,
+        phone: phoneMs,
         notes: [result.data.description.trim()],
         isReferral: authUser !== null && !authUser.physical,
         ...(result.data.documentType?.trim()
@@ -211,9 +245,8 @@ export function useClient() {
         id: r._id,
         name: displayName,
         email: r.email ?? result.data.email,
-        whatsapp: r.whatsapp ?? result.data.whatsapp,
-        phone: r.phone || undefined,
-        documentType: (result.data.documentType as DocumentType) || undefined,
+        whatsapp: r.whatsapp ?? whatsappMs,
+        phone: r.phone || phoneMs || undefined,
         document: r.document || result.data.document || undefined,
         projectInterest: result.data.projectInterest,
         status: 'nuevo',
@@ -235,18 +268,11 @@ export function useClient() {
       toast.success(t('clients.clientAddedToast', { name: newClient.name }));
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
-        const apiMsg = parseNestJsMessage(err.response.data)?.trim();
-        const dup =
-          apiMsg && apiMsg.length > 0
-            ? apiMsg
-            : t('clients.phoneDuplicateDefault');
-        setErrors({ phone: dup });
+        const apiMsg = getHttpErrorMessage(err, t('clients.phoneDuplicateDefault'));
+        setErrors(buildConflictFieldErrors(apiMsg));
         return;
       }
-      const message =
-        err && typeof err === 'object' && 'message' in err
-          ? String((err as { message: string }).message)
-          : t('clients.createClientFailed');
+      const message = getHttpErrorMessage(err, t('clients.createClientFailed'));
       toast.error(message);
     }
   };

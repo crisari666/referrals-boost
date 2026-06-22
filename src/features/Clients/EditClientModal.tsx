@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import Field from './Field';
-import type { DocumentType } from '@/data/mockData';
+import { VENDOR_DOCUMENT_TYPE_OPTIONS } from './document-type-options';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
   closeVendorCustomerEditModal,
@@ -11,19 +11,27 @@ import {
 } from '@/store/clientsSlice';
 import { fetchProjects } from '@/store/projectsSlice';
 import { useEffect } from 'react';
-
-const DOCUMENT_TYPES: DocumentType[] = ['INE', 'Pasaporte', 'CURP', 'RFC', 'Otro'];
+import { CountryCodeSelect } from '@/components/country-code-select';
+import { COUNTRY_CODES, DEFAULT_COUNTRY } from '@/lib/country-codes';
+import type { CountryCode } from '@/lib/country-codes';
 
 export type EditClientFormState = {
   name: string;
   email: string;
   whatsapp: string;
   phone: string;
+  whatsappCountryCode: string;
+  phoneCountryCode: string;
+  sameAsWhatsapp: boolean;
   documentType: string;
   document: string;
   projectInterest: string;
   isInternational: boolean;
 };
+
+function resolveCountry(code: string): CountryCode {
+  return COUNTRY_CODES.find((country) => country.code === code) ?? DEFAULT_COUNTRY;
+}
 
 export function EditClientModal() {
   const { t } = useTranslation();
@@ -37,6 +45,7 @@ export function EditClientModal() {
     void dispatch(fetchProjects());
   }, [dispatch]);
   const projectList = useAppSelector((state) => state.projects.list);
+  const formError = errors._form;
 
   const onClose = () => {
     dispatch(closeVendorCustomerEditModal());
@@ -79,6 +88,15 @@ export function EditClientModal() {
               </button>
             </div>
 
+            {formError ? (
+              <p
+                role="alert"
+                className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2"
+              >
+                {formError}
+              </p>
+            ) : null}
+
             <Field label={t('clients.nameLabel')} error={errors.name}>
               <input
                 value={form.name}
@@ -99,24 +117,54 @@ export function EditClientModal() {
             </Field>
 
             <Field label={t('clients.whatsappLabel')} error={errors.whatsapp}>
-              <input
-                type="tel"
-                value={form.whatsapp}
-                onChange={(e) => updateField('whatsapp', e.target.value)}
-                placeholder={t('clients.phonePlaceholder')}
-                className="form-input"
-              />
+              <div className="flex gap-2">
+                <CountryCodeSelect
+                  value={resolveCountry(form.whatsappCountryCode)}
+                  onChange={(country) => updateField('whatsappCountryCode', country.code)}
+                />
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  value={form.whatsapp}
+                  onChange={(e) =>
+                    updateField('whatsapp', e.target.value.replace(/[^\d\s-]/g, ''))
+                  }
+                  placeholder={t('clients.phonePlaceholder')}
+                  className="form-input flex-1 min-w-0"
+                />
+              </div>
             </Field>
 
-            <Field label={t('clients.phoneLabel')} error={errors.phone}>
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
               <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => updateField('phone', e.target.value)}
-                placeholder={t('clients.phonePlaceholder')}
-                className="form-input"
+                type="checkbox"
+                checked={form.sameAsWhatsapp}
+                onChange={(e) => updateField('sameAsWhatsapp', e.target.checked)}
+                className="rounded border-input"
               />
-            </Field>
+              <span>{t('clients.samePhoneAsWhatsapp')}</span>
+            </label>
+
+            {!form.sameAsWhatsapp ? (
+              <Field label={t('clients.phoneLabel')} error={errors.phone}>
+                <div className="flex gap-2">
+                  <CountryCodeSelect
+                    value={resolveCountry(form.phoneCountryCode)}
+                    onChange={(country) => updateField('phoneCountryCode', country.code)}
+                  />
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={form.phone}
+                    onChange={(e) =>
+                      updateField('phone', e.target.value.replace(/[^\d\s-]/g, ''))
+                    }
+                    placeholder={t('clients.phonePlaceholder')}
+                    className="form-input flex-1 min-w-0"
+                  />
+                </div>
+              </Field>
+            ) : null}
 
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('clients.documentType')} error={errors.documentType}>
@@ -126,9 +174,9 @@ export function EditClientModal() {
                   className="form-input cursor-pointer"
                 >
                   <option value="">{t('common.selectPlaceholder')}</option>
-                  {DOCUMENT_TYPES.map((dt) => (
-                    <option key={dt} value={dt}>
-                      {dt}
+                  {VENDOR_DOCUMENT_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>

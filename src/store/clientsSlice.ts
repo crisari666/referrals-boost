@@ -2,7 +2,7 @@ import { createAsyncThunk, createSelector, createSlice, PayloadAction } from "@r
 import i18n from "@/i18n";
 import { toast } from "sonner";
 import { z } from "zod";
-import { clients as initialClients, type Client, type ClientStatus } from "@/data/mockData";
+import type { Client, ClientStatus } from '@/features/Clients/types/client.type';
 import * as clientsService from "@/services/clientsService";
 import type { CustomerMineListSort } from "@/services/clientsService";
 import type {
@@ -14,7 +14,15 @@ import type {
   VendorCustomerStep,
   CustomerMetaLeadMappedFieldsResponse,
 } from "@/services/clientsService.types";
-import type { EditClientFormState } from "@/features/Clients/EditClientModal";
+import type { EditClientFormState } from '@/features/Clients/EditClientModal';
+import { COUNTRY_CODES, DEFAULT_COUNTRY, splitStoredPhone } from '@/lib/country-codes';
+import type { CountryCode } from '@/lib/country-codes';
+import { buildMsPhone, isValidLocalPhone } from '@/lib/phone-e164';
+import {
+  buildConflictFieldErrors,
+  getHttpErrorMessage,
+} from '@/lib/parse-api-error';
+import axios from 'axios';
 import type { RootState } from "@/store";
 import type { AddCustomerEventArgs, AddCustomerNoteArgs } from "./clients-slice.types";
 import type { VentorScheduleEventApi } from "@/services/scheduleService";
@@ -28,26 +36,74 @@ export type ClientsListSort = CustomerMineListSort;
 const WITHOUT_STEP_FILTER_ID = "__without_step__";
 
 const emptyVendorEditForm: EditClientFormState = {
-  name: "",
-  email: "",
-  whatsapp: "",
-  phone: "",
-  documentType: "",
-  document: "",
-  projectInterest: "",
+  name: '',
+  email: '',
+  whatsapp: '',
+  phone: '',
+  whatsappCountryCode: DEFAULT_COUNTRY.code,
+  phoneCountryCode: DEFAULT_COUNTRY.code,
+  sameAsWhatsapp: true,
+  documentType: '',
+  document: '',
+  projectInterest: '',
   isInternational: false,
 };
 
+function resolveCountryByCode(code: string): CountryCode {
+  return COUNTRY_CODES.find((country) => country.code === code) ?? DEFAULT_COUNTRY;
+}
+
 function getEditClientSchema() {
-  return z.object({
-    name: z.string().trim().min(1, i18n.t("validation.nameRequired")).max(100),
-    email: z.string().trim().email(i18n.t("validation.emailInvalid")).max(255),
-    whatsapp: z.string().trim().min(1, i18n.t("validation.whatsappRequired")).max(40),
-    phone: z.string().trim().min(1, i18n.t("validation.phoneRequired")).max(40),
-    documentType: z.string().optional(),
-    document: z.string().trim().max(30).optional(),
-    projectInterest: z.string().optional().or(z.literal("")),
-  });
+  return z
+    .object({
+      name: z.string().trim().min(1, i18n.t('validation.nameRequired')).max(100),
+      email: z.string().trim().email(i18n.t('validation.emailInvalid')).max(255),
+      whatsapp: z.string().trim().min(1, i18n.t('validation.whatsappRequired')).max(20),
+      phone: z.string().trim().max(20),
+      whatsappCountryCode: z.string().min(2),
+      phoneCountryCode: z.string().min(2),
+      sameAsWhatsapp: z.boolean(),
+      documentType: z.string().optional(),
+      document: z.string().trim().max(30).optional(),
+      projectInterest: z.string().optional().or(z.literal('')),
+      isInternational: z.boolean().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (!isValidLocalPhone(data.whatsapp)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: i18n.t('validation.whatsappInvalid'),
+          path: ['whatsapp'],
+        });
+      }
+      if (!data.sameAsWhatsapp) {
+        if (!data.phone.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: i18n.t('validation.phoneRequired'),
+            path: ['phone'],
+          });
+        } else if (!isValidLocalPhone(data.phone)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: i18n.t('validation.phoneInvalid'),
+            path: ['phone'],
+          });
+        }
+        const whatsappCountry = resolveCountryByCode(data.whatsappCountryCode);
+        const phoneCountry = resolveCountryByCode(data.phoneCountryCode);
+        if (
+          buildMsPhone(whatsappCountry, data.whatsapp) ===
+          buildMsPhone(phoneCountry, data.phone)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: i18n.t('validation.phoneSameAsWhatsapp'),
+            path: ['phone'],
+          });
+        }
+      }
+    });
 }
 
 function buildEditFormFromCustomer(c: CreationDetailCustomer): EditClientFormState {
@@ -57,16 +113,20 @@ function buildEditFormFromCustomer(c: CreationDetailCustomer): EditClientFormSta
     interestItems.length > 0
       ? interestItems[interestItems.length - 1]?.proyect?.trim() ?? ""
       : "";
-  let documentTypeUi = "";
-  const dt = c.documentType?.toLowerCase();
-  if (dt === "cc") documentTypeUi = "INE";
-  else if (dt === "passport") documentTypeUi = "Pasaporte";
+  const whatsappSplit = splitStoredPhone(c.whatsapp ?? c.phone);
+  const phoneSplit = splitStoredPhone(c.phone ?? c.whatsapp);
+  const sameAsWhatsapp =
+    buildMsPhone(whatsappSplit.country, whatsappSplit.local) ===
+    buildMsPhone(phoneSplit.country, phoneSplit.local);
   return {
     name: fullName,
     email: c.email ?? "",
-    whatsapp: c.whatsapp ?? "",
-    phone: c.phone ?? "",
-    documentType: documentTypeUi,
+    whatsapp: whatsappSplit.local,
+    phone: sameAsWhatsapp ? "" : phoneSplit.local,
+    whatsappCountryCode: whatsappSplit.country.code,
+    phoneCountryCode: phoneSplit.country.code,
+    sameAsWhatsapp,
+    documentType: c.documentType?.trim().toLowerCase() ?? '',
     document: c.document ?? "",
     projectInterest: lastProject,
     isInternational: c.isInternational === true,
@@ -168,15 +228,21 @@ export const submitVendorCustomerEdit = createAsyncThunk<
   const namePart = parts[0] ?? "";
   const lastNamePart = parts.slice(1).join(" ");
   const docType = clientsService.mapVendorDocumentTypeToMs(parsed.data.documentType);
+  const whatsappCountry = resolveCountryByCode(parsed.data.whatsappCountryCode);
+  const phoneCountry = resolveCountryByCode(parsed.data.phoneCountryCode);
+  const whatsappMs = buildMsPhone(whatsappCountry, parsed.data.whatsapp);
+  const phoneMs = parsed.data.sameAsWhatsapp
+    ? whatsappMs
+    : buildMsPhone(phoneCountry, parsed.data.phone);
   const body: UpdateMsCustomerPayload = {
     name: namePart,
     lastName: lastNamePart,
-    phone: parsed.data.phone.trim(),
-    whatsapp: parsed.data.whatsapp.trim(),
+    phone: phoneMs,
+    whatsapp: whatsappMs,
     email: parsed.data.email.trim(),
     ...(parsed.data.document?.trim()
       ? { document: parsed.data.document.trim() }
-      : { document: "" }),
+      : { document: '' }),
     ...(docType ? { documentType: docType } : {}),
     isInternational: vendorCustomerEdit.form.isInternational === true,
     interestedProjects: parsed.data.projectInterest?.trim()
@@ -191,10 +257,15 @@ export const submitVendorCustomerEdit = createAsyncThunk<
   try {
     await clientsService.updateMsCustomer(vendorCreationDetailCustomerId, body);
     await dispatch(fetchVendorCustomerCreationDetail(vendorCreationDetailCustomerId)).unwrap();
-    toast.success(i18n.t("clients.storeCustomerUpdatedToast"));
-  } catch {
-    toast.error(i18n.t("clients.storeCustomerSaveFailed"));
-    return rejectWithValue("update-failed");
+    toast.success(i18n.t('clients.storeCustomerUpdatedToast'));
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response?.status === 409) {
+      const apiMsg = getHttpErrorMessage(err, i18n.t('clients.storeCustomerSaveFailed'));
+      return rejectWithValue({ formErrors: buildConflictFieldErrors(apiMsg) });
+    }
+    const message = getHttpErrorMessage(err, i18n.t('clients.storeCustomerSaveFailed'));
+    toast.error(message);
+    return rejectWithValue('update-failed');
   }
 });
 
@@ -304,7 +375,7 @@ export interface ClientsState {
 }
 
 const initialState: ClientsState = {
-  list: initialClients,
+  list: [],
   search: "",
   listSort: "createdAt",
   vendorStepCatalog: [],

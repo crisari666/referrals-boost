@@ -1,23 +1,23 @@
-import { X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useTranslation } from "react-i18next";
-import Field from "./Field";
-import type { DocumentType } from "@/data/mockData";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { fetchProjects } from "@/store/projectsSlice";
-import { useEffect } from "react";
-
-const DOCUMENT_TYPES: DocumentType[] = ["INE", "Pasaporte", "CURP", "RFC", "Otro"];
-
-function isServerDuplicatePhoneMessage(message: string): boolean {
-  return /ya existe|registrado|duplicate key|already exists|registered/i.test(message);
-}
+import { X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import Field from './Field';
+import { VENDOR_DOCUMENT_TYPE_OPTIONS } from './document-type-options';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { fetchProjects } from '@/store/projectsSlice';
+import { useEffect } from 'react';
+import { CountryCodeSelect } from '@/components/country-code-select';
+import { COUNTRY_CODES, DEFAULT_COUNTRY } from '@/lib/country-codes';
+import type { CountryCode } from '@/lib/country-codes';
 
 export interface AddClientFormState {
   name: string;
   email: string;
   whatsapp: string;
   phone: string;
+  whatsappCountryCode: string;
+  phoneCountryCode: string;
+  sameAsWhatsapp: boolean;
   documentType: string;
   document: string;
   projectInterest: string;
@@ -29,8 +29,12 @@ interface AddClientModalProps {
   onClose: () => void;
   form: AddClientFormState;
   errors: Record<string, string>;
-  updateField: (field: string, value: string) => void;
+  updateField: (field: string, value: string | boolean) => void;
   onSubmit: () => void;
+}
+
+function resolveCountry(code: string): CountryCode {
+  return COUNTRY_CODES.find((country) => country.code === code) ?? DEFAULT_COUNTRY;
 }
 
 const AddClientModal = ({
@@ -48,8 +52,7 @@ const AddClientModal = ({
     void dispatch(fetchProjects());
   }, [dispatch]);
   const projectList = useAppSelector((state) => state.projects.list);
-  const duplicatePhoneBanner =
-    errors.phone && isServerDuplicatePhoneMessage(errors.phone) ? errors.phone : null;
+  const formError = errors._form;
 
   return (
     <AnimatePresence>
@@ -62,100 +65,130 @@ const AddClientModal = ({
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: "100%" }}
+            initial={{ y: '100%' }}
             animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
             className="bg-card w-full md:max-w-md md:rounded-2xl rounded-t-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-foreground">{t("clients.newClientTitle")}</h2>
+              <h2 className="text-lg font-bold text-foreground">{t('clients.newClientTitle')}</h2>
               <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-secondary/50 cursor-pointer">
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
-            {duplicatePhoneBanner ? (
+            {formError ? (
               <p
                 role="alert"
                 className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2"
               >
-                {duplicatePhoneBanner}
+                {formError}
               </p>
             ) : null}
 
-            <Field label={t("clients.nameLabel")} error={errors.name}>
+            <Field label={t('clients.nameLabel')} error={errors.name}>
               <input
                 value={form.name}
-                onChange={(e) => updateField("name", e.target.value)}
-                placeholder={t("clients.fullNamePlaceholder")}
+                onChange={(e) => updateField('name', e.target.value)}
+                placeholder={t('clients.fullNamePlaceholder')}
                 className="form-input"
               />
             </Field>
 
-            <Field label={t("clients.emailLabel")} error={errors.email}>
+            <Field label={t('clients.emailLabel')} error={errors.email}>
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => updateField("email", e.target.value)}
-                placeholder={t("clients.emailPlaceholder")}
+                onChange={(e) => updateField('email', e.target.value)}
+                placeholder={t('clients.emailPlaceholder')}
                 className="form-input"
               />
             </Field>
 
-            <Field label={t("clients.whatsappLabel")} error={errors.whatsapp}>
-              <input
-                type="tel"
-                value={form.whatsapp}
-                onChange={(e) => updateField("whatsapp", e.target.value)}
-                placeholder={t("clients.phonePlaceholder")}
-                className="form-input"
-              />
+            <Field label={t('clients.whatsappLabel')} error={errors.whatsapp}>
+              <div className="flex gap-2">
+                <CountryCodeSelect
+                  value={resolveCountry(form.whatsappCountryCode)}
+                  onChange={(country) => updateField('whatsappCountryCode', country.code)}
+                />
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  value={form.whatsapp}
+                  onChange={(e) =>
+                    updateField('whatsapp', e.target.value.replace(/[^\d\s-]/g, ''))
+                  }
+                  placeholder={t('clients.phonePlaceholder')}
+                  className="form-input flex-1 min-w-0"
+                />
+              </div>
             </Field>
 
-            <Field label={t("clients.phoneLabel")} error={errors.phone}>
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
               <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => updateField("phone", e.target.value)}
-                placeholder={t("clients.phonePlaceholder")}
-                className="form-input"
+                type="checkbox"
+                checked={form.sameAsWhatsapp}
+                onChange={(e) => updateField('sameAsWhatsapp', e.target.checked)}
+                className="rounded border-input"
               />
-            </Field>
+              <span>{t('clients.samePhoneAsWhatsapp')}</span>
+            </label>
+
+            {!form.sameAsWhatsapp ? (
+              <Field label={t('clients.phoneLabel')} error={errors.phone}>
+                <div className="flex gap-2">
+                  <CountryCodeSelect
+                    value={resolveCountry(form.phoneCountryCode)}
+                    onChange={(country) => updateField('phoneCountryCode', country.code)}
+                  />
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={form.phone}
+                    onChange={(e) =>
+                      updateField('phone', e.target.value.replace(/[^\d\s-]/g, ''))
+                    }
+                    placeholder={t('clients.phonePlaceholder')}
+                    className="form-input flex-1 min-w-0"
+                  />
+                </div>
+              </Field>
+            ) : null}
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={t("clients.documentType")} error={errors.documentType}>
+              <Field label={t('clients.documentType')} error={errors.documentType}>
                 <select
                   value={form.documentType}
-                  onChange={(e) => updateField("documentType", e.target.value)}
+                  onChange={(e) => updateField('documentType', e.target.value)}
                   className="form-input"
                 >
-                  <option value="">{t("common.selectPlaceholder")}</option>
-                  {DOCUMENT_TYPES.map((dt) => (
-                    <option key={dt} value={dt}>
-                      {dt}
+                  <option value="">{t('common.selectPlaceholder')}</option>
+                  {VENDOR_DOCUMENT_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
               </Field>
-              <Field label={t("clients.documentNumber")} error={errors.document}>
+              <Field label={t('clients.documentNumber')} error={errors.document}>
                 <input
                   value={form.document}
-                  onChange={(e) => updateField("document", e.target.value)}
-                  placeholder={t("clients.documentNumberPlaceholder")}
+                  onChange={(e) => updateField('document', e.target.value)}
+                  placeholder={t('clients.documentNumberPlaceholder')}
                   className="form-input"
                 />
               </Field>
             </div>
 
-            <Field label={t("clients.projectInterest")} error={errors.projectInterest}>
+            <Field label={t('clients.projectInterest')} error={errors.projectInterest}>
               <select
                 value={form.projectInterest}
-                onChange={(e) => updateField("projectInterest", e.target.value)}
+                onChange={(e) => updateField('projectInterest', e.target.value)}
                 className="form-input"
               >
-                <option value="">{t("clients.noProjectAssigned")}</option>
+                <option value="">{t('clients.noProjectAssigned')}</option>
                 {projectList.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title}
@@ -164,11 +197,11 @@ const AddClientModal = ({
               </select>
             </Field>
 
-            <Field label={t("clients.descriptionLabel")} error={errors.description}>
+            <Field label={t('clients.descriptionLabel')} error={errors.description}>
               <textarea
                 value={form.description}
-                onChange={(e) => updateField("description", e.target.value)}
-                placeholder={t("clients.descriptionPlaceholder")}
+                onChange={(e) => updateField('description', e.target.value)}
+                placeholder={t('clients.descriptionPlaceholder')}
                 className="form-input min-h-[96px] resize-y"
               />
             </Field>
@@ -178,7 +211,7 @@ const AddClientModal = ({
               onClick={onSubmit}
               className="w-full gradient-commission text-primary-foreground font-bold py-3 rounded-xl shadow-md text-sm cursor-pointer"
             >
-              {t("clients.addClientSubmit")}
+              {t('clients.addClientSubmit')}
             </button>
           </motion.div>
         </motion.div>
