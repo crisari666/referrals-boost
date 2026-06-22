@@ -17,7 +17,6 @@ import {
 
 export type ClientDetailScheduleDialogProps = {
   readonly customerId: string;
-  readonly isMock: boolean;
 };
 
 function scheduleTypeLabel(
@@ -47,7 +46,6 @@ function statusBadgeClass(status: VentorScheduleEventApi['status']): string {
 
 export function ClientDetailScheduleDialog({
   customerId,
-  isMock,
 }: ClientDetailScheduleDialogProps) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
@@ -59,12 +57,12 @@ export function ClientDetailScheduleDialog({
   });
 
   useEffect(() => {
-    if (isMock || !customerId) return;
+    if (!customerId) return;
     const task = dispatch(fetchVendorScheduleByCustomer(customerId));
     return () => {
       task.abort();
     };
-  }, [customerId, isMock, dispatch]);
+  }, [customerId, dispatch]);
 
   const pendingCount = useMemo(
     () => events.filter((ev) => ev.status === 'pending').length,
@@ -110,23 +108,20 @@ export function ClientDetailScheduleDialog({
             {t('clients.scheduleSectionTitle')}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            {isMock ? t('clients.scheduleMockHint') : t('clients.scheduleDialogDescription')}
+            {t('clients.scheduleDialogDescription')}
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-[min(60vh,28rem)] overflow-y-auto px-6 py-4">
-          {isMock ? (
-            <p className="text-sm text-muted-foreground">{t('clients.scheduleMockHint')}</p>
-          ) : null}
-          {!isMock && status === 'loading' ? (
+          {status === 'loading' ? (
             <p className="text-sm text-muted-foreground">{t('clients.scheduleLoading')}</p>
           ) : null}
-          {!isMock && status === 'failed' && error ? (
+          {status === 'failed' && error ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : null}
-          {!isMock && status === 'succeeded' && events.length === 0 ? (
+          {status === 'succeeded' && events.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('clients.scheduleEmpty')}</p>
           ) : null}
-          {!isMock && events.length > 0 ? (
+          {events.length > 0 ? (
             <ul className="space-y-3">
               {events.map((ev) => (
                 <li

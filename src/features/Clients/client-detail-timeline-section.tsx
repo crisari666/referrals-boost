@@ -2,38 +2,33 @@ import { motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import type { Client } from '@/data/mockData';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchCustomerEventsRequest } from '@/store/clientsSlice';
 import { ClientAddEventDialog } from './client-add-event-dialog';
 import { formatCreationDetailUser, formatDetailDate, situationLabel } from './client-detail-formatters';
 
-export type ClientDetailTimelineSectionProps = {
-  isMock: boolean;
-  client: Client;
-};
+export type ClientDetailTimelineSectionProps = Record<string, never>;
 
-export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTimelineSectionProps) {
+export function ClientDetailTimelineSection() {
   const { t } = useTranslation();
   const { id: routeId } = useParams();
   const dispatch = useAppDispatch();
   const apiLogs = useAppSelector((s) => {
-    if (!routeId || isMock || s.clients.vendorCreationDetailCustomerId !== routeId) return [];
+    if (!routeId || s.clients.vendorCreationDetailCustomerId !== routeId) return [];
     return s.clients.vendorCreationDetail?.customerLogSituations ?? [];
   });
   const customerEvents = useAppSelector((s) => {
-    if (!routeId || isMock || s.clients.vendorCreationDetailCustomerId !== routeId) return [];
+    if (!routeId || s.clients.vendorCreationDetailCustomerId !== routeId) return [];
     return s.clients.customerEvents;
   });
   const isPhysicalUser = useAppSelector((s) => s.auth.user?.physical === true);
-  const hasMockTimeline = isMock && client.interactions.length > 0;
-  const hasApiTimeline = !isMock && apiLogs.length > 0;
-  const hasEventsTimeline = !isMock && customerEvents.length > 0;
+  const hasApiTimeline = apiLogs.length > 0;
+  const hasEventsTimeline = customerEvents.length > 0;
 
   useEffect(() => {
-    if (!routeId || isMock) return;
+    if (!routeId) return;
     void dispatch(fetchCustomerEventsRequest(routeId));
-  }, [dispatch, isMock, routeId]);
+  }, [dispatch, routeId]);
 
   return (
     <motion.div
@@ -43,31 +38,11 @@ export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTime
       className="bg-card rounded-2xl p-5 border border-border shadow-sm"
     >
       <h3 className="font-bold text-foreground mb-4">
-        {isMock ? t('clients.timelineMockTitle') : t('clients.timelineApiTitle')}
+        {t('clients.timelineApiTitle')}
       </h3>
-      {!isMock && routeId && isPhysicalUser && (
+      {routeId && isPhysicalUser && (
         <div className="mb-4">
           <ClientAddEventDialog customerId={routeId} />
-        </div>
-      )}
-      {hasMockTimeline && (
-        <div className="space-y-4">
-          {client.interactions.map((inter, i) => (
-            <div key={i} className="flex gap-3">
-              <div className="flex flex-col items-center">
-                <div className="w-2.5 h-2.5 rounded-full gradient-commission mt-1" />
-                {i < client.interactions.length - 1 && (
-                  <div className="w-px flex-1 bg-border mt-1" />
-                )}
-              </div>
-              <div className="pb-4">
-                <p className="text-xs text-muted-foreground">
-                  {inter.date} · {inter.type}
-                </p>
-                <p className="text-sm text-foreground mt-0.5">{inter.detail}</p>
-              </div>
-            </div>
-          ))}
         </div>
       )}
       {hasApiTimeline && (
@@ -111,7 +86,7 @@ export function ClientDetailTimelineSection({ isMock, client }: ClientDetailTime
           ))}
         </div>
       )}
-      {!hasMockTimeline && !hasApiTimeline && !hasEventsTimeline && (
+      {!hasApiTimeline && !hasEventsTimeline && (
         <p className="text-sm text-muted-foreground">{t('clients.timelineEmpty')}</p>
       )}
     </motion.div>

@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { clients, type Client } from '@/data/mockData';
+import type { Client } from '@/features/Clients/types/client.type';
 import { useEffect, useMemo, useLayoutEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -9,7 +9,7 @@ import {
   fetchVendorCustomerSteps,
 } from '@/store/clientsSlice';
 import { fetchProjects } from '@/store/projectsSlice';
-import { mapCreationCustomerToClient, shouldIncludeMockClientsForUser } from './use-client';
+import { mapCreationCustomerToClient } from './use-client';
 import { ClientDetailHeader } from './client-detail-header';
 import { ClientDetailProfileCard } from './client-detail-profile-card';
 import { ClientDetailNotesSection } from './client-detail-notes-section';
@@ -25,25 +25,19 @@ const ClientDetail = () => {
   const vendorCreationDetail = useAppSelector((s) => s.clients.vendorCreationDetail);
   const vendorCreationDetailCustomerId = useAppSelector((s) => s.clients.vendorCreationDetailCustomerId);
   const dispatch = useAppDispatch();
-  const mocksAllowed = shouldIncludeMockClientsForUser(authUser);
-  const mockClient = useMemo(
-    () => (id && mocksAllowed ? clients.find((c) => c.id === id) ?? null : null),
-    [id, mocksAllowed]
-  );
   const isPhysical = authUser?.physical === true;
 
   const detailForRoute =
     id && vendorCreationDetailCustomerId === id ? vendorCreationDetail : null;
-  const remoteClient = useMemo((): Client | null => {
-    if (!id || mockClient || !detailForRoute?.customer) return null;
+  const client = useMemo((): Client | null => {
+    if (!id || !detailForRoute?.customer) return null;
     return mapCreationCustomerToClient(id, detailForRoute.customer);
-  }, [id, mockClient, detailForRoute]);
+  }, [id, detailForRoute]);
 
-  const client = mockClient ?? remoteClient;
-  const loading = Boolean(id) && !mockClient && vendorCreationDetailStatus === 'loading';
+  const loading = Boolean(id) && vendorCreationDetailStatus === 'loading';
 
   useLayoutEffect(() => {
-    if (!id || mockClient) {
+    if (!id) {
       dispatch(clearVendorCreationDetail());
       return;
     }
@@ -51,20 +45,18 @@ const ClientDetail = () => {
     return () => {
       req.abort();
     };
-  }, [id, mockClient, dispatch]);
+  }, [id, dispatch]);
 
   useEffect(() => {
-    if (mockClient) return;
     const p = dispatch(fetchVendorCustomerSteps());
     return () => {
       p.abort();
     };
-  }, [dispatch, mockClient]);
+  }, [dispatch]);
 
   useEffect(() => {
-    if (mockClient) return;
     void dispatch(fetchProjects());
-  }, [dispatch, mockClient]);
+  }, [dispatch]);
 
   if (!id || (!loading && !client)) {
     return (
@@ -93,24 +85,18 @@ const ClientDetail = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-4">
-      <ClientDetailHeader
-        customerId={id}
-        isMock={Boolean(mockClient)}
-        isPhysical={isPhysical}
-      />
+      <ClientDetailHeader customerId={id} isPhysical={isPhysical} />
 
       <ClientDetailProfileCard
         client={client}
         initials={initials}
-        isMock={Boolean(mockClient)}
         isPhysical={isPhysical}
       />
-      {isPhysical && !mockClient ? <ClientDetailMetaLeadFieldsSection /> : null}
+      {isPhysical ? <ClientDetailMetaLeadFieldsSection /> : null}
 
-      <ClientDetailNotesSection isMock={Boolean(mockClient)} mockNotes={client.notes} />
+      <ClientDetailNotesSection />
 
-
-      <ClientDetailTimelineSection isMock={Boolean(mockClient)} client={client} />
+      <ClientDetailTimelineSection />
 
       <EditClientModal />
     </div>

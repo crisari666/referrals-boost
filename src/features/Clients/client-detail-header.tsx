@@ -5,13 +5,11 @@ import { ClientDetailScheduleDialog } from './client-detail-schedule-dialog';
 
 export type ClientDetailHeaderProps = {
   readonly customerId: string;
-  readonly isMock: boolean;
   readonly isPhysical: boolean;
 };
 
 export function ClientDetailHeader({
   customerId,
-  isMock,
   isPhysical,
 }: ClientDetailHeaderProps) {
   const { t } = useTranslation();
@@ -28,7 +26,7 @@ export function ClientDetailHeader({
         {t('clients.detailTitle')}
       </h1>
       {isPhysical ? (
-        <ClientDetailScheduleDialog customerId={customerId} isMock={isMock} />
+        <ClientDetailScheduleDialog customerId={customerId} />
       ) : null}
     </div>
   );

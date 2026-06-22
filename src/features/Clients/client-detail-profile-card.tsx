@@ -5,39 +5,26 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ChevronDown, Check, Pencil } from 'lucide-react';
 import { ClientContactActions } from './client-contact-actions';
-import { statusColors, type ClientStatus, type Client, projects as mockProjectsCatalog } from '@/data/mockData';
+import {
+  CLIENT_STATUS_I18N_KEY,
+  statusColors,
+  statusOrder,
+} from '@/features/Clients/client-status-styles';
+import type { Client, ClientStatus } from '@/features/Clients/types/client.type';
 import { formatDetailDate } from './client-detail-formatters';
 import { ClientDetailStepSelect } from './client-detail-step-select';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { openVendorCustomerEditModal } from '@/store/clientsSlice';
 
-const statusOrder: ClientStatus[] = [
-  'nuevo',
-  'interesado',
-  'agendo_cita',
-  'pago_reserva',
-  'cerrado',
-];
-
-const CLIENT_STATUS_I18N_KEY: Record<ClientStatus, string> = {
-  nuevo: 'clients.statusNuevo',
-  interesado: 'clients.statusInteresado',
-  agendo_cita: 'clients.statusAgendoCita',
-  pago_reserva: 'clients.statusPagoReserva',
-  cerrado: 'clients.statusCerrado',
-};
-
 export type ClientDetailProfileCardProps = {
   client: Client;
   initials: string;
-  isMock: boolean;
   isPhysical: boolean;
 };
 
 export function ClientDetailProfileCard({
   client,
   initials,
-  isMock,
   isPhysical,
 }: ClientDetailProfileCardProps) {
   const { t } = useTranslation();
@@ -49,11 +36,11 @@ export function ClientDetailProfileCard({
     if (!pid) return undefined;
     const fromStore = projectsList.find((p) => p.id === pid)?.title;
     if (fromStore) return fromStore;
-    return mockProjectsCatalog.find((p) => p.id === pid)?.title ?? pid;
+    return pid;
   }, [client.projectInterest, projectsList]);
   const catalogStepCount = useAppSelector((s) => s.clients.vendorStepCatalog.length);
   const apiCustomer = useAppSelector((s) => {
-    if (isMock || !routeId || s.clients.vendorCreationDetailCustomerId !== routeId) {
+    if (!routeId || s.clients.vendorCreationDetailCustomerId !== routeId) {
       return undefined;
     }
     return s.clients.vendorCreationDetail?.customer ?? undefined;
@@ -65,9 +52,9 @@ export function ClientDetailProfileCard({
     setCurrentStatus(client.status);
   }, [client.id, client.status]);
 
-  const useCatalogPicker = catalogStepCount > 0 && !isMock;
+  const useCatalogPicker = catalogStepCount > 0;
   const currentCustomerStepId = apiCustomer?.customerStepId ?? null;
-  const showEditCustomer = !isMock && Boolean(apiCustomer);
+  const showEditCustomer = Boolean(apiCustomer);
 
   return (
     <motion.div

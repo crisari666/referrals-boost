@@ -19,7 +19,6 @@ function isMsDescriptionEntry(n: ClientDetailApiNote): n is MsCustomerDescriptio
   );
 }
 
-/** CRM `CreationDetailNote` or raw customers MS description row. */
 function toNoteDisplayRow(n: ClientDetailApiNote): {
   key: string;
   user: string | clientsService.CreationDetailPopulatedUser;
@@ -43,12 +42,7 @@ function toNoteDisplayRow(n: ClientDetailApiNote): {
   };
 }
 
-export type ClientDetailNotesSectionProps = {
-  isMock: boolean;
-  mockNotes: string[];
-};
-
-export function ClientDetailNotesSection({ isMock, mockNotes }: ClientDetailNotesSectionProps) {
+export function ClientDetailNotesSection() {
   const { id: routeId } = useParams();
   const isPhysical = useAppSelector((s) => s.auth.user?.physical === true);
   const detailReady = useAppSelector(
@@ -62,10 +56,9 @@ export function ClientDetailNotesSection({ isMock, mockNotes }: ClientDetailNote
     if (!routeId || s.clients.vendorCreationDetailCustomerId !== routeId) return [];
     return s.clients.vendorCreationDetail?.notes ?? [];
   });
-  const allowAddNote = !isMock && isPhysical && Boolean(routeId);
-  const hasMock = isMock && mockNotes.length > 0;
-  const hasApi = !isMock && apiNotes.length > 0;
-  if (!hasMock && !hasApi && !allowAddNote) return null;
+  const allowAddNote = isPhysical && Boolean(routeId);
+  const hasApi = apiNotes.length > 0;
+  if (!hasApi && !allowAddNote) return null;
 
   return (
     <motion.div
@@ -83,22 +76,10 @@ export function ClientDetailNotesSection({ isMock, mockNotes }: ClientDetailNote
           <ClientAddNoteDialog customerId={routeId} />
         )}
       </div>
-      {!hasMock && !hasApi && allowAddNote && (
+      {!hasApi && allowAddNote && (
         <p className="text-sm text-muted-foreground">
           Aun no hay notas para este cliente.
         </p>
-      )}
-      {hasMock && (
-        <ul className="space-y-2">
-          {mockNotes.map((note, i) => (
-            <li
-              key={i}
-              className="text-sm text-muted-foreground bg-secondary/50 rounded-xl px-4 py-2.5"
-            >
-              {note}
-            </li>
-          ))}
-        </ul>
       )}
       {hasApi && (
         <ul className="space-y-3">
