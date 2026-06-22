@@ -232,7 +232,7 @@ export type UpdateMsCustomerPayload = {
   whatsapp?: string;
   email?: string;
   document?: string;
-  documentType?: "cc" | "passport";
+  documentType?: 'cc' | 'passport' | 'foreign_cc';
   isInternational?: boolean;
   interestedProjects?: { projectId: string; date?: string }[];
 };

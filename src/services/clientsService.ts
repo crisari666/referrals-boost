@@ -1,11 +1,7 @@
-/**
- * Clients service — all requests go through the centralized http client.
- *
- * NOTE: All requests from this service must include the auth token header.
- */
-
-import * as http from "@/lib/http";
-import { getStoredAuthToken } from "@/lib/auth-token";
+import type { VendorDocumentTypeValue } from '@/features/Clients/document-type-options';
+import { digitsOnlyForMs } from '@/lib/phone-e164';
+import * as http from '@/lib/http';
+import { getStoredAuthToken } from '@/lib/auth-token';
 import { APP_CONSTANTS } from "@/constants/app-constants";
 import type { AuthUser } from "@/store/authSlice";
 import type {
@@ -124,18 +120,24 @@ export function normalizeMsCustomerDocumentId(raw: unknown): string {
 
 /** Maps vendor UI document labels to customers-ms `DocumentType`. */
 export function mapVendorDocumentTypeToMs(
-  raw?: string
-): "cc" | "passport" | undefined {
+  raw?: string,
+): VendorDocumentTypeValue | undefined {
   if (!raw?.trim()) return undefined;
   const v = raw.trim().toLowerCase();
-  if (v === "ine" || v === "cc" || v === "cedula" || v === "cédula" || v === "curp" || v === "rfc")
-    return "cc";
-  if (v === "passport" || v === "pasaporte") return "passport";
+  if (v === 'passport' || v === 'pasaporte') return 'passport';
+  if (v === 'cc' || v === 'cédula' || v === 'cedula') return 'cc';
+  if (
+    v === 'foreign_cc' ||
+    v === 'cédula extranjera' ||
+    v === 'cedula extranjera'
+  ) {
+    return 'foreign_cc';
+  }
   return undefined;
 }
 
 function normalizeCustomersMsPhone(value: string): string {
-  return value.trim().replace(/\s+/g, "");
+  return digitsOnlyForMs(value);
 }
 
 function msInterestDateToYmd(value: string | Date | undefined): string {
@@ -420,11 +422,15 @@ export async function createVendorCustomer(
 ): Promise<CreateVendorCustomerResponse> {
   const docType = mapVendorDocumentTypeToMs(payload.documentType);
   const canonicalPhone = normalizeCustomersMsPhone(payload.phone);
+  const canonicalWhatsapp =
+    payload.whatsapp !== undefined && payload.whatsapp.trim() !== ''
+      ? normalizeCustomersMsPhone(payload.whatsapp)
+      : canonicalPhone;
   const createBody: Record<string, unknown> = {
     name: payload.name.trim(),
-    lastName: "",
+    lastName: '',
     phone: canonicalPhone,
-    whatsapp: canonicalPhone,
+    whatsapp: canonicalWhatsapp,
     email: payload.email.trim(),
     isReferral: payload.isReferral === true,
   };
