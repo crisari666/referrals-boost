@@ -5,6 +5,12 @@
 		},
 		{
 			"path": "../quantum-voice-server"
+		},
+		{
+			"path": "../crm_lots_agents"
+		},
+		{
+			"path": "../omega_office_back"
 		}
 	],
 	"settings": {}

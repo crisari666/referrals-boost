@@ -29,5 +29,9 @@ dist-ssr
 
 # Generated from pdfjs-dist at build/dev time (see scripts/copy-pdf-worker.mjs)
 public/pdf.worker.min.js
-.cursor
 .env.gtower
+# Added by code-review-graph
+.cursor/
+.code-review-graph/
+.cursorrules
+AGENTS.md
