@@ -12,6 +12,13 @@ export type RegistrationStatus = 'idle' | 'loading' | 'registered' | 'error';
 
 export type SessionFieldStatus = 'idle' | 'loading' | 'ready' | 'error';
 
+export type CoachNote = {
+  callSid: string;
+  message: string;
+  supervisorName: string;
+  sentAt: string;
+};
+
 export interface TwilioVoiceState {
   tokenJWT: string | null;
   tokenStatus: SessionFieldStatus;
@@ -25,6 +32,8 @@ export interface TwilioVoiceState {
   callPhase: CallPhase;
   callError: string | null;
   dialogOpen: boolean;
+  coachNotes: CoachNote[];
+  supervisorConnected: boolean;
 }
 
 const initialState: TwilioVoiceState = {
@@ -40,6 +49,8 @@ const initialState: TwilioVoiceState = {
   callPhase: 'idle',
   callError: null,
   dialogOpen: false,
+  coachNotes: [],
+  supervisorConnected: false,
 };
 
 export const ensureVoiceSession = createAsyncThunk(
@@ -92,10 +103,16 @@ const twilioVoiceSlice = createSlice({
     setDialogOpen(state, action: PayloadAction<boolean>) {
       state.dialogOpen = action.payload;
     },
+    appendCoachNote(state, action: PayloadAction<CoachNote>) {
+      state.coachNotes.push(action.payload);
+      state.supervisorConnected = true;
+    },
     resetCallUi(state) {
       state.callPhase = 'idle';
       state.callError = null;
       state.dialogOpen = false;
+      state.coachNotes = [];
+      state.supervisorConnected = false;
     },
     voiceSessionCleared(state) {
       state.tokenJWT = null;
@@ -110,6 +127,8 @@ const twilioVoiceSlice = createSlice({
       state.callPhase = 'idle';
       state.callError = null;
       state.dialogOpen = false;
+      state.coachNotes = [];
+      state.supervisorConnected = false;
     },
   },
   extraReducers: (builder) => {
@@ -146,6 +165,7 @@ export const {
   setCallError,
   setTokenError,
   setDialogOpen,
+  appendCoachNote,
   resetCallUi,
   voiceSessionCleared,
 } = twilioVoiceSlice.actions;

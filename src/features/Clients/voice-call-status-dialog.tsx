@@ -23,12 +23,21 @@ const phaseLabels: Record<string, string> = {
   error: 'Error',
 };
 
+function formatNoteTime(sentAt: string): string {
+  const d = new Date(sentAt);
+  if (Number.isNaN(d.getTime())) return sentAt;
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
 export function VoiceCallStatusDialog() {
   const dispatch = useAppDispatch();
   const open = useAppSelector((s) => s.twilioVoice.dialogOpen);
   const phase = useAppSelector((s) => s.twilioVoice.callPhase);
   const error = useAppSelector((s) => s.twilioVoice.callError);
+  const coachNotes = useAppSelector((s) => s.twilioVoice.coachNotes);
+  const supervisorConnected = useAppSelector((s) => s.twilioVoice.supervisorConnected);
   const onCall = phase === 'open' || phase === 'ringing' || phase === 'connecting';
+  const showCoaching = onCall && (supervisorConnected || coachNotes.length > 0);
 
   return (
     <Dialog
@@ -52,6 +61,34 @@ export function VoiceCallStatusDialog() {
         <div className="space-y-2 py-2">
           <p className="text-sm text-muted-foreground">{phaseLabels[phase] ?? phase}</p>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {showCoaching ? (
+            <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+              <p className="text-sm font-medium">Coaching en vivo</p>
+              {supervisorConnected ? (
+                <p className="text-xs text-muted-foreground">
+                  Un supervisor está acompañando esta llamada.
+                </p>
+              ) : null}
+              {coachNotes.length > 0 ? (
+                <ul className="max-h-40 space-y-2 overflow-y-auto">
+                  {coachNotes.map((note, index) => (
+                    <li
+                      key={`${note.sentAt}-${index}`}
+                      className="rounded border bg-background px-2 py-1.5 text-sm"
+                    >
+                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span>{note.supervisorName}</span>
+                        <span>{formatNoteTime(note.sentAt)}</span>
+                      </div>
+                      <p className="mt-0.5">{note.message}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-muted-foreground">Sin notas de coaching aún.</p>
+              )}
+            </div>
+          ) : null}
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
           {onCall ? (

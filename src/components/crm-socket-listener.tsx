@@ -13,6 +13,7 @@ import {
   crmUserConnected,
   crmUserDisconnected,
 } from '@/store/crmPresenceSlice'
+import { appendCoachNote, type CoachNote } from '@/store/twilioVoiceSlice'
 
 export function CrmSocketListener() {
   const token = useAppSelector((s) => s.auth.user?.token)
@@ -64,6 +65,19 @@ export function CrmSocketListener() {
 
     socket.on('reload', () => {
       window.location.reload()
+    })
+
+    socket.on('voiceCoachNote', (payload: unknown) => {
+      if (!payload || typeof payload !== 'object') return
+      const o = payload as Record<string, unknown>
+      const callSid = typeof o.callSid === 'string' ? o.callSid : ''
+      const message = typeof o.message === 'string' ? o.message : ''
+      const supervisorName =
+        typeof o.supervisorName === 'string' ? o.supervisorName : 'Supervisor'
+      const sentAt = typeof o.sentAt === 'string' ? o.sentAt : new Date().toISOString()
+      if (!callSid || !message) return
+      const note: CoachNote = { callSid, message, supervisorName, sentAt }
+      dispatch(appendCoachNote(note))
     })
 
     return () => {
