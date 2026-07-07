@@ -6,6 +6,7 @@ import type { Project } from '@/features/Projects/types/project.type';
 import { getStoredAuthToken } from '@/lib/auth-token';
 import { getProjectResourceUrl, getRagIngestAssetUrl } from '@/services/projectsService';
 import ProjectDetailModalImagePickerDialog from './project-detail-modal-image-picker-dialog';
+import ProjectDetailModalVideoPickerDialog from './project-detail-modal-video-picker-dialog';
 import ProjectDetailModalLegalDocumentsDialog from './project-detail-modal-legal-documents-dialog';
 import { useProjectDetailModalLabels } from './project-detail-modal-labels';
 import ProjectResourceRowActions from './project-resource-row-actions';
@@ -19,6 +20,7 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
   const { t } = useTranslation();
   const LABELS = useProjectDetailModalLabels();
   const [imageDialogMode, setImageDialogMode] = useState<'download' | 'share' | null>(null);
+  const [videoDialogMode, setVideoDialogMode] = useState<'download' | 'share' | null>(null);
   const [legalDialogMode, setLegalDialogMode] = useState<'download' | 'share' | null>(null);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [shareResource, setShareResource] = useState<ProjectResourceShareSheetResource | null>(null);
@@ -34,7 +36,9 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
       })
       .filter((row): row is { label: string; url: string; fileName: string } => row !== null);
   }, [project.legalDocuments, t]);
-  const reelVideoUrl = project.reelVideo ? getProjectResourceUrl(project.reelVideo) : '';
+  const reelVideoUrls = (project.reelVideos ?? [])
+    .map((name) => getProjectResourceUrl(name))
+    .filter(Boolean);
   const brochureUrl = project.brochure ? getProjectResourceUrl(project.brochure) : '';
   const planeUrl = project.plane ? getProjectResourceUrl(project.plane) : '';
   const shareMessage = t('projects.shareResourceMessage', { title: project.title });
@@ -51,12 +55,12 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
     if (!next) setShareResource(null);
   }, []);
 
-  const openVideoShare = () => {
-    if (!reelVideoUrl) return;
+  const openVideoShareFromPicker = (url: string, index: number) => {
+    setVideoDialogMode(null);
     openShareSheet({
-      previewUrl: reelVideoUrl,
-      fetchUrl: reelVideoUrl,
-      filename: `${project.title}-video.mp4`,
+      previewUrl: url,
+      fetchUrl: url,
+      filename: `${project.title}-video-${index + 1}.mp4`,
       previewKind: 'video',
       shareTitle: project.title,
       shareText: shareMessage,
@@ -131,13 +135,28 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
             <Video className='h-4 w-4 shrink-0' />
             {LABELS.videos}
           </div>
-          <ProjectResourceRowActions
-            downloadLabel={LABELS.descargar}
-            shareLabel={LABELS.compartir}
-            resourceAvailable={Boolean(reelVideoUrl)}
-            onDownload={openVideoShare}
-            onSharePreview={openVideoShare}
-          />
+          <div className='flex shrink-0 items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='cursor-pointer'
+              disabled={reelVideoUrls.length === 0}
+              onClick={() => setVideoDialogMode('download')}
+            >
+              <Download className='h-4 w-4' /> {LABELS.descargar}
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='cursor-pointer'
+              disabled={reelVideoUrls.length === 0}
+              onClick={() => setVideoDialogMode('share')}
+            >
+              <Share2 className='h-4 w-4' /> {LABELS.compartir}
+            </Button>
+          </div>
         </div>
 
         <div className='flex items-center justify-between gap-2 rounded-xl border p-3'>
@@ -236,6 +255,17 @@ const ProjectDetailModalResourcesSection = ({ project }: ProjectDetailModalResou
           if (!nextOpen) setImageDialogMode(null);
         }}
         onRequestSharePreview={(url, index) => openImageShareFromPicker(url, index)}
+      />
+
+      <ProjectDetailModalVideoPickerDialog
+        open={videoDialogMode !== null}
+        mode={videoDialogMode}
+        videoUrls={reelVideoUrls}
+        projectTitle={project.title}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setVideoDialogMode(null);
+        }}
+        onRequestSharePreview={(url, index) => openVideoShareFromPicker(url, index)}
       />
 
       <ProjectDetailModalLegalDocumentsDialog

@@ -18,6 +18,13 @@ function mapLegalDocuments(api: ApiProject): Project["legalDocuments"] {
   return items.length > 0 ? items : undefined;
 }
 
+function resolveReelVideoNames(api: ApiProject): string[] {
+  const fromArray = (api.reelVideos ?? []).map((name) => name.trim()).filter(Boolean);
+  if (fromArray.length > 0) return fromArray;
+  const legacy = (api.reelVideo ?? '').trim();
+  return legacy ? [legacy] : [];
+}
+
 function mapApiProjectToProject(api: ApiProject): Project {
   const cityStateCountry = [api.city, api.state, api.country].filter(Boolean).join(", ");
   const location = cityStateCountry || api.location || "";
@@ -41,7 +48,7 @@ function mapApiProjectToProject(api: ApiProject): Project {
     amenitiesGroups: api.amenitiesGroups ?? [],
     images: api.images ?? [],
     cardProject: cardProjectUrl,
-    reelVideo: api.reelVideo ?? "",
+    reelVideos: resolveReelVideoNames(api),
     brochure: api.brochure ?? "",
     plane: api.plane ?? "",
     legalDocuments: mapLegalDocuments(api),

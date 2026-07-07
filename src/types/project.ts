@@ -19,6 +19,8 @@ export type ApiProject = {
   amenitiesGroups?: ApiAmenityGroup[];
   images?: string[];
   horizontalImages?: string[];
+  reelVideos?: string[];
+  /** @deprecated Legacy single reel filename */
   reelVideo?: string;
   brochure?: string;
   plane?: string;

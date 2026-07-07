@@ -28,7 +28,7 @@ export type Project = {
   amenitiesGroups?: { icon?: string; title: string; amenities: string[] }[];
   images?: string[];
   cardProject?: string;
-  reelVideo?: string;
+  reelVideos?: string[];
   brochure?: string;
   plane?: string;
   legalDocuments?: ProjectLegalDocumentEntry[];

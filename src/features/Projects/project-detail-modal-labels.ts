@@ -18,6 +18,8 @@ type ProjectDetailModalLabels = {
   compartir: string;
   descargar: string;
   seleccionarImagen: string;
+  seleccionarVideo: string;
+  video: string;
   compartirWhatsApp: string;
   vistaPrevia: string;
   preparandoParaCompartir: string;
@@ -49,6 +51,8 @@ export function useProjectDetailModalLabels(): ProjectDetailModalLabels {
       compartir: t("projects.modalShare"),
       descargar: t("projects.modalDownload"),
       seleccionarImagen: t("projects.modalSelectImage"),
+      seleccionarVideo: t("projects.modalSelectVideo"),
+      video: t("projects.modalVideo"),
       compartirWhatsApp: t("projects.modalShareWhatsapp"),
       vistaPrevia: t("projects.modalPreview"),
       preparandoParaCompartir: t("projects.modalPreparingShare"),

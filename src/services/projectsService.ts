@@ -61,6 +61,7 @@ export type ProjectResourceDownloadAttribute =
   | "brochure"
   | "plane"
   | "reelVideo"
+  | "reelVideos"
   | "cardProject"
   | "verticalVideos";
 
@@ -71,8 +72,8 @@ export function buildProjectResourceDownloadUrl(params: {
 }): string {
   const { projectId, attribute, fileName } = params;
   const baseUrl = buildRagUrl(`projects/${projectId}/resources/${attribute}/download`);
-  if (attribute !== "verticalVideos") return baseUrl;
-  if (!fileName) throw new Error("fileName is required when attribute is verticalVideos");
+  if (attribute !== "verticalVideos" && attribute !== "reelVideos") return baseUrl;
+  if (!fileName) throw new Error(`fileName is required when attribute is ${attribute}`);
   return `${baseUrl}?fileName=${encodeURIComponent(fileName)}`;
 }
 

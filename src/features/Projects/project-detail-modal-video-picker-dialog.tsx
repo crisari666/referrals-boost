@@ -1,0 +1,77 @@
+import { Download, Share2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useProjectDetailModalLabels } from './project-detail-modal-labels';
+
+export type VideoPickerDialogMode = 'download' | 'share';
+
+interface ProjectDetailModalVideoPickerDialogProps {
+  open: boolean;
+  mode: VideoPickerDialogMode | null;
+  videoUrls: string[];
+  projectTitle: string;
+  onOpenChange: (open: boolean) => void;
+  onRequestSharePreview: (url: string, index: number) => void;
+}
+
+const ProjectDetailModalVideoPickerDialog = ({
+  open,
+  mode,
+  videoUrls,
+  projectTitle,
+  onOpenChange,
+  onRequestSharePreview,
+}: ProjectDetailModalVideoPickerDialogProps) => {
+  const LABELS = useProjectDetailModalLabels();
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        onOpenChange(nextOpen);
+      }}
+    >
+      <DialogContent className='max-w-md'>
+        <DialogHeader>
+          <DialogTitle>{LABELS.seleccionarVideo}</DialogTitle>
+        </DialogHeader>
+        <div className='grid max-h-[60vh] gap-2 overflow-y-auto'>
+          {videoUrls.map((url, index) => (
+            <div key={url} className='flex items-center gap-3 rounded-lg border p-2 transition-colors hover:bg-muted/40'>
+              <video
+                src={url}
+                muted
+                playsInline
+                preload='metadata'
+                className='h-14 w-14 rounded-md object-cover bg-muted'
+              />
+              <div className='flex-1 text-sm text-muted-foreground'>
+                {LABELS.video} {index + 1}
+              </div>
+              {mode === 'download' ? (
+                <Button
+                  size='sm'
+                  variant='outline'
+                  className='cursor-pointer shrink-0'
+                  onClick={() => onRequestSharePreview(url, index)}
+                >
+                  <Download className='h-4 w-4' />
+                </Button>
+              ) : (
+                <Button
+                  size='sm'
+                  variant='outline'
+                  className='cursor-pointer shrink-0'
+                  onClick={() => onRequestSharePreview(url, index)}
+                >
+                  <Share2 className='h-4 w-4' />
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default ProjectDetailModalVideoPickerDialog;
