@@ -12,6 +12,7 @@ import { projectsSegment } from "@/i18n/segments/projects";
 import { scheduleSegment } from "@/i18n/segments/schedule";
 import { signupSegment } from "@/i18n/segments/signup";
 import { twilioSegment } from "@/i18n/segments/twilio";
+import { callScriptSegment } from "@/i18n/segments/call-script";
 import { uiSegment } from "@/i18n/segments/ui";
 import { validationSegment } from "@/i18n/segments/validation";
 import { trainingSessionsSegment } from "@/i18n/segments/training-sessions";
@@ -30,6 +31,7 @@ const en = {
   assistant: assistantSegment.en,
   whatsapp: whatsappSegment.en,
   twilio: twilioSegment.en,
+  callScript: callScriptSegment.en,
   signup: signupSegment.en,
   contract: contractSegment.en,
   notFound: notFoundSegment.en,

@@ -5,6 +5,7 @@ import type { Client } from '@/features/Clients/types/client.type';
 import { useAppDispatch } from '@/store';
 import {
   ensureVoiceSession,
+  setActiveCallSid,
   setCallError,
   setCallPhase,
   setRegistrationStatus,
@@ -42,6 +43,9 @@ export function ClientContactActions({ client, clientId, isPhysical }: ClientCon
       },
       onCallError: (message) => {
         dispatch(setCallError(message));
+      },
+      onCallSid: (callSid) => {
+        dispatch(setActiveCallSid(callSid));
       },
     });
     return () => {

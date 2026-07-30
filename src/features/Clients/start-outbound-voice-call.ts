@@ -1,6 +1,11 @@
 import i18n from '@/i18n';
 import type { AppDispatch, RootState } from '@/store';
-import { setCallError, setCallPhase, setDialogOpen } from '@/store/twilioVoiceSlice';
+import {
+  initCallScriptUi,
+  setCallError,
+  setCallPhase,
+  setDialogOpen,
+} from '@/store/twilioVoiceSlice';
 import { connectOutboundCall } from '@/lib/twilio-voice-runtime';
 import { digitsToE164 } from './phone-e164';
 
@@ -23,7 +28,6 @@ export const startOutboundCall =
       throw new Error(msg);
     }
     const isIntl = payload.isInternational === true;
-    console.log({payload})
     const callerNumber = isIntl
       ? twilioVoice.userInternationalNumber
       : twilioVoice.userNumber;
@@ -39,6 +43,7 @@ export const startOutboundCall =
     dispatch(setDialogOpen(true));
     dispatch(setCallPhase('connecting'));
     dispatch(setCallError(null));
+    dispatch(initCallScriptUi());
     try {
       await connectOutboundCall({
         to: toE164,
