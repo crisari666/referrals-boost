@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CrmSocketListener } from '@/components/crm-socket-listener';
+import { HandlePushNotifications } from '@/components/handle-push-notifications';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -217,6 +218,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <motion.div className="min-h-screen bg-background pb-20 md:pb-0 md:pl-64">
       <CrmSocketListener />
+      <HandlePushNotifications />
       <div className="fixed top-2 right-2 z-50 md:hidden">
         <LanguageSwitcher />
       </div>
