@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly VITE_URL_VOIP_SERVER?: string;
   /** Customers microservice REST origin, e.g. http://localhost:4000/customers-rest/ */
   readonly VITE_URL_CUSTOMERS_MS?: string;
+  /** Google OAuth web client id (GIS token client; never the client_secret). */
+  readonly VITE_GOOGLE_CLIENT_ID?: string;
 }
 
 interface ImportMeta {

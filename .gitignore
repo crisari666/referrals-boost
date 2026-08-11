@@ -31,6 +31,8 @@ dist-ssr
 public/pdf.worker.min.js
 # Firebase web config (local / env-specific; do not commit)
 public/firebase-config.json
+# Google OAuth client secrets must never be in the SPA or git
+client_secret*.json
 .env.gtower
 # Added by code-review-graph
 .cursor/
