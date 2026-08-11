@@ -7,6 +7,13 @@ export type LoginPayload = {
   lng: number;
 };
 
+/** Google ID-token login (GIS credential → POST login/signin-google). */
+export type GoogleLoginPayload = {
+  idToken: string;
+  lat: number;
+  lng: number;
+};
+
 /** User as returned by the API (result) */
 export type ApiUser = {
   physical: boolean;

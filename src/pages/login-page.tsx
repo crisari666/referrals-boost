@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { LoginForm } from "@/features/login/login-form";
 import { LoginErrorDialog } from "@/features/login/login-error-dialog";
 import { ForgotPasswordDialog } from "@/features/login/forgot-password-dialog";
+import { GoogleSignInButton } from "@/features/login/google-sign-in-button";
 import { useLoginPage } from "@/features/login/use-login-page";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -18,6 +19,8 @@ const LoginPage = () => {
     isLoading,
     error,
     handleSubmit,
+    handleGoogleCredential,
+    handleGoogleError,
     dismissError,
   } = useLoginPage();
 
@@ -41,6 +44,23 @@ const LoginPage = () => {
           onUserOrEmailChange={setUserOrEmail}
           onPasswordChange={setPassword}
           onSubmit={handleSubmit}
+        />
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              {t("auth.orContinueWith")}
+            </span>
+          </div>
+        </div>
+
+        <GoogleSignInButton
+          disabled={isLoading}
+          onCredential={handleGoogleCredential}
+          onError={handleGoogleError}
         />
 
         <div className="text-center">

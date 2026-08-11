@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import i18n from "@/i18n";
 import { APP_CONSTANTS } from "@/constants/app-constants";
@@ -6,6 +6,7 @@ import * as authService from "@/services/authService";
 import * as profileService from "@/services/profileService";
 import { USER_LEVEL_MAIN_LEAD } from "@/constants/user-level";
 import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
+import { clearGoogleCalendarAccessToken } from "@/lib/google/request-calendar-access-token";
 
 export type { AuthUser, UserRole } from "@/types/auth";
 
@@ -148,6 +149,29 @@ export const loginUser = createAsyncThunk<
   }
 });
 
+export const loginWithGoogle = createAsyncThunk<
+  AuthUser,
+  { idToken: string; lat: number; lng: number },
+  { rejectValue: string }
+>("auth/loginWithGoogle", async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authService.loginWithGoogle(payload);
+    if (response.error) {
+      return rejectWithValue(response.error);
+    }
+    if (!isApiUserLoginResult(response.result)) {
+      return rejectWithValue(i18n.t("auth.googleLoginNoAccount"));
+    }
+    return mapApiUserToAuthUser(response.result);
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : i18n.t("auth.connectionError");
+    return rejectWithValue(message);
+  }
+});
+
 export const requestForgotPassword = createAsyncThunk<
   void,
   { email: string },
@@ -183,6 +207,7 @@ const authSlice = createSlice({
   reducers: {
     logout(state) {
       localStorage.removeItem(APP_CONSTANTS.AUTH_USER_STORAGE_KEY);
+      clearGoogleCalendarAccessToken();
       state.user = null;
       state.isAuthenticated = false;
       state.error = null;
@@ -192,6 +217,10 @@ const authSlice = createSlice({
     },
     clearError(state) {
       state.error = null;
+    },
+    setError(state, action: PayloadAction<string>) {
+      state.error = action.payload;
+      state.isLoading = false;
     },
     clearForgotPasswordState(state) {
       state.forgotPasswordIsLoading = false;
@@ -215,6 +244,23 @@ const authSlice = createSlice({
         );
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? i18n.t("common.unknownError");
+      })
+      .addCase(loginWithGoogle.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginWithGoogle.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        localStorage.setItem(
+          APP_CONSTANTS.AUTH_USER_STORAGE_KEY,
+          JSON.stringify(action.payload)
+        );
+      })
+      .addCase(loginWithGoogle.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? i18n.t("common.unknownError");
       })
@@ -245,5 +291,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, clearForgotPasswordState } = authSlice.actions;
+export const { logout, clearError, setError, clearForgotPasswordState } = authSlice.actions;
 export default authSlice.reducer;

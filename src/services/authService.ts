@@ -7,6 +7,7 @@ import type {
   ApiUser,
   ForgotPasswordPayload,
   ForgotPasswordResponse,
+  GoogleLoginPayload,
   LoginPayload,
   LoginResponse,
 } from "@/types/auth";
@@ -14,6 +15,11 @@ import type {
 /** POST /api/auth/login */
 export function login(payload: LoginPayload) {
   return http.post<LoginResponse>("login/signin", payload);
+}
+
+/** POST /login/signin-google — GIS ID token → CRM JWT */
+export function loginWithGoogle(payload: GoogleLoginPayload) {
+  return http.post<LoginResponse>("login/signin-google", payload);
 }
 
 /** POST /login/forgot-password */

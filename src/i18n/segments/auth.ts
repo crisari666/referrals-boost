@@ -21,6 +21,15 @@ export const authSegment = {
     sessionRefreshFailed: "No se pudo actualizar los datos de sesión.",
     loginErrorTitle: "Error al iniciar sesión",
     loginErrorOk: "Entendido",
+    orContinueWith: "o continúa con",
+    signInWithGoogle: "Iniciar sesión con Google",
+    googleLoginNoAccount:
+      "No hay una cuenta de vendedor asociada a ese correo de Google.",
+    googleSignInCancelled: "Inicio de sesión con Google cancelado.",
+    googleSignInUnavailable: "No se pudo cargar el inicio de sesión con Google.",
+    googleClientIdMissing: "Falta configurar VITE_GOOGLE_CLIENT_ID.",
+    googleScopesAtLoginFailed:
+      "No se pudieron obtener permisos de Google Calendar/Meet. Algunas funciones de Meet pueden fallar.",
   },
   en: {
     vendorCredentialsHint: "Sign in with your seller credentials",
@@ -44,5 +53,14 @@ export const authSegment = {
     sessionRefreshFailed: "Could not refresh session data.",
     loginErrorTitle: "Sign-in error",
     loginErrorOk: "OK",
+    orContinueWith: "or continue with",
+    signInWithGoogle: "Sign in with Google",
+    googleLoginNoAccount:
+      "No seller account is linked to that Google email.",
+    googleSignInCancelled: "Google sign-in was cancelled.",
+    googleSignInUnavailable: "Could not load Google sign-in.",
+    googleClientIdMissing: "VITE_GOOGLE_CLIENT_ID is not configured.",
+    googleScopesAtLoginFailed:
+      "Could not get Google Calendar/Meet permissions. Some Meet features may fail.",
   },
 } as const;
