@@ -16,6 +16,7 @@ export interface ScheduleVisitRow {
   eventType: VentorScheduleEventTypeApi;
   status: VentorScheduleStatusApi;
   note?: string;
+  googleMeetUrl?: string;
 }
 
 export type { VentorScheduleEventTypeApi as ScheduleEventType } from "@/services/scheduleService";

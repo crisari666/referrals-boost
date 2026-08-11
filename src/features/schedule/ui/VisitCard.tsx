@@ -14,17 +14,21 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store";
 import type { ScheduleVisitRow } from "@/types/schedule";
 import type { VentorScheduleEventTypeApi, VentorScheduleStatusApi } from "@/services/scheduleService";
+import * as scheduleService from "@/services/scheduleService";
 import {
   Building2,
   Clock,
   MapPin,
   MonitorSmartphone,
   Phone,
+  Video,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { requestGoogleCalendarAccessToken } from "@/lib/google/request-calendar-access-token";
+import { fetchMeetConferenceSync } from "@/lib/google/fetch-meet-conference-sync";
 
 function formatAssigneeUserId(userId: string): string {
   const trimmed = userId.trim();
@@ -56,6 +60,27 @@ function EventTypeIcon({ type }: { type: VentorScheduleEventTypeApi }) {
   }
 }
 
+async function syncMeetAfterDone(visit: ScheduleVisitRow): Promise<void> {
+  const meetUrl = visit.googleMeetUrl?.trim();
+  if (!meetUrl || visit.eventType !== "virtual") {
+    return;
+  }
+  const accessToken = await requestGoogleCalendarAccessToken();
+  const sync = await fetchMeetConferenceSync({
+    accessToken,
+    googleMeetUrl: meetUrl,
+  });
+  await scheduleService.syncVentorMeetCall(visit.id, {
+    attendance: sync.attendance,
+    conferenceRecordName: sync.conferenceRecordName,
+    durationSeconds: sync.durationSeconds,
+    transcript: sync.transcript,
+    text: sync.text,
+    utterances: sync.utterances,
+    endedAt: sync.endedAt,
+  });
+}
+
 const VisitCard = ({
   visit,
   showScheduleAssignee = false,
@@ -72,6 +97,23 @@ const VisitCard = ({
     );
     if (patchVentorScheduleStatusRequest.rejected.match(res)) {
       toast.error(res.payload ?? t("schedule.updateFailed"));
+      return;
+    }
+    if (
+      status === "done" &&
+      visit.eventType === "virtual" &&
+      visit.googleMeetUrl?.trim()
+    ) {
+      try {
+        await syncMeetAfterDone(visit);
+        toast.success(t("schedule.meetSyncSuccess"));
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : t("schedule.meetSyncFailed");
+        toast.error(message || t("schedule.meetSyncFailed"));
+      }
     }
   };
 
@@ -142,6 +184,18 @@ const VisitCard = ({
           <span className="truncate">{t(VENTOR_SCHEDULE_TYPE_LABEL_KEYS[visit.eventType])}</span>
         </span>
       </div>
+
+      {visit.googleMeetUrl ? (
+        <a
+          href={visit.googleMeetUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline cursor-pointer"
+        >
+          <Video className="w-3.5 h-3.5 shrink-0" />
+          {t("schedule.joinMeet")}
+        </a>
+      ) : null}
 
       {visit.note ? (
         <p className="mt-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg px-3 py-2">

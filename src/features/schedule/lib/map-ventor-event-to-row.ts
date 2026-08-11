@@ -38,5 +38,6 @@ export function mapVentorEventToVisitRow(
     eventType: ev.eventType,
     status: ev.status,
     note: ev.note,
+    googleMeetUrl: ev.googleMeetUrl,
   };
 }

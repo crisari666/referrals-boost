@@ -32,6 +32,8 @@ export type VentorScheduleEventApi = {
   scheduledAt: string;
   eventType: VentorScheduleEventTypeApi;
   note?: string;
+  googleMeetUrl?: string;
+  googleCalendarEventId?: string;
   status: VentorScheduleStatusApi;
   createdAt?: string;
   updatedAt?: string;
@@ -44,6 +46,9 @@ export type CreateVentorSchedulePayload = {
   time: string;
   eventType: VentorScheduleEventTypeApi;
   note?: string;
+  googleMeetUrl?: string;
+  googleCalendarEventId?: string;
+  organizerEmail?: string;
 };
 
 export async function listVentorScheduleByCustomer(
@@ -100,4 +105,31 @@ export async function patchVentorScheduleStatus(
       ),
     }
   );
+}
+
+export type SyncVentorMeetCallPayload = {
+  attendance: "attended" | "no_answer";
+  conferenceRecordName?: string;
+  durationSeconds?: number;
+  transcript?: string;
+  text?: string;
+  utterances?: Array<{
+    speaker?: string;
+    text: string;
+    start?: number;
+    end?: number;
+  }>;
+  endedAt?: string;
+};
+
+export async function syncVentorMeetCall(
+  eventId: string,
+  payload: SyncVentorMeetCallPayload
+): Promise<unknown> {
+  return http.post("", payload, {
+    ...withCustomersMsAuth(),
+    url: customersMsUrl(
+      `ventor-schedule/${encodeURIComponent(eventId)}/meet-sync`
+    ),
+  });
 }

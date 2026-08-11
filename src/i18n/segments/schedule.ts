@@ -33,6 +33,11 @@ export const scheduleSegment = {
     clientLabel: "Cliente",
     selectClientPlaceholder: "Seleccionar cliente…",
     eventTypeLabel: "Tipo de evento",
+    joinMeet: "Unirse a Meet",
+    googleSignInRequired: "Inicia sesión con Google para crear el Meet",
+    googleMeetCreateFailed: "No se pudo crear el enlace de Google Meet",
+    meetSyncFailed: "Visita marcada hecha, pero no se pudo sincronizar Meet",
+    meetSyncSuccess: "Meet sincronizado (asistencia / transcripción)",
   },
   en: {
     pageTitle: "Schedule",
@@ -68,5 +73,10 @@ export const scheduleSegment = {
     clientLabel: "Client",
     selectClientPlaceholder: "Select a client…",
     eventTypeLabel: "Event type",
+    joinMeet: "Join Meet",
+    googleSignInRequired: "Sign in with Google to create the Meet link",
+    googleMeetCreateFailed: "Could not create the Google Meet link",
+    meetSyncFailed: "Visit marked done, but Meet sync failed",
+    meetSyncSuccess: "Meet synced (attendance / transcript)",
   },
 } as const;

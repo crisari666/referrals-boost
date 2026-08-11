@@ -18,6 +18,8 @@ import { toast } from "sonner";
 import type { VentorScheduleEventTypeApi } from "@/services/scheduleService";
 import { VENTOR_SCHEDULE_TYPE_LABEL_KEYS } from "@/features/schedule/lib/schedule.constants";
 import { useTranslation } from "react-i18next";
+import { requestGoogleCalendarAccessToken } from "@/lib/google/request-calendar-access-token";
+import { createGoogleMeetEvent } from "@/lib/google/create-google-meet-event";
 
 interface ScheduleDialogProps {
   clientId?: string;
@@ -30,7 +32,9 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
   const clients = useAppSelector((s) => s.clients.list);
   const projects = useAppSelector((s) => s.projects.list);
   const creating = useAppSelector((s) => s.schedule.creating);
+  const authUser = useAppSelector((s) => s.auth.user);
   const [open, setOpen] = useState(false);
+  const [creatingMeet, setCreatingMeet] = useState(false);
 
   const [selectedClient, setSelectedClient] = useState(clientId ?? "");
   const [date, setDate] = useState("");
@@ -59,6 +63,32 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
       toast.error(t("schedule.requiredFields"));
       return;
     }
+    let googleMeetUrl: string | undefined;
+    let googleCalendarEventId: string | undefined;
+    if (type === "virtual") {
+      setCreatingMeet(true);
+      try {
+        const accessToken = await requestGoogleCalendarAccessToken();
+        const meet = await createGoogleMeetEvent({
+          accessToken,
+          summary: t("schedule.dialogTitle") + (client?.name ? `: ${client.name}` : ""),
+          dateYmd: date,
+          timeHm: time,
+          description: notes.trim() || undefined,
+        });
+        googleMeetUrl = meet.googleMeetUrl;
+        googleCalendarEventId = meet.googleCalendarEventId;
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : t("schedule.googleMeetCreateFailed");
+        toast.error(message || t("schedule.googleSignInRequired"));
+        setCreatingMeet(false);
+        return;
+      }
+      setCreatingMeet(false);
+    }
 
     const resultAction = await dispatch(
       createVentorScheduleEventRequest({
@@ -67,6 +97,11 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
         time,
         eventType: type,
         ...(notes.trim() ? { note: notes.trim() } : {}),
+        ...(googleMeetUrl ? { googleMeetUrl } : {}),
+        ...(googleCalendarEventId ? { googleCalendarEventId } : {}),
+        ...(googleMeetUrl && authUser?.email?.trim()
+          ? { organizerEmail: authUser.email.trim() }
+          : {}),
       })
     );
 
@@ -88,6 +123,8 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
     setType("office");
     setNotes("");
   };
+
+  const isSubmitting = creating || creatingMeet;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -196,8 +233,8 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
             />
           </div>
 
-          <Button type="submit" className="w-full cursor-pointer" disabled={creating}>
-            {creating ? t("common.saving") : t("schedule.confirmVisit")}
+          <Button type="submit" className="w-full cursor-pointer" disabled={isSubmitting}>
+            {isSubmitting ? t("common.saving") : t("schedule.confirmVisit")}
           </Button>
         </form>
       </DialogContent>
