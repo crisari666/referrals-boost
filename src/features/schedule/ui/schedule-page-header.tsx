@@ -8,7 +8,7 @@ interface SchedulePageHeaderProps {
 const SchedulePageHeader = ({ showScheduleButton }: SchedulePageHeaderProps) => {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-3 flex-wrap">
       <div>
         <h1 className="text-xl font-bold text-foreground">{t("schedule.pageTitle")}</h1>
         <p className="text-sm text-muted-foreground">{t("schedule.pageSubtitle")}</p>

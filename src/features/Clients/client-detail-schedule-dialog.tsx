@@ -141,6 +141,14 @@ export function ClientDetailScheduleDialog({
                   <div className="text-xs text-muted-foreground">
                     {scheduleTypeLabel(t, ev.eventType)}
                   </div>
+                  {ev.eventType === 'on_land' ? (
+                    <div className="text-[11px] text-muted-foreground">
+                      {t('schedule.onLandAgentPrefix')}{' '}
+                      {ev.onLandAgentUserId?.trim()
+                        ? ev.onLandAgentUserId
+                        : t('schedule.onLandAgentUnassigned')}
+                    </div>
+                  ) : null}
                   {ev.note?.trim() ? (
                     <p className="text-xs text-foreground/90 line-clamp-2">{ev.note.trim()}</p>
                   ) : null}

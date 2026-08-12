@@ -21,7 +21,8 @@ const SchedulePage = () => {
   const assigneeNamesById = useAppSelector((s) => s.scheduleAssignees.namesById);
   const assigneeLoadingById = useAppSelector((s) => s.scheduleAssignees.loadingById);
   const isPhysical = user?.role === "asesor_fisico" || user?.role === "admin";
-  const isMainLead = user?.role === "main_lead";
+  const isCoordinator =
+    user?.role === "main_lead" || user?.role === "subadmin";
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekOffset, setWeekOffset] = useState(0);
@@ -40,13 +41,13 @@ const SchedulePage = () => {
   useEffect(() => {
     weekDays.forEach((day) => {
       const ymd = format(day, "yyyy-MM-dd");
-      if (isMainLead) {
+      if (isCoordinator) {
         void dispatch(fetchMainLeadOnLandScheduleByDay(ymd));
       } else {
         void dispatch(fetchVentorScheduleByDay(ymd));
       }
     });
-  }, [dispatch, weekDays, isMainLead]);
+  }, [dispatch, weekDays, isCoordinator]);
 
   const pendingCountByDay = useMemo(() => {
     const m = new Map<string, number>();
@@ -72,14 +73,15 @@ const SchedulePage = () => {
   }, [byDay, projects, filter, selectedYmd]);
 
   useEffect(() => {
-    if (!isMainLead) {
+    if (!isCoordinator && !isPhysical) {
       return;
     }
     const allRows = Object.values(byDay).flat();
     const missingIds = Array.from(
       new Set(
         allRows
-          .map((row) => row.userId.trim())
+          .flatMap((row) => [row.userId, row.onLandAgentUserId ?? ""])
+          .map((id) => id.trim())
           .filter((id) => id.length > 0)
           .filter((id) => assigneeNamesById[id] == null && assigneeLoadingById[id] !== true),
       ),
@@ -88,11 +90,20 @@ const SchedulePage = () => {
       return;
     }
     void dispatch(fetchScheduleAssigneeNamesByIds(missingIds));
-  }, [dispatch, isMainLead, byDay, assigneeNamesById, assigneeLoadingById]);
+  }, [
+    dispatch,
+    isCoordinator,
+    isPhysical,
+    byDay,
+    assigneeNamesById,
+    assigneeLoadingById,
+  ]);
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-4">
-      <SchedulePageHeader showScheduleButton={Boolean(isPhysical)} />
+      <SchedulePageHeader
+        showScheduleButton={Boolean(isPhysical)}
+      />
 
       <ScheduleWeekStrip
         weekStart={weekStart}
@@ -108,7 +119,8 @@ const SchedulePage = () => {
       <ScheduleDayList
         selectedDate={selectedDate}
         visits={filteredVisits}
-        showScheduleAssignee={isMainLead}
+        showScheduleAssignee={isCoordinator}
+        canAssignOnLandAgent={isCoordinator}
         assigneeNamesById={assigneeNamesById}
       />
     </div>

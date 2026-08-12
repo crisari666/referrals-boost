@@ -10,6 +10,7 @@ interface ScheduleDayListProps {
   selectedDate: Date;
   visits: ScheduleVisitRow[];
   showScheduleAssignee?: boolean;
+  canAssignOnLandAgent?: boolean;
   assigneeNamesById?: Record<string, string>;
 }
 
@@ -17,6 +18,7 @@ const ScheduleDayList = ({
   selectedDate,
   visits,
   showScheduleAssignee = false,
+  canAssignOnLandAgent = false,
   assigneeNamesById = {},
 }: ScheduleDayListProps) => {
   const { t, i18n } = useTranslation();
@@ -36,7 +38,13 @@ const ScheduleDayList = ({
                 key={visit.id}
                 visit={visit}
                 showScheduleAssignee={showScheduleAssignee}
+                canAssignOnLandAgent={canAssignOnLandAgent}
                 assigneeName={assigneeNamesById[visit.scheduleOwnerUserId]}
+                onLandAgentName={
+                  visit.onLandAgentUserId
+                    ? assigneeNamesById[visit.onLandAgentUserId]
+                    : undefined
+                }
               />
             ))}
           </div>

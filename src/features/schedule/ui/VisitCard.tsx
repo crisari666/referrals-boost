@@ -3,6 +3,7 @@ import {
   VENTOR_SCHEDULE_STATUS_LABEL_KEYS,
   VENTOR_SCHEDULE_TYPE_LABEL_KEYS,
 } from "@/features/schedule/lib/schedule.constants";
+import { AssignOnLandAgentDialog } from "@/features/schedule/ui/assign-on-land-agent-dialog";
 import { patchVentorScheduleStatusRequest } from "@/features/schedule/store/scheduleSlice";
 import {
   Select,
@@ -41,7 +42,9 @@ function formatAssigneeUserId(userId: string): string {
 interface VisitCardProps {
   visit: ScheduleVisitRow;
   showScheduleAssignee?: boolean;
+  canAssignOnLandAgent?: boolean;
   assigneeName?: string;
+  onLandAgentName?: string;
 }
 
 function EventTypeIcon({ type }: { type: VentorScheduleEventTypeApi }) {
@@ -84,11 +87,15 @@ async function syncMeetAfterDone(visit: ScheduleVisitRow): Promise<void> {
 const VisitCard = ({
   visit,
   showScheduleAssignee = false,
+  canAssignOnLandAgent = false,
   assigneeName,
+  onLandAgentName,
 }: VisitCardProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const patching = useAppSelector((s) => s.schedule.patchingById[visit.id] ?? false);
+  const isOnLandPending =
+    visit.eventType === "on_land" && visit.status === "pending";
 
   const onStatusChange = async (value: string) => {
     const status = value as VentorScheduleStatusApi;
@@ -144,6 +151,17 @@ const VisitCard = ({
                 </span>
               </p>
             ) : null}
+            {visit.eventType === "on_land" ? (
+              <p className="text-[11px] text-muted-foreground/90 mt-0.5">
+                {t("schedule.onLandAgentPrefix")}{" "}
+                <span className="tabular-nums">
+                  {visit.onLandAgentUserId
+                    ? onLandAgentName?.trim() ||
+                      formatAssigneeUserId(visit.onLandAgentUserId)
+                    : t("schedule.onLandAgentUnassigned")}
+                </span>
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
@@ -171,6 +189,13 @@ const VisitCard = ({
               ))}
             </SelectContent>
           </Select>
+          {canAssignOnLandAgent && isOnLandPending ? (
+            <AssignOnLandAgentDialog
+              eventId={visit.id}
+              currentOnLandAgentUserId={visit.onLandAgentUserId}
+              disabled={patching}
+            />
+          ) : null}
         </div>
       </div>
 
