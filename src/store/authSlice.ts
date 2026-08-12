@@ -4,7 +4,7 @@ import i18n from "@/i18n";
 import { APP_CONSTANTS } from "@/constants/app-constants";
 import * as authService from "@/services/authService";
 import * as profileService from "@/services/profileService";
-import { USER_LEVEL_MAIN_LEAD } from "@/constants/user-level";
+import { USER_LEVEL_MAIN_LEAD, USER_LEVEL_SUBADMIN } from "@/constants/user-level";
 import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
 import { clearGoogleCalendarAccessToken } from "@/lib/google/request-calendar-access-token";
 
@@ -28,6 +28,9 @@ function deriveUserRole(
   }
   if (api.level === USER_LEVEL_MAIN_LEAD) {
     return "main_lead";
+  }
+  if (api.level === USER_LEVEL_SUBADMIN) {
+    return "subadmin";
   }
   if (api.physical) {
     return "asesor_fisico";
@@ -54,6 +57,7 @@ function mapApiUserToAuthUser(api: ApiUser): AuthUser {
     createdAt: api.createdAt,
     updatedAt: api.updatedAt,
     physical: Boolean(api.physical),
+    isOnLand: Boolean(api.isOnLand),
     role,
   };
 }
@@ -87,6 +91,7 @@ function getInitialAuthState(): AuthState {
         typeof user.physical === "boolean"
           ? user.physical
           : user.role === "asesor_fisico",
+      isOnLand: Boolean(user.isOnLand),
       role: deriveUserRole({
         root: user.root,
         physical: user.physical,

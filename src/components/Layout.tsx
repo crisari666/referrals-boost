@@ -59,7 +59,7 @@ const sidebarNavItems: NavItem[] = [
     path: '/schedule',
     labelKey: 'layout.navAgenda',
     icon: CalendarDays,
-    roles: ['asesor_fisico', 'admin', 'main_lead'],
+    roles: ['asesor_fisico', 'admin', 'main_lead', 'subadmin'],
   },
   { path: '/assistant', labelKey: 'layout.navAssistant', icon: Sparkles },
   { path: '/whatsapp', labelKey: 'layout.navWhatsapp', icon: MessageSquare, physicalOnly: true },
@@ -93,7 +93,10 @@ const Layout = ({ children }: LayoutProps) => {
   const todayYmd = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
   const scheduleNavEligible = Boolean(
     userRole &&
-      (userRole === 'asesor_fisico' || userRole === 'admin' || userRole === 'main_lead'),
+      (userRole === 'asesor_fisico' ||
+        userRole === 'admin' ||
+        userRole === 'main_lead' ||
+        userRole === 'subadmin'),
   );
   const todayPendingCount = useAppSelector(
     (s) => (s.schedule.byDay[todayYmd] ?? []).filter((e) => e.status === 'pending').length,
@@ -101,7 +104,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   useEffect(() => {
     if (!scheduleNavEligible) return;
-    if (userRole === 'main_lead') {
+    if (userRole === 'main_lead' || userRole === 'subadmin') {
       void dispatch(fetchMainLeadOnLandScheduleByDay(todayYmd));
       return;
     }
