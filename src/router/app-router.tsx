@@ -11,6 +11,7 @@ import Index from '@/pages/Index';
 import Login from '@/pages/Login';
 import FirstAccess from '@/pages/FirstAccess';
 import AppInfo from '@/pages/AppInfo';
+import Privacy from '@/pages/Privacy';
 import NotFound from '@/pages/NotFound';
 import ContractSign from '@/pages/ContractSign';
 import Schedule from '@/pages/Schedule';
@@ -31,6 +32,7 @@ const AppRouter = () => (
     <Route path='/sign' element={<ContractSign />} />
     <Route path='/signup' element={<SignupCampaignPage />} />
     <Route path='/app-info' element={<AppInfo />} />
+    <Route path='/privacy' element={<Privacy />} />
     <Route path='/' element={<Protected><Index /></Protected>} />
     <Route path='/projects' element={<Protected><Projects /></Protected>} />
     <Route path='/projects/:id' element={<Protected><ProjectDetail /></Protected>} />

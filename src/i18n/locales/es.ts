@@ -8,6 +8,7 @@ import { dashboardSegment } from "@/i18n/segments/dashboard";
 import { firstAccessSegment } from "@/i18n/segments/firstAccess";
 import { layoutSegment } from "@/i18n/segments/layout";
 import { notFoundSegment } from "@/i18n/segments/notFound";
+import { privacySegment } from "@/i18n/segments/privacy";
 import { profileSegment } from "@/i18n/segments/profile";
 import { projectsSegment } from "@/i18n/segments/projects";
 import { scheduleSegment } from "@/i18n/segments/schedule";
@@ -38,6 +39,7 @@ const es = {
   notFound: notFoundSegment.es,
   firstAccess: firstAccessSegment.es,
   appInfo: appInfoSegment.es,
+  privacy: privacySegment.es,
   ui: uiSegment.es,
   trainingSessions: trainingSessionsSegment.es,
   notifications: notificationsSegment.es,
