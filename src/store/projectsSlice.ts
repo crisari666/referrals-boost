@@ -52,6 +52,7 @@ function mapApiProjectToProject(api: ApiProject): Project {
     brochure: api.brochure ?? "",
     plane: api.plane ?? "",
     legalDocuments: mapLegalDocuments(api),
+    separation: api.separation ?? 0,
   };
 }
 

@@ -13,9 +13,11 @@ import { mapCreationCustomerToClient } from './use-client';
 import { ClientDetailHeader } from './client-detail-header';
 import { ClientDetailProfileCard } from './client-detail-profile-card';
 import { ClientDetailNotesSection } from './client-detail-notes-section';
+import { ClientDetailDownPaymentsSection } from './client-detail-down-payments-section';
 import { ClientDetailTimelineSection } from './client-detail-timeline-section';
 import { ClientDetailMetaLeadFieldsSection } from './client-detail-meta-lead-fields-section';
 import { EditClientModal } from './EditClientModal';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ClientDetail = () => {
   const { t } = useTranslation();
@@ -83,6 +85,8 @@ const ClientDetail = () => {
     .slice(0, 2)
     .join('');
 
+  const defaultTab = isPhysical ? 'meta' : 'notes';
+
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-4">
       <ClientDetailHeader customerId={id} isPhysical={isPhysical} />
@@ -92,11 +96,43 @@ const ClientDetail = () => {
         initials={initials}
         isPhysical={isPhysical}
       />
-      {isPhysical ? <ClientDetailMetaLeadFieldsSection /> : null}
 
-      <ClientDetailNotesSection />
-
-      <ClientDetailTimelineSection />
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1 p-1">
+          {isPhysical ? (
+            <TabsTrigger value="meta" className="cursor-pointer flex-1 min-w-[7rem]">
+              {t('clients.metaLeadTitle')}
+            </TabsTrigger>
+          ) : null}
+          <TabsTrigger value="notes" className="cursor-pointer flex-1 min-w-[7rem]">
+            {t('clients.notesTitle')}
+          </TabsTrigger>
+          {isPhysical ? (
+            <TabsTrigger value="payments" className="cursor-pointer flex-1 min-w-[7rem]">
+              {t('downPayments.title')}
+            </TabsTrigger>
+          ) : null}
+          <TabsTrigger value="timeline" className="cursor-pointer flex-1 min-w-[7rem]">
+            {t('clients.timelineApiTitle')}
+          </TabsTrigger>
+        </TabsList>
+        {isPhysical ? (
+          <TabsContent value="meta" className="mt-3">
+            <ClientDetailMetaLeadFieldsSection />
+          </TabsContent>
+        ) : null}
+        <TabsContent value="notes" className="mt-3">
+          <ClientDetailNotesSection />
+        </TabsContent>
+        {isPhysical ? (
+          <TabsContent value="payments" className="mt-3">
+            <ClientDetailDownPaymentsSection />
+          </TabsContent>
+        ) : null}
+        <TabsContent value="timeline" className="mt-3">
+          <ClientDetailTimelineSection />
+        </TabsContent>
+      </Tabs>
 
       <EditClientModal />
     </div>

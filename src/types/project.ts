@@ -31,6 +31,7 @@ export type ApiProject = {
   legalLibertarianCertificate?: string;
   cardProject?: string;
   deleted?: boolean;
+  separation?: number;
   createdAt: string;
   updatedAt: string;
 };

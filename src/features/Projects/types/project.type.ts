@@ -32,4 +32,6 @@ export type Project = {
   brochure?: string;
   plane?: string;
   legalDocuments?: ProjectLegalDocumentEntry[];
+  /** Suggested down-payment / separation amount from RAG (editable on create). */
+  separation?: number;
 };

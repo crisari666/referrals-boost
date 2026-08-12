@@ -5,6 +5,7 @@ import authReducer from "./authSlice";
 import scheduleReducer from "@/features/schedule/store/scheduleSlice";
 import scheduleAssigneesReducer from "@/features/schedule/store/schedule-assignees-slice";
 import clientsReducer from "./clientsSlice";
+import downPaymentsReducer from "@/features/Clients/store/down-payments-slice";
 import projectsReducer from "./projectsSlice";
 import profileReducer from "./profileSlice";
 import vendorDashboardReducer from "./vendorDashboardSlice";
@@ -20,6 +21,7 @@ export const store = configureStore({
     schedule: scheduleReducer,
     scheduleAssignees: scheduleAssigneesReducer,
     clients: clientsReducer,
+    downPayments: downPaymentsReducer,
     projects: projectsReducer,
     profile: profileReducer,
     vendorDashboard: vendorDashboardReducer,
