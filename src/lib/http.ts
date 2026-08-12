@@ -122,6 +122,21 @@ export async function patch<T = unknown>(
 }
 
 /**
+ * PUT request. Use path (relative to BASE_URL) or pass options.url for absolute URL.
+ */
+export async function put<T = unknown>(
+  path: string,
+  body?: unknown,
+  options?: HttpOptions
+): Promise<T> {
+  const config = buildConfig(path, options);
+  config.method = "PUT";
+  config.data = body;
+  const { data } = await httpClient.request<T>(config);
+  return data;
+}
+
+/**
  * DELETE request. Use path (relative to BASE_URL) or pass options.url for absolute URL.
  */
 export async function del<T = unknown>(
@@ -140,6 +155,7 @@ export const http = {
   post,
   postMultipart,
   patch,
+  put,
   delete: del,
   del,
 };

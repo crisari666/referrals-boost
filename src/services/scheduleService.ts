@@ -28,6 +28,7 @@ export type VentorScheduleCustomerEmbed = {
 export type VentorScheduleEventApi = {
   id: string;
   userId: string;
+  onLandAgentUserId?: string | null;
   customerId: string;
   scheduledAt: string;
   eventType: VentorScheduleEventTypeApi;
@@ -102,6 +103,22 @@ export async function patchVentorScheduleStatus(
       ...withCustomersMsAuth(),
       url: customersMsUrl(
         `ventor-schedule/${encodeURIComponent(eventId)}/status`
+      ),
+    }
+  );
+}
+
+export async function patchVentorScheduleOnLandAgent(
+  eventId: string,
+  onLandAgentUserId: string | null
+): Promise<VentorScheduleEventApi> {
+  return http.patch<VentorScheduleEventApi>(
+    "",
+    { onLandAgentUserId },
+    {
+      ...withCustomersMsAuth(),
+      url: customersMsUrl(
+        `ventor-schedule/${encodeURIComponent(eventId)}/on-land-agent`
       ),
     }
   );

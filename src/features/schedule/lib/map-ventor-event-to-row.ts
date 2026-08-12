@@ -30,6 +30,7 @@ export function mapVentorEventToVisitRow(
   return {
     id: ev.id,
     scheduleOwnerUserId: ev.userId,
+    onLandAgentUserId: ev.onLandAgentUserId?.trim() || null,
     customerId: ev.customerId,
     clientName: ev.customer?.displayName?.trim() || "Cliente",
     projectName,

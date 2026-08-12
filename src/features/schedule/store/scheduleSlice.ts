@@ -117,6 +117,28 @@ export const patchVentorScheduleStatusRequest = createAsyncThunk<
   }
 });
 
+export const patchVentorScheduleOnLandAgentRequest = createAsyncThunk<
+  VentorScheduleEventApi,
+  { eventId: string; onLandAgentUserId: string | null },
+  { rejectValue: string }
+>(
+  "schedule/patchOnLandAgent",
+  async ({ eventId, onLandAgentUserId }, { rejectWithValue }) => {
+    try {
+      return await scheduleService.patchVentorScheduleOnLandAgent(
+        eventId,
+        onLandAgentUserId
+      );
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: string }).message)
+          : "No se pudo asignar el agente en terreno.";
+      return rejectWithValue(message);
+    }
+  }
+);
+
 const scheduleSlice = createSlice({
   name: "schedule",
   initialState,
@@ -181,7 +203,24 @@ const scheduleSlice = createSlice({
       .addCase(patchVentorScheduleStatusRequest.rejected, (state, action) => {
         const id = action.meta.arg.eventId;
         state.patchingById[id] = false;
-      });
+      })
+      .addCase(patchVentorScheduleOnLandAgentRequest.pending, (state, action) => {
+        state.patchingById[action.meta.arg.eventId] = true;
+      })
+      .addCase(
+        patchVentorScheduleOnLandAgentRequest.fulfilled,
+        (state, action) => {
+          state.patchingById[action.payload.id] = false;
+          replaceEventInAllCachedDays(state, action.payload);
+        }
+      )
+      .addCase(
+        patchVentorScheduleOnLandAgentRequest.rejected,
+        (state, action) => {
+          const id = action.meta.arg.eventId;
+          state.patchingById[id] = false;
+        }
+      );
   },
 });
 

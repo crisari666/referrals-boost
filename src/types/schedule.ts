@@ -6,8 +6,10 @@ import type {
 /** Row used by schedule list cards (mapped from API + project catalog). */
 export interface ScheduleVisitRow {
   id: string;
-  /** Schedule row owner (ventor office user id). */
+  /** Schedule row owner (source agent office user id). */
   scheduleOwnerUserId: string;
+  /** Assigned on-land attending agent (nullable). */
+  onLandAgentUserId: string | null;
   customerId: string;
   clientName: string;
   projectName: string;
