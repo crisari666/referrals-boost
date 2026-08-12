@@ -1,3 +1,4 @@
+import { appInfoSegment } from "@/i18n/segments/app-info";
 import { assistantSegment } from "@/i18n/segments/assistant";
 import { authSegment } from "@/i18n/segments/auth";
 import { clientsSegment } from "@/i18n/segments/clients";
@@ -36,6 +37,7 @@ const en = {
   contract: contractSegment.en,
   notFound: notFoundSegment.en,
   firstAccess: firstAccessSegment.en,
+  appInfo: appInfoSegment.en,
   ui: uiSegment.en,
   trainingSessions: trainingSessionsSegment.en,
   notifications: notificationsSegment.en,
