@@ -22,7 +22,9 @@ const SchedulePage = () => {
   const assigneeLoadingById = useAppSelector((s) => s.scheduleAssignees.loadingById);
   const isPhysical = user?.role === "asesor_fisico" || user?.role === "admin";
   const isCoordinator =
-    user?.role === "main_lead" || user?.role === "subadmin";
+    user?.role === "admin" ||
+    user?.role === "main_lead" ||
+    user?.role === "subadmin";
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekOffset, setWeekOffset] = useState(0);

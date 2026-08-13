@@ -104,7 +104,11 @@ const Layout = ({ children }: LayoutProps) => {
 
   useEffect(() => {
     if (!scheduleNavEligible) return;
-    if (userRole === 'main_lead' || userRole === 'subadmin') {
+    if (
+      userRole === 'admin' ||
+      userRole === 'main_lead' ||
+      userRole === 'subadmin'
+    ) {
       void dispatch(fetchMainLeadOnLandScheduleByDay(todayYmd));
       return;
     }
