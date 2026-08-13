@@ -4,7 +4,11 @@ import i18n from "@/i18n";
 import { APP_CONSTANTS } from "@/constants/app-constants";
 import * as authService from "@/services/authService";
 import * as profileService from "@/services/profileService";
-import { USER_LEVEL_MAIN_LEAD, USER_LEVEL_SUBADMIN } from "@/constants/user-level";
+import {
+  USER_LEVEL_ADMIN,
+  USER_LEVEL_MAIN_LEAD,
+  USER_LEVEL_SUBADMIN,
+} from "@/constants/user-level";
 import type { ApiUser, AuthUser, UserRole } from "@/types/auth";
 import { clearGoogleCalendarAccessToken } from "@/lib/google/request-calendar-access-token";
 
@@ -23,7 +27,7 @@ function isApiUserLoginResult(value: unknown): value is ApiUser {
 function deriveUserRole(
   api: Pick<ApiUser, "root" | "physical" | "level">
 ): UserRole {
-  if (api.root) {
+  if (api.root || api.level === USER_LEVEL_ADMIN) {
     return "admin";
   }
   if (api.level === USER_LEVEL_MAIN_LEAD) {

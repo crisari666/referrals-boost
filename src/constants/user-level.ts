@@ -1,3 +1,6 @@
+/** Matches `UserLevel.admin` in omega_office_back `user.schema`. */
+export const USER_LEVEL_ADMIN = 0;
+
 /** Matches `UserLevel.subadmin` (coordinator) in omega_office_back `user.schema`. */
 export const USER_LEVEL_SUBADMIN = 1;
 
