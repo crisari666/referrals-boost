@@ -50,7 +50,14 @@ function LotColumnTable({ lots, title }: { lots: PublicProjectLot[]; title: stri
                 <td className="max-w-[7rem] truncate px-2 py-1.5">
                   {lot.ventorName?.trim() ? lot.ventorName : t('lotStock.noVentor')}
                 </td>
-                <td className="px-2 py-1.5 text-center font-extrabold" title={t(LOT_STATUS_LABEL_KEY[lot.status])}>
+                <td
+                  className="px-2 py-1.5 text-center font-extrabold"
+                  title={
+                    lot.status === 'hold' && lot.holdUntil
+                      ? `${t(LOT_STATUS_LABEL_KEY[lot.status])} · ${t('lotStock.holdUntilLabel')} ${new Date(lot.holdUntil).toLocaleString(intlLocale, { dateStyle: 'short', timeStyle: 'short' })}`
+                      : t(LOT_STATUS_LABEL_KEY[lot.status])
+                  }
+                >
                   {t(LOT_STATUS_CODE_KEY[lot.status])}
                 </td>
               </tr>

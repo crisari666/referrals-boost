@@ -26,6 +26,10 @@ export type PublicProjectLot = {
   status: ProjectLotStatus;
   kind: ProjectLotKind;
   ventorName: string;
+  holdUntil: string | null;
+  stageKey: string;
+  stageName: string;
+  stageOrder: number;
 };
 
 export type PublicLotsResponse = {

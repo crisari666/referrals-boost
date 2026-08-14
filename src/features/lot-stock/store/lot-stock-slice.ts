@@ -39,6 +39,10 @@ export const fetchLotStock = createAsyncThunk<
         ? data.lots.map((lot) => ({
             ...lot,
             ventorName: lot.ventorName ?? '',
+            holdUntil: lot.holdUntil ?? null,
+            stageKey: lot.stageKey || 'default',
+            stageName: lot.stageName || (lot.stageKey && lot.stageKey !== 'default' ? lot.stageKey : 'General'),
+            stageOrder: typeof lot.stageOrder === 'number' ? lot.stageOrder : 0,
           }))
         : [],
       summary: data.summary ?? EMPTY_KIND_SUMMARY,

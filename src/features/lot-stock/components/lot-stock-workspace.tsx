@@ -13,7 +13,7 @@ import { LotStockGrid } from '@/features/lot-stock/components/lot-stock-grid';
 import { LotStockColumns } from '@/features/lot-stock/components/lot-stock-columns';
 import { LotStockFooter } from '@/features/lot-stock/components/lot-stock-footer';
 import { LotStockSettingsSheet } from '@/features/lot-stock/components/lot-stock-settings-sheet';
-import { chunkLots, filterPublicLots, lotStockKey } from '@/features/lot-stock/utils/lot-stock.utils';
+import { chunkLots, collectStageOptions, filterPublicLots, lotStockKey, shouldShowStageFilter } from '@/features/lot-stock/utils/lot-stock.utils';
 import { readLotStockPrefs, writeLotStockPrefs } from '@/features/lot-stock/utils/lot-stock-prefs';
 import {
   LOT_STATUS_LABEL_KEY,
@@ -34,6 +34,7 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
   const isAuthenticated = useAppSelector((state) => Boolean(state.auth.user));
   const [kind, setKind] = useState<ProjectLotKind>('lot');
   const [statusFilter, setStatusFilter] = useState<ProjectLotStatus | 'all'>('all');
+  const [stageFilter, setStageFilter] = useState<string | 'all'>('all');
   const [search, setSearch] = useState('');
   const [selectedLot, setSelectedLot] = useState<PublicProjectLot | null>(null);
   const [prefs, setPrefs] = useState<LotStockPrefs>(readLotStockPrefs);
@@ -41,9 +42,21 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
   const [pageIndex, setPageIndex] = useState(0);
   const intlLocale = getIntlLocaleTag();
   const kindSummary = kind === 'lot' ? summary.lot : summary.commercial;
+  const stageOptions = useMemo(
+    () => collectStageOptions(lots, kind, t('lotStock.stageGeneral')),
+    [lots, kind, t],
+  );
+  const showStageFilter = shouldShowStageFilter(stageOptions);
   const visibleLots = useMemo(
-    () => filterPublicLots({ lots, kind, status: statusFilter, search }),
-    [lots, kind, statusFilter, search],
+    () =>
+      filterPublicLots({
+        lots,
+        kind,
+        status: statusFilter,
+        stage: showStageFilter ? stageFilter : 'all',
+        search,
+      }),
+    [lots, kind, statusFilter, stageFilter, search, showStageFilter],
   );
   const columns = useMemo(
     () => chunkLots(visibleLots, prefs.rowsPerColumn),
@@ -58,7 +71,11 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
   useEffect(() => {
     setPageIndex(0);
     setSelectedLot(null);
-  }, [kind, statusFilter, search, prefs.rowsPerColumn]);
+  }, [kind, statusFilter, stageFilter, search, prefs.rowsPerColumn]);
+
+  useEffect(() => {
+    setStageFilter('all');
+  }, [kind]);
 
   const handlePrefsChange = (next: LotStockPrefs) => {
     setPrefs(next);
@@ -114,6 +131,39 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
             );
           })}
         </div>
+        {showStageFilter ? (
+          <div className="mx-auto mt-3 flex max-w-6xl flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setStageFilter('all')}
+              className={cn(
+                'inline-flex cursor-pointer items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors duration-200',
+                stageFilter === 'all'
+                  ? 'border-foreground/30 bg-foreground text-background'
+                  : 'border-border bg-card text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {t('lotStock.filterAllStages')}
+            </button>
+            {stageOptions.map((stage) => (
+              <button
+                key={stage.key}
+                type="button"
+                onClick={() =>
+                  setStageFilter((current) => (current === stage.key ? 'all' : stage.key))
+                }
+                className={cn(
+                  'inline-flex cursor-pointer items-center rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors duration-200',
+                  stageFilter === stage.key
+                    ? 'border-foreground/30 bg-foreground text-background'
+                    : 'border-border bg-card text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {stage.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="mx-auto mt-3 flex max-w-6xl flex-wrap items-center gap-2">
           <div className="relative min-w-[10rem] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -181,6 +231,12 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
             )}
           >
             <p className="text-sm font-extrabold">{t('lotStock.selectedLot', { number: selectedLot.number })}</p>
+            {showStageFilter ? (
+              <p className="mt-1 text-xs font-semibold">
+                {t('lotStock.stageLabel')}:{' '}
+                {selectedLot.stageName || t('lotStock.stageGeneral')}
+              </p>
+            ) : null}
             <p className="mt-1 text-xs font-semibold">{t(LOT_STATUS_LABEL_KEY[selectedLot.status])}</p>
             <p className="mt-2 text-sm">
               {t('lotStock.areaM2', { area: Math.round(selectedLot.area) })} · $
@@ -189,6 +245,15 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
             <p className="text-sm">
               {t('lotStock.colVentor')}: {selectedLot.ventorName?.trim() ? selectedLot.ventorName : t('lotStock.noVentor')}
             </p>
+            {selectedLot.status === 'hold' && selectedLot.holdUntil ? (
+              <p className="mt-1 text-sm font-semibold">
+                {t('lotStock.holdUntilLabel')}:{' '}
+                {new Date(selectedLot.holdUntil).toLocaleString(intlLocale, {
+                  dateStyle: 'short',
+                  timeStyle: 'short',
+                })}
+              </p>
+            ) : null}
           </div>
         ) : null}
         {!isLoading && !error && prefs.viewMode === 'glance' ? (
