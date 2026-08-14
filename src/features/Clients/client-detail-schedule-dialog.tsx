@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, Video } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchVendorScheduleByCustomer } from '@/store/clientsSlice';
 import type { VentorScheduleEventApi } from '@/services/scheduleService';
@@ -148,6 +148,17 @@ export function ClientDetailScheduleDialog({
                         ? ev.onLandAgentUserId
                         : t('schedule.onLandAgentUnassigned')}
                     </div>
+                  ) : null}
+                  {ev.eventType === 'virtual' && ev.googleMeetUrl?.trim() ? (
+                    <a
+                      href={ev.googleMeetUrl.trim()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                    >
+                      <Video className="h-3 w-3 shrink-0" aria-hidden />
+                      {t('schedule.joinMeet')}
+                    </a>
                   ) : null}
                   {ev.note?.trim() ? (
                     <p className="text-xs text-foreground/90 line-clamp-2">{ev.note.trim()}</p>
