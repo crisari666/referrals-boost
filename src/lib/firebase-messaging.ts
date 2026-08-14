@@ -52,7 +52,21 @@ export async function getFirebaseMessaging(): Promise<Messaging | null> {
 }
 
 /**
+ * Returns the current notification permission without prompting when already decided.
+ */
+export async function ensureNotificationPermission(): Promise<NotificationPermission> {
+  if (typeof Notification === 'undefined') {
+    return 'denied';
+  }
+  if (Notification.permission !== 'default') {
+    return Notification.permission;
+  }
+  return Notification.requestPermission();
+}
+
+/**
  * Requests an FCM registration token using the web VAPID key.
+ * Does not prompt for permission; call ensureNotificationPermission first.
  */
 export async function requestFcmRegistrationToken(): Promise<string | null> {
   const messaging = await getFirebaseMessaging();
@@ -60,8 +74,7 @@ export async function requestFcmRegistrationToken(): Promise<string | null> {
   if (messaging == null || vapidKey == null || vapidKey === '') {
     return null;
   }
-  const permission = await Notification.requestPermission();
-  if (permission !== 'granted') {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
     return null;
   }
   const token = await getToken(messaging, { vapidKey });

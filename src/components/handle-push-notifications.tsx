@@ -10,7 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { APP_CONSTANTS } from '@/constants/app-constants';
 import {
+  ensureNotificationPermission,
   requestFcmRegistrationToken,
   subscribeForegroundMessages,
 } from '@/lib/firebase-messaging';
@@ -18,8 +20,34 @@ import { updateUserFcmToken } from '@/services/fcmTokenService';
 
 const PUSH_SW_PATH = '/firebase-messaging-sw.js';
 
+function hasStoredPushPermissionGranted(): boolean {
+  try {
+    return localStorage.getItem(APP_CONSTANTS.PUSH_NOTIFICATIONS_GRANTED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function persistPushPermissionGranted(): void {
+  try {
+    localStorage.setItem(APP_CONSTANTS.PUSH_NOTIFICATIONS_GRANTED_KEY, '1');
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function shouldPromptForNotifications(): boolean {
+  if (typeof Notification === 'undefined') {
+    return false;
+  }
+  if (Notification.permission === 'granted' || Notification.permission === 'denied') {
+    return false;
+  }
+  return !hasStoredPushPermissionGranted();
+}
+
 /**
- * Requests notification permission, registers FCM token, and routes assignment taps.
+ * Requests notification permission once, registers FCM token, and routes assignment taps.
  */
 export function HandlePushNotifications() {
   const { t } = useTranslation();
@@ -31,10 +59,11 @@ export function HandlePushNotifications() {
       return;
     }
     if (Notification.permission === 'granted') {
+      persistPushPermissionGranted();
       void registerPush();
       return;
     }
-    if (Notification.permission === 'default') {
+    if (shouldPromptForNotifications()) {
       setShowPermissionDialog(true);
     }
   }, []);
@@ -86,10 +115,19 @@ export function HandlePushNotifications() {
     }
   }
 
-  const handleAllow = () => {
-    setShowPermissionDialog(false);
-    void registerPush();
+  const handleAllow = (): void => {
+    void grantAndRegisterPush();
   };
+
+  async function grantAndRegisterPush(): Promise<void> {
+    const permission = await ensureNotificationPermission();
+    setShowPermissionDialog(false);
+    if (permission !== 'granted') {
+      return;
+    }
+    persistPushPermissionGranted();
+    await registerPush();
+  }
 
   return (
     <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
