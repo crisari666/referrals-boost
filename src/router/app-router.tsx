@@ -18,6 +18,8 @@ import Schedule from '@/pages/Schedule';
 import WhatsAppSync from '@/pages/WhatsAppSync';
 import { SignupCampaignPage } from '@/features/signup-campaign';
 import { TrainingSessionsPage } from '@/features/training-sessions/pages/training-sessions-page';
+import { LotStockHubPage } from '@/features/lot-stock/pages/lot-stock-hub-page';
+import { LotStockPage } from '@/features/lot-stock/pages/lot-stock-page';
 
 const Protected = ({ children }: { children: ReactNode }) => (
   <ProtectedRoute>
@@ -33,6 +35,8 @@ const AppRouter = () => (
     <Route path='/signup' element={<SignupCampaignPage />} />
     <Route path='/app-info' element={<AppInfo />} />
     <Route path='/privacy' element={<Privacy />} />
+    <Route path='/stock' element={<LotStockHubPage />} />
+    <Route path='/stock/:projectId' element={<LotStockPage />} />
     <Route path='/' element={<Protected><Index /></Protected>} />
     <Route path='/projects' element={<Protected><Projects /></Protected>} />
     <Route path='/projects/:id' element={<Protected><ProjectDetail /></Protected>} />

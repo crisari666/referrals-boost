@@ -5,6 +5,8 @@ export const APP_CONSTANTS = {
   GOOGLE_SCOPES_GRANTED_KEY: "referrals-boost:google-calendar-meet-scopes-granted",
   /** Browser notification permission was granted in this origin. */
   PUSH_NOTIFICATIONS_GRANTED_KEY: "referrals-boost:push-notifications-granted",
+  /** Public lot stock view preferences (rows per column, view mode). */
+  LOT_STOCK_PREFS_KEY: "referrals-boost:lot-stock-prefs",
 } as const;
 
 /** Login `user` field; goals/achievements UI is shown only for this account. */

@@ -1,16 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  User,
-  Sparkles,
-  MessageSquare,
-  CalendarDays,
-  LogOut,
-  Menu,
-  Video,
-} from 'lucide-react';
+import { LayoutDashboard, Building2, Users, User, Sparkles, MessageSquare, CalendarDays, LogOut, Menu, Video, LayoutGrid } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CrmSocketListener } from '@/components/crm-socket-listener';
 import { HandlePushNotifications } from '@/components/handle-push-notifications';
@@ -55,6 +44,7 @@ const bottomBarNavItems: NavItem[] = [
 const sidebarNavItems: NavItem[] = [
   ...bottomBarNavItems,
   { path: '/training-sessions', labelKey: 'layout.navTrainingSessions', icon: Video },
+  { path: '/stock', labelKey: 'layout.navLotStock', icon: LayoutGrid },
   {
     path: '/schedule',
     labelKey: 'layout.navAgenda',

@@ -12,6 +12,8 @@ function shouldSkipAuthHeader(url: string): boolean {
   if (/forgot-password/i.test(url)) return true;
   if (/agent-contract-sign/i.test(url)) return true;
   if (/signup-campaigns/i.test(url)) return true;
+  if (/\/lots\/public/i.test(url)) return true;
+  if (/\/rag\/projects\/?(\?|$)/i.test(url)) return true;
   return /agent-first-access/i.test(url);
 }
 

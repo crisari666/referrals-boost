@@ -50,6 +50,7 @@ export const projectsSegment = {
     detailDownloadPdf: "Descargar PDF",
     detailTotalValueCop: "Valor Total COP",
     detailLotsLabel: "Lotes",
+    viewStock: "Ver inventario",
   },
   en: {
     pageTitle: "Projects",
@@ -102,5 +103,6 @@ export const projectsSegment = {
     detailDownloadPdf: "Download PDF",
     detailTotalValueCop: "Total value COP",
     detailLotsLabel: "Lots",
+    viewStock: "View inventory",
   },
 } as const;

@@ -20,6 +20,7 @@ import { trainingSessionsSegment } from "@/i18n/segments/training-sessions";
 import { whatsappSegment } from "@/i18n/segments/whatsapp";
 import { notificationsSegment } from "@/i18n/segments/notifications";
 import { downPaymentsSegment } from "@/i18n/segments/down-payments";
+import { lotStockSegment } from "@/i18n/segments/lot-stock";
 
 const es = {
   common: commonSegment.es,
@@ -44,6 +45,7 @@ const es = {
   trainingSessions: trainingSessionsSegment.es,
   notifications: notificationsSegment.es,
   downPayments: downPaymentsSegment.es,
+  lotStock: lotStockSegment.es,
 };
 
 export default es;

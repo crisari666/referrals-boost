@@ -91,6 +91,12 @@ const ProjectDetail = () => {
               </p>
             </div>
           </div>
+          <Link
+            to={`/stock/${project.id}`}
+            className="flex cursor-pointer items-center justify-center rounded-xl border border-border py-3 text-sm font-bold text-primary transition-colors duration-200 hover:bg-secondary"
+          >
+            {t("projects.viewStock")}
+          </Link>
         </div>
         <div className="bg-card rounded-2xl p-5 border border-border shadow-sm">
           <h2 className="font-bold text-foreground mb-3">{t("projects.detailAmenities")}</h2>

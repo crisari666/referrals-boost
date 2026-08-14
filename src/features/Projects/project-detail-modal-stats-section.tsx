@@ -1,4 +1,5 @@
 import { Layers } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { Project } from '@/features/Projects/types/project.type';
 import { getIntlLocaleTag } from '@/i18n/intl-locale';
 import { useProjectDetailModalLabels } from './project-detail-modal-labels';
@@ -39,6 +40,12 @@ const ProjectDetailModalStatsSection = ({ project }: ProjectDetailModalStatsSect
           {t('projects.lotsOfTotal', { available: project.lotsAvailable, total: project.totalLots })}
         </p>
       </div>
+      <Link
+        to={`/stock/${project.id}`}
+        className='col-span-2 flex cursor-pointer items-center justify-center rounded-xl border border-border bg-card py-3 text-sm font-bold text-primary transition-colors duration-200 hover:bg-secondary'
+      >
+        {t('projects.viewStock')}
+      </Link>
     </div>
   );
 };
