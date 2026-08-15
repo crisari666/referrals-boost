@@ -8,6 +8,7 @@ import { LOT_STATUS_LABEL_KEY } from '@/features/lot-stock/utils/lot-stock-statu
 import type {
   LotMapFeatureProperties,
   LotMapGeoJson,
+  LotStatusSummary,
   ProjectLotStatus,
   PublicProjectLot,
 } from '@/features/lot-stock/types/lot-stock.types';
@@ -187,6 +188,8 @@ type LotStockMapProps = {
   statusFilter: ProjectLotStatus | 'all';
   stageFilter: string | 'all';
   search: string;
+  summary: LotStatusSummary;
+  onStatusChange: (status: ProjectLotStatus | 'all') => void;
   onSelect: (lot: PublicProjectLot) => void;
 };
 
@@ -196,6 +199,8 @@ export function LotStockMap({
   statusFilter,
   stageFilter,
   search,
+  summary,
+  onStatusChange,
   onSelect,
 }: LotStockMapProps) {
   const { t } = useTranslation();
@@ -365,8 +370,8 @@ export function LotStockMap({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-1">
+      <div className="flex flex-wrap items-center gap-1">
         {(
           [
             'available',
@@ -374,29 +379,41 @@ export function LotStockMap({
             'sold',
             'locked',
           ] as const
-        ).map((status) => (
-          <span
-            key={status}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-semibold text-foreground"
-          >
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: STATUS_COLORS[status] }}
-            />
-            {t(LOT_STATUS_LABEL_KEY[status])}
-          </span>
-        ))}
-        <span className="text-[11px] text-muted-foreground">
+        ).map((status) => {
+          const isActive = statusFilter === status;
+          return (
+            <button
+              key={status}
+              type="button"
+              onClick={() => onStatusChange(isActive ? 'all' : status)}
+              className={cn(
+                'inline-flex cursor-pointer items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold transition-colors duration-200',
+                isActive
+                  ? 'border-foreground/30 bg-foreground text-background'
+                  : 'border-border bg-card text-foreground',
+              )}
+              aria-pressed={isActive}
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: STATUS_COLORS[status] }}
+              />
+              <span className="hidden sm:inline">{t(LOT_STATUS_LABEL_KEY[status])}</span>
+              <span className="tabular-nums">{summary[status]}</span>
+            </button>
+          );
+        })}
+        <span className="hidden text-[10px] text-muted-foreground sm:inline">
           {mapPaint.matchedCount}/{mapPaint.featureCount} {t('lotStock.mapMatched')}
         </span>
-        <div className="ml-auto inline-flex rounded-lg border border-border bg-secondary p-1">
+        <div className="ml-auto inline-flex rounded-md border border-border bg-secondary p-0.5">
           {(['2d', '3d'] as const).map((mode) => (
             <button
               key={mode}
               type="button"
               onClick={() => setPerspective(mode)}
               className={cn(
-                'inline-flex h-8 cursor-pointer items-center rounded-md px-2.5 text-xs font-semibold transition-colors duration-200',
+                'inline-flex h-6 cursor-pointer items-center rounded px-2 text-[10px] font-semibold transition-colors duration-200',
                 perspective === mode
                   ? 'bg-card text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
@@ -410,7 +427,7 @@ export function LotStockMap({
       </div>
       <div
         ref={containerRef}
-        className="min-h-[420px] flex-1 overflow-hidden rounded-xl border border-border"
+        className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border"
       />
     </div>
   );
