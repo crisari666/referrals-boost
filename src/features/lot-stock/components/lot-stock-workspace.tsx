@@ -28,11 +28,16 @@ import {
 import { chunkLots, collectStageOptions, filterPublicLots, lotStockKey, shouldShowStageFilter } from '@/features/lot-stock/utils/lot-stock.utils';
 import { readLotStockPrefs, writeLotStockPrefs } from '@/features/lot-stock/utils/lot-stock-prefs';
 import {
+  parseLotStockViewHash,
+  writeLotStockViewHash,
+} from '@/features/lot-stock/utils/lot-stock-hash';
+import {
   LOT_STATUS_LABEL_KEY,
   LOT_STATUS_TONE,
 } from '@/features/lot-stock/utils/lot-stock-status';
 import {
   type LotStockPrefs,
+  type LotStockViewMode,
   type ProjectLotKind,
   type ProjectLotStatus,
   type PublicProjectLot,
@@ -95,9 +100,32 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
   }, [kind]);
 
   const handlePrefsChange = (next: LotStockPrefs) => {
+    const viewChanged = next.viewMode !== prefs.viewMode;
     setPrefs(next);
     writeLotStockPrefs(next);
+    if (viewChanged) {
+      writeLotStockViewHash(next.viewMode);
+    }
   };
+
+  const handleViewModeChange = (mode: LotStockViewMode) => {
+    handlePrefsChange({ ...prefs, viewMode: mode });
+  };
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const fromHash = parseLotStockViewHash(window.location.hash);
+      if (!fromHash) return;
+      setPrefs((current) => {
+        if (current.viewMode === fromHash) return current;
+        const next = { ...current, viewMode: fromHash };
+        writeLotStockPrefs(next);
+        return next;
+      });
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   const handleSelectLot = (lot: PublicProjectLot) => {
     setSelectedLot((current) => (current && lotStockKey(current) === lotStockKey(lot) ? null : lot));
@@ -245,7 +273,7 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
               <button
                 key={mode}
                 type="button"
-                onClick={() => handlePrefsChange({ ...prefs, viewMode: mode })}
+                onClick={() => handleViewModeChange(mode)}
                 className={cn(
                   'inline-flex cursor-pointer items-center gap-1 rounded-md text-xs font-semibold transition-colors duration-200',
                   isMap ? 'h-7 px-2' : 'h-8 px-2.5',
