@@ -1,8 +1,12 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { fetchPublicProjectLots } from '@/features/lot-stock/services/lot-stock.service';
+import {
+  fetchPublicLotsMap,
+  fetchPublicProjectLots,
+} from '@/features/lot-stock/services/lot-stock.service';
 import {
   EMPTY_KIND_SUMMARY,
   type LotKindSummary,
+  type LotMapPaintResponse,
   type PublicProjectLot,
 } from '@/features/lot-stock/types/lot-stock.types';
 import type { RootState } from '@/store';
@@ -14,6 +18,9 @@ export type LotStockState = {
   summary: LotKindSummary;
   isLoading: boolean;
   error: string | null;
+  mapPaint: LotMapPaintResponse | null;
+  mapLoading: boolean;
+  mapError: string | null;
 };
 
 const initialState: LotStockState = {
@@ -23,6 +30,9 @@ const initialState: LotStockState = {
   summary: EMPTY_KIND_SUMMARY,
   isLoading: false,
   error: null,
+  mapPaint: null,
+  mapLoading: false,
+  mapError: null,
 };
 
 export const fetchLotStock = createAsyncThunk<
@@ -41,7 +51,9 @@ export const fetchLotStock = createAsyncThunk<
             ventorName: lot.ventorName ?? '',
             holdUntil: lot.holdUntil ?? null,
             stageKey: lot.stageKey || 'default',
-            stageName: lot.stageName || (lot.stageKey && lot.stageKey !== 'default' ? lot.stageKey : 'General'),
+            stageName:
+              lot.stageName ||
+              (lot.stageKey && lot.stageKey !== 'default' ? lot.stageKey : 'General'),
             stageOrder: typeof lot.stageOrder === 'number' ? lot.stageOrder : 0,
           }))
         : [],
@@ -52,6 +64,22 @@ export const fetchLotStock = createAsyncThunk<
       err && typeof err === 'object' && 'message' in err
         ? String((err as { message: string }).message)
         : 'Failed to load lot stock';
+    return rejectWithValue(message);
+  }
+});
+
+export const fetchLotStockMap = createAsyncThunk<
+  LotMapPaintResponse,
+  string,
+  { rejectValue: string }
+>('lotStock/fetchMap', async (projectId, { rejectWithValue }) => {
+  try {
+    return await fetchPublicLotsMap(projectId);
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === 'object' && 'message' in err
+        ? String((err as { message: string }).message)
+        : 'Failed to load lot map';
     return rejectWithValue(message);
   }
 });
@@ -81,6 +109,20 @@ const lotStockSlice = createSlice({
       .addCase(fetchLotStock.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? 'Failed to load lot stock';
+      })
+      .addCase(fetchLotStockMap.pending, (state) => {
+        state.mapLoading = true;
+        state.mapError = null;
+      })
+      .addCase(fetchLotStockMap.fulfilled, (state, action) => {
+        state.mapLoading = false;
+        state.mapPaint = action.payload;
+        state.mapError = null;
+      })
+      .addCase(fetchLotStockMap.rejected, (state, action) => {
+        state.mapLoading = false;
+        state.mapPaint = null;
+        state.mapError = action.payload ?? 'Failed to load lot map';
       });
   },
 });

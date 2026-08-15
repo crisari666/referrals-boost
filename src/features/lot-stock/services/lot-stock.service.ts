@@ -1,5 +1,8 @@
 import * as http from '@/lib/http';
-import type { PublicLotsResponse } from '@/features/lot-stock/types/lot-stock.types';
+import type {
+  LotMapPaintResponse,
+  PublicLotsResponse,
+} from '@/features/lot-stock/types/lot-stock.types';
 
 const RAG_BASE = (import.meta.env.VITE_URL_RAG_AGENT ?? '').replace(/\/$/, '');
 
@@ -11,5 +14,11 @@ export function fetchPublicProjectLots(projectId: string): Promise<PublicLotsRes
   return http.get<PublicLotsResponse>('', {
     url: buildRagUrl(`projects/${projectId}/lots/public`),
     params: { kind: 'all' },
+  });
+}
+
+export function fetchPublicLotsMap(projectId: string): Promise<LotMapPaintResponse> {
+  return http.get<LotMapPaintResponse>('', {
+    url: buildRagUrl(`projects/${projectId}/lots/map/public`),
   });
 }

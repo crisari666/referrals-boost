@@ -2,7 +2,7 @@ export type ProjectLotStatus = 'available' | 'sold' | 'hold' | 'locked';
 
 export type ProjectLotKind = 'lot' | 'commercial';
 
-export type LotStockViewMode = 'glance' | 'grid' | 'columns';
+export type LotStockViewMode = 'glance' | 'grid' | 'columns' | 'map';
 
 export type LotStockColumnNav = 'scroll' | 'pages';
 
@@ -37,6 +37,43 @@ export type PublicLotsResponse = {
   projectTitle: string;
   lots: PublicProjectLot[];
   summary: LotKindSummary;
+};
+
+export type LotMapFeatureProperties = {
+  lotNumber: string;
+  stageKey: string;
+  stageName: string;
+  stageOrder: number;
+  status?: ProjectLotStatus | null;
+  lotId?: string | null;
+  area?: number | null;
+  price?: number | null;
+  ventorName?: string | null;
+  holdUntil?: string | null;
+};
+
+export type LotMapGeoJsonFeature = {
+  type: 'Feature';
+  properties: LotMapFeatureProperties;
+  geometry: {
+    type: 'Polygon';
+    coordinates: number[][][];
+  };
+};
+
+export type LotMapGeoJson = {
+  type: 'FeatureCollection';
+  features: LotMapGeoJsonFeature[];
+};
+
+export type LotMapPaintResponse = {
+  projectId: string;
+  projectTitle: string;
+  lotsMapKml: string;
+  lotsMapGeojson: string;
+  geojson: LotMapGeoJson;
+  featureCount: number;
+  matchedCount: number;
 };
 
 export type LotStockPrefs = {

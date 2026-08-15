@@ -8,7 +8,7 @@ import {
 } from '@/features/lot-stock/types/lot-stock.types';
 
 function isViewMode(value: unknown): value is LotStockViewMode {
-  return value === 'glance' || value === 'grid' || value === 'columns';
+  return value === 'glance' || value === 'grid' || value === 'columns' || value === 'map';
 }
 
 function isColumnNav(value: unknown): value is LotStockColumnNav {

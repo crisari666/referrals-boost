@@ -15,6 +15,8 @@ interface ImportMetaEnv {
   readonly VITE_URL_CUSTOMERS_MS?: string;
   /** Google OAuth web client id (GIS token client; never the client_secret). */
   readonly VITE_GOOGLE_CLIENT_ID?: string;
+  /** Mapbox public token (pk.*) for lot stock satellite map. */
+  readonly VITE_MAPBOX_ACCESS_TOKEN?: string;
 }
 
 interface ImportMeta {

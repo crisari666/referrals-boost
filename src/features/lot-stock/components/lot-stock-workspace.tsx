@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Columns3, Grid2x2, MapPinned, Search } from 'lucide-react';
+import { ArrowLeft, Columns3, Grid2x2, LayoutGrid, Map as MapIcon, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +11,7 @@ import { fetchLotStock, selectLotStock } from '@/features/lot-stock/store/lot-st
 import { LotStockGlance } from '@/features/lot-stock/components/lot-stock-glance';
 import { LotStockGrid } from '@/features/lot-stock/components/lot-stock-grid';
 import { LotStockColumns } from '@/features/lot-stock/components/lot-stock-columns';
+import { LotStockMap } from '@/features/lot-stock/components/lot-stock-map';
 import { LotStockFooter } from '@/features/lot-stock/components/lot-stock-footer';
 import { LotStockSettingsSheet } from '@/features/lot-stock/components/lot-stock-settings-sheet';
 import { chunkLots, collectStageOptions, filterPublicLots, lotStockKey, shouldShowStageFilter } from '@/features/lot-stock/utils/lot-stock.utils';
@@ -178,9 +179,10 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
           <div className="inline-flex rounded-lg border border-border bg-secondary p-1">
             {(
               [
-                ['glance', MapPinned, 'lotStock.viewGlance'],
+                ['glance', LayoutGrid, 'lotStock.viewGlance'],
                 ['grid', Grid2x2, 'lotStock.viewGrid'],
                 ['columns', Columns3, 'lotStock.viewColumns'],
+                ['map', MapIcon, 'lotStock.viewMap'],
               ] as const
             ).map(([mode, Icon, labelKey]) => (
               <button
@@ -218,8 +220,11 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
             </Button>
           </div>
         ) : null}
-        {!isLoading && !error && prefs.viewMode !== 'columns' ? (
+        {!isLoading && !error && prefs.viewMode !== 'columns' && prefs.viewMode !== 'map' ? (
           <p className="mb-3 text-xs text-muted-foreground">{t('lotStock.glanceHint')}</p>
+        ) : null}
+        {!isLoading && !error && prefs.viewMode === 'map' ? (
+          <p className="mb-3 text-xs text-muted-foreground">{t('lotStock.mapHint')}</p>
         ) : null}
         {!isLoading && !error && selectedLot && prefs.viewMode !== 'columns' ? (
           <div
@@ -269,6 +274,22 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
             pageIndex={pageIndex}
             onPageIndexChange={setPageIndex}
           />
+        ) : null}
+        {!isLoading && !error && prefs.viewMode === 'map' ? (
+          kind === 'commercial' ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              {t('lotStock.mapLotsOnly')}
+            </p>
+          ) : (
+            <LotStockMap
+              projectId={projectId}
+              lots={visibleLots}
+              statusFilter={statusFilter}
+              stageFilter={showStageFilter ? stageFilter : 'all'}
+              search={search}
+              onSelect={handleSelectLot}
+            />
+          )
         ) : null}
       </main>
       <LotStockFooter kind={kind} onKindChange={setKind} onOpenSettings={() => setSettingsOpen(true)} />
