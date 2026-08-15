@@ -30,6 +30,7 @@ const SKY_LAYER_ID = 'sky';
 const MAP_PITCH = 60;
 const MAP_BEARING = -20;
 const LOT_EXTRUSION_HEIGHT_M = 1;
+const MAPBOX_STYLE = 'mapbox://styles/mapbox/satellite-streets-v12';
 const EMPTY_GEOJSON: LotMapGeoJson = {
   type: 'FeatureCollection',
   features: [],
@@ -247,7 +248,7 @@ export function LotStockMap({
     const initialMode = perspectiveRef.current;
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: 'mapbox://styles/mapbox/satellite-v9',
+      style: MAPBOX_STYLE,
       center: [-74.08175, 4.60971],
       zoom: 14,
       pitch: initialMode === '3d' ? MAP_PITCH : 0,
