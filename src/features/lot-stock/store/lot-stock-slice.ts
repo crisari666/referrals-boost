@@ -2,7 +2,10 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import {
   fetchPublicLotsMap,
   fetchPublicProjectLots,
+  holdProjectLot as holdProjectLotReq,
+  unholdProjectLot as unholdProjectLotReq,
 } from '@/features/lot-stock/services/lot-stock.service';
+import { getHttpErrorMessage } from '@/lib/parse-api-error';
 import {
   EMPTY_KIND_SUMMARY,
   type LotKindSummary,
@@ -21,6 +24,8 @@ export type LotStockState = {
   mapPaint: LotMapPaintResponse | null;
   mapLoading: boolean;
   mapError: string | null;
+  holdLoading: boolean;
+  holdError: string | null;
 };
 
 const initialState: LotStockState = {
@@ -33,6 +38,8 @@ const initialState: LotStockState = {
   mapPaint: null,
   mapLoading: false,
   mapError: null,
+  holdLoading: false,
+  holdError: null,
 };
 
 export const fetchLotStock = createAsyncThunk<
@@ -48,7 +55,9 @@ export const fetchLotStock = createAsyncThunk<
       lots: Array.isArray(data.lots)
         ? data.lots.map((lot) => ({
             ...lot,
+            id: lot.id || '',
             ventorName: lot.ventorName ?? '',
+            heldByUserId: lot.heldByUserId ?? '',
             holdUntil: lot.holdUntil ?? null,
             stageKey: lot.stageKey || 'default',
             stageName:
@@ -81,6 +90,36 @@ export const fetchLotStockMap = createAsyncThunk<
         ? String((err as { message: string }).message)
         : 'Failed to load lot map';
     return rejectWithValue(message);
+  }
+});
+
+export const holdProjectLot = createAsyncThunk<
+  string,
+  { projectId: string; lotId: string; ventorName?: string },
+  { rejectValue: string }
+>('lotStock/hold', async (params, { dispatch, rejectWithValue }) => {
+  try {
+    await holdProjectLotReq(params);
+    await dispatch(fetchLotStock(params.projectId)).unwrap();
+    void dispatch(fetchLotStockMap(params.projectId));
+    return params.lotId;
+  } catch (err: unknown) {
+    return rejectWithValue(getHttpErrorMessage(err, 'Failed to hold lot'));
+  }
+});
+
+export const unholdProjectLot = createAsyncThunk<
+  string,
+  { projectId: string; lotId: string },
+  { rejectValue: string }
+>('lotStock/unhold', async (params, { dispatch, rejectWithValue }) => {
+  try {
+    await unholdProjectLotReq(params);
+    await dispatch(fetchLotStock(params.projectId)).unwrap();
+    void dispatch(fetchLotStockMap(params.projectId));
+    return params.lotId;
+  } catch (err: unknown) {
+    return rejectWithValue(getHttpErrorMessage(err, 'Failed to unhold lot'));
   }
 });
 
@@ -123,6 +162,30 @@ const lotStockSlice = createSlice({
         state.mapLoading = false;
         state.mapPaint = null;
         state.mapError = action.payload ?? 'Failed to load lot map';
+      })
+      .addCase(holdProjectLot.pending, (state) => {
+        state.holdLoading = true;
+        state.holdError = null;
+      })
+      .addCase(holdProjectLot.fulfilled, (state) => {
+        state.holdLoading = false;
+        state.holdError = null;
+      })
+      .addCase(holdProjectLot.rejected, (state, action) => {
+        state.holdLoading = false;
+        state.holdError = action.payload ?? 'Failed to hold lot';
+      })
+      .addCase(unholdProjectLot.pending, (state) => {
+        state.holdLoading = true;
+        state.holdError = null;
+      })
+      .addCase(unholdProjectLot.fulfilled, (state) => {
+        state.holdLoading = false;
+        state.holdError = null;
+      })
+      .addCase(unholdProjectLot.rejected, (state, action) => {
+        state.holdLoading = false;
+        state.holdError = action.payload ?? 'Failed to unhold lot';
       });
   },
 });

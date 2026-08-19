@@ -22,3 +22,30 @@ export function fetchPublicLotsMap(projectId: string): Promise<LotMapPaintRespon
     url: buildRagUrl(`projects/${projectId}/lots/map/public`),
   });
 }
+
+export function holdProjectLot(params: {
+  readonly projectId: string;
+  readonly lotId: string;
+  readonly ventorName?: string;
+}): Promise<unknown> {
+  return http.post(
+    '',
+    { ventorName: params.ventorName ?? '' },
+    {
+      url: buildRagUrl(`projects/${params.projectId}/lots/${params.lotId}/hold`),
+    },
+  );
+}
+
+export function unholdProjectLot(params: {
+  readonly projectId: string;
+  readonly lotId: string;
+}): Promise<unknown> {
+  return http.post(
+    '',
+    {},
+    {
+      url: buildRagUrl(`projects/${params.projectId}/lots/${params.lotId}/unhold`),
+    },
+  );
+}

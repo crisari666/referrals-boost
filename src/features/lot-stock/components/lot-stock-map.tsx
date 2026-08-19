@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 import mapboxgl, { GeoJSONSource, LngLatBoundsLike, Map } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchLotStockMap, selectLotStock } from '@/features/lot-stock/store/lot-stock-slice';
-import { LOT_STATUS_LABEL_KEY } from '@/features/lot-stock/utils/lot-stock-status';
+import { LOT_STATUS_LABEL_KEY, LOT_STATUS_TONE } from '@/features/lot-stock/utils/lot-stock-status';
 import type {
   LotMapFeatureProperties,
   LotMapGeoJson,
@@ -192,6 +193,17 @@ type LotStockMapProps = {
   summary: LotStatusSummary;
   onStatusChange: (status: ProjectLotStatus | 'all') => void;
   onSelect: (lot: PublicProjectLot) => void;
+  selectedLot: PublicProjectLot | null;
+  showStage: boolean;
+  canHold: boolean;
+  canUnhold: boolean;
+  holdLoading: boolean;
+  holdError: string | null;
+  holdLabelKey: 'lotStock.hold72h' | 'lotStock.hold24h';
+  intlLocale: string;
+  onCloseSelected: () => void;
+  onHold: () => void;
+  onUnhold: () => void;
 };
 
 export function LotStockMap({
@@ -203,6 +215,17 @@ export function LotStockMap({
   summary,
   onStatusChange,
   onSelect,
+  selectedLot,
+  showStage,
+  canHold,
+  canUnhold,
+  holdLoading,
+  holdError,
+  holdLabelKey,
+  intlLocale,
+  onCloseSelected,
+  onHold,
+  onUnhold,
 }: LotStockMapProps) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
@@ -284,7 +307,9 @@ export function LotStockMap({
           (item) => `${item.stageKey || 'default'}::${item.number}` === key,
         ) ?? null;
       if (lot) {
-        onSelectRef.current(lot);
+        const withId =
+          lot.id || !props.lotId ? lot : { ...lot, id: props.lotId };
+        onSelectRef.current(withId);
       }
     });
     map.on('mouseenter', LOTS_FILL_LAYER_ID, (event) => {
@@ -426,10 +451,81 @@ export function LotStockMap({
           ))}
         </div>
       </div>
-      <div
-        ref={containerRef}
-        className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border"
-      />
+      <div className="relative min-h-0 flex-1">
+        <div
+          ref={containerRef}
+          className="absolute inset-0 overflow-hidden rounded-lg border border-border"
+        />
+        {selectedLot ? (
+          <div className="pointer-events-none absolute right-3 top-14 z-10 w-[min(100%-1.5rem,18rem)]">
+            <div
+              className={cn(
+                'pointer-events-auto rounded-xl border-2 bg-card/95 p-3 shadow-lg backdrop-blur-sm transition-colors duration-200',
+                LOT_STATUS_TONE[selectedLot.status].bg,
+                LOT_STATUS_TONE[selectedLot.status].border,
+                LOT_STATUS_TONE[selectedLot.status].text,
+              )}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-extrabold">
+                  {t('lotStock.selectedLot', { number: selectedLot.number })}
+                </p>
+                <button
+                  type="button"
+                  onClick={onCloseSelected}
+                  className="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-current opacity-80 transition-opacity duration-200 hover:opacity-100"
+                  aria-label={t('lotStock.closeSelected')}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              {showStage ? (
+                <p className="mt-0.5 text-[11px] font-semibold">
+                  {t('lotStock.stageLabel')}:{' '}
+                  {selectedLot.stageName || t('lotStock.stageGeneral')}
+                </p>
+              ) : null}
+              <p className="mt-0.5 text-[11px] font-semibold">
+                {t(LOT_STATUS_LABEL_KEY[selectedLot.status])}
+              </p>
+              <p className="mt-1 text-xs">
+                {t('lotStock.areaM2', { area: Math.round(selectedLot.area) })} · $
+                {selectedLot.price.toLocaleString(intlLocale)}
+              </p>
+              {selectedLot.status === 'hold' && selectedLot.holdUntil ? (
+                <p className="mt-0.5 text-xs font-semibold">
+                  {t('lotStock.holdUntilLabel')}:{' '}
+                  {new Date(selectedLot.holdUntil).toLocaleString(intlLocale, {
+                    dateStyle: 'short',
+                    timeStyle: 'short',
+                  })}
+                </p>
+              ) : null}
+              {holdError ? <p className="mt-1 text-xs text-destructive">{holdError}</p> : null}
+              {canHold && selectedLot.status === 'available' && selectedLot.id ? (
+                <button
+                  type="button"
+                  disabled={holdLoading}
+                  onClick={onHold}
+                  className="mt-2 inline-flex h-8 w-full cursor-pointer items-center justify-center rounded-lg bg-foreground px-3 text-xs font-semibold text-background transition-opacity duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {t(holdLabelKey)}
+                </button>
+              ) : null}
+              {canUnhold && selectedLot.id ? (
+                <button
+                  type="button"
+                  disabled={holdLoading}
+                  onClick={onUnhold}
+                  className="mt-2 inline-flex h-8 w-full cursor-pointer items-center justify-center rounded-lg bg-foreground px-3 text-xs font-semibold text-background transition-opacity duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {t('lotStock.unhold')}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { ArrowLeft, Columns3, Grid2x2, LayoutGrid, Map as MapIcon, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,13 @@ import {
 } from '@/components/ui/select';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { fetchLotStock, selectLotStock } from '@/features/lot-stock/store/lot-stock-slice';
+import { fetchLotStock, holdProjectLot, selectLotStock, unholdProjectLot } from '@/features/lot-stock/store/lot-stock-slice';
+import { fetchProjects } from '@/store/projectsSlice';
+import { displayUserName } from '@/lib/display-user-name';
+import {
+  USER_LEVEL_EXTERNAL_AGENT,
+  USER_LEVEL_VENTOR,
+} from '@/constants/user-level';
 import { LotStockGlance } from '@/features/lot-stock/components/lot-stock-glance';
 import { LotStockGrid } from '@/features/lot-stock/components/lot-stock-grid';
 import { LotStockColumns } from '@/features/lot-stock/components/lot-stock-columns';
@@ -47,13 +54,23 @@ import { cn } from '@/lib/utils';
 
 type LotStockWorkspaceProps = {
   projectId: string;
+  embedded?: boolean;
 };
 
-export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
+export function LotStockWorkspace({ projectId, embedded = false }: LotStockWorkspaceProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { projectTitle, lots, summary, isLoading, error } = useAppSelector(selectLotStock);
-  const isAuthenticated = useAppSelector((state) => Boolean(state.auth.user));
+  const { projectTitle, lots, summary, isLoading, error, holdLoading, holdError } =
+    useAppSelector(selectLotStock);
+  const authUser = useAppSelector((state) => state.auth.user);
+  const isAuthenticated = Boolean(authUser);
+  const canHold =
+    authUser?.role === 'external_agent' ||
+    authUser?.level === USER_LEVEL_VENTOR ||
+    authUser?.level === USER_LEVEL_EXTERNAL_AGENT;
+  const isLongHold = authUser?.role === 'external_agent';
+  const projects = useAppSelector((state) => state.projects.list);
   const [kind, setKind] = useState<ProjectLotKind>('lot');
   const [statusFilter, setStatusFilter] = useState<ProjectLotStatus | 'all'>('all');
   const [stageFilter, setStageFilter] = useState<string | 'all'>('all');
@@ -89,6 +106,20 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
   useEffect(() => {
     void dispatch(fetchLotStock(projectId));
   }, [dispatch, projectId]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (projects.length === 0) {
+      void dispatch(fetchProjects());
+    }
+  }, [dispatch, isAuthenticated, projects.length]);
+
+  useEffect(() => {
+    setSelectedLot((current) => {
+      if (!current) return null;
+      return lots.find((lot) => lotStockKey(lot) === lotStockKey(current)) ?? null;
+    });
+  }, [lots]);
 
   useEffect(() => {
     setPageIndex(0);
@@ -131,10 +162,52 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
     setSelectedLot((current) => (current && lotStockKey(current) === lotStockKey(lot) ? null : lot));
   };
 
+  const handleHoldSelected = async (): Promise<void> => {
+    if (!selectedLot?.id) return;
+    const result = await dispatch(
+      holdProjectLot({
+        projectId,
+        lotId: selectedLot.id,
+        ventorName: authUser
+          ? displayUserName(authUser.name, authUser.lastName)
+          : undefined,
+      }),
+    );
+    if (holdProjectLot.fulfilled.match(result)) {
+      toast.success(t(isLongHold ? 'lotStock.holdSuccess' : 'lotStock.holdSuccess24h'));
+      return;
+    }
+    toast.error(result.payload ?? t('lotStock.holdConflict'));
+  };
+
+  const handleUnholdSelected = async (): Promise<void> => {
+    if (!selectedLot?.id) return;
+    const result = await dispatch(
+      unholdProjectLot({
+        projectId,
+        lotId: selectedLot.id,
+      }),
+    );
+    if (unholdProjectLot.fulfilled.match(result)) {
+      toast.success(t('lotStock.unholdSuccess'));
+      return;
+    }
+    toast.error(result.payload ?? t('lotStock.unholdConflict'));
+  };
+
+  const canUnhold =
+    Boolean(canHold && selectedLot && selectedLot.status === 'hold' && selectedLot.heldByUserId === authUser?.id);
+
   const isMap = prefs.viewMode === 'map';
 
   return (
-    <div className={cn('flex h-dvh flex-col bg-background', isMap ? 'pb-14' : 'pb-20')}>
+    <div
+      className={cn(
+        'flex flex-col bg-background',
+        embedded ? 'h-[calc(100dvh-5rem)] md:h-screen' : 'h-dvh',
+        isMap ? 'pb-14' : 'pb-20',
+      )}
+    >
       <header
         className={cn(
           'shrink-0 border-b border-border bg-card/95',
@@ -144,12 +217,36 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <Link
-              to={isAuthenticated ? '/projects' : '/stock'}
+              to="/stock"
               className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-secondary text-foreground transition-colors duration-200 hover:bg-secondary/80"
               aria-label={t('lotStock.backProjects')}
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
+            {isAuthenticated && projects.length > 0 ? (
+              <Select
+                value={projectId}
+                onValueChange={(value) => {
+                  if (value && value !== projectId) {
+                    navigate(`/stock/${value}`);
+                  }
+                }}
+              >
+                <SelectTrigger
+                  className="h-8 max-w-[12rem] cursor-pointer text-xs"
+                  aria-label={t('lotStock.switchProject')}
+                >
+                  <SelectValue placeholder={t('lotStock.switchProject')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
             {!isMap ? (
               <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                 {t('lotStock.pageReadOnly')}
@@ -314,7 +411,7 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
         {!isLoading && !error && prefs.viewMode !== 'columns' && prefs.viewMode !== 'map' ? (
           <p className="mb-3 hidden text-xs text-muted-foreground md:block">{t('lotStock.glanceHint')}</p>
         ) : null}
-        {!isLoading && !error && selectedLot && prefs.viewMode !== 'columns' ? (
+        {!isLoading && !error && selectedLot && prefs.viewMode !== 'columns' && prefs.viewMode !== 'map' ? (
           <div
             className={cn(
               'rounded-xl border-2',
@@ -355,6 +452,27 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
                 })}
               </p>
             ) : null}
+            {canHold && selectedLot.status === 'available' && selectedLot.id ? (
+              <button
+                type="button"
+                disabled={holdLoading}
+                onClick={() => void handleHoldSelected()}
+                className="mt-2 inline-flex h-8 cursor-pointer items-center rounded-lg bg-foreground px-3 text-xs font-semibold text-background transition-opacity duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t(isLongHold ? 'lotStock.hold72h' : 'lotStock.hold24h')}
+              </button>
+            ) : null}
+            {canUnhold && selectedLot.id ? (
+              <button
+                type="button"
+                disabled={holdLoading}
+                onClick={() => void handleUnholdSelected()}
+                className="mt-2 inline-flex h-8 cursor-pointer items-center rounded-lg bg-foreground px-3 text-xs font-semibold text-background transition-opacity duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t('lotStock.unhold')}
+              </button>
+            ) : null}
+            {holdError ? <p className="mt-1 text-xs text-destructive">{holdError}</p> : null}
           </div>
         ) : null}
         {!isLoading && !error && prefs.viewMode === 'glance' ? (
@@ -386,6 +504,17 @@ export function LotStockWorkspace({ projectId }: LotStockWorkspaceProps) {
               summary={kindSummary}
               onStatusChange={setStatusFilter}
               onSelect={handleSelectLot}
+              selectedLot={selectedLot}
+              showStage={showStageFilter}
+              canHold={canHold}
+              canUnhold={canUnhold}
+              holdLoading={holdLoading}
+              holdError={holdError}
+              holdLabelKey={isLongHold ? 'lotStock.hold72h' : 'lotStock.hold24h'}
+              intlLocale={intlLocale}
+              onCloseSelected={() => setSelectedLot(null)}
+              onHold={() => void handleHoldSelected()}
+              onUnhold={() => void handleUnholdSelected()}
             />
           )
         ) : null}

@@ -20,12 +20,14 @@ export type LotKindSummary = {
 };
 
 export type PublicProjectLot = {
+  id: string;
   number: string;
   area: number;
   price: number;
   status: ProjectLotStatus;
   kind: ProjectLotKind;
   ventorName: string;
+  heldByUserId: string;
   holdUntil: string | null;
   stageKey: string;
   stageName: string;
