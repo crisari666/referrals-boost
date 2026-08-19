@@ -37,6 +37,12 @@ const bottomBarNavItems: NavItem[] = [
   { path: '/', labelKey: 'layout.navHome', icon: LayoutDashboard },
   { path: '/projects', labelKey: 'layout.navProjects', icon: Building2 },
   { path: '/clients', labelKey: 'layout.navClients', icon: Users },
+  {
+    path: '/stock',
+    labelKey: 'layout.navLotStock',
+    icon: LayoutGrid,
+    roles: ['external_agent'],
+  },
   { path: '/profile', labelKey: 'layout.navProfile', icon: User },
 ];
 
@@ -59,16 +65,29 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+function uniqueNavByPath(items: NavItem[]): NavItem[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.path)) return false;
+    seen.add(item.path);
+    return true;
+  });
+}
+
 function filterNavItems(
   items: NavItem[],
   user: { physical?: boolean } | null | undefined,
   userRole: UserRole | undefined,
 ): NavItem[] {
-  return items.filter((item) => {
-    if (item.physicalOnly && !user?.physical) return false;
-    if (item.roles && (!userRole || !item.roles.includes(userRole))) return false;
-    return true;
-  });
+  const filtered =
+    userRole === 'external_agent'
+      ? items.filter((item) => item.path === '/stock' || item.path === '/profile')
+      : items.filter((item) => {
+          if (item.physicalOnly && !user?.physical) return false;
+          if (item.roles && (!userRole || !item.roles.includes(userRole))) return false;
+          return true;
+        });
+  return uniqueNavByPath(filtered);
 }
 
 const Layout = ({ children }: LayoutProps) => {

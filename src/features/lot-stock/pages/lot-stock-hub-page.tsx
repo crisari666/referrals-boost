@@ -11,13 +11,14 @@ export function LotStockHubPage() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { list, isLoading, error } = useAppSelector((state) => state.projects);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   useEffect(() => {
     void dispatch(fetchProjects());
   }, [dispatch]);
 
   return (
-    <div className="min-h-screen bg-background px-4 py-6">
+    <div className={isAuthenticated ? 'min-h-full bg-background px-4 py-6' : 'min-h-screen bg-background px-4 py-6'}>
       <div className="mx-auto max-w-3xl">
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
@@ -25,7 +26,7 @@ export function LotStockHubPage() {
             <h1 className="mt-1 text-2xl font-extrabold text-foreground">{t('lotStock.hubTitle')}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{t('lotStock.hubSubtitle')}</p>
           </div>
-          <LanguageSwitcher />
+          {!isAuthenticated ? <LanguageSwitcher /> : null}
         </div>
         {isLoading ? (
           <div className="space-y-3">

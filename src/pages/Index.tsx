@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom';
 import { DollarSign, Users, Target, TrendingUp } from 'lucide-react';
 import StatsCard from '@/components/StatsCard';
 import { motion } from 'framer-motion';
@@ -31,6 +32,10 @@ const Dashboard = () => {
       void dispatch(fetchVendorDashboard());
     }
   }, [dispatch, isVendor]);
+
+  if (user?.role === 'external_agent') {
+    return <Navigate to="/stock" replace />;
+  }
 
   const monthCommissions = isVendor && api ? api.monthCommissions : 0;
   const totalCommissions = isVendor && api ? api.totalHistoryCommissions : 0;

@@ -70,7 +70,8 @@ export type UserRole =
   | "asesor_fisico"
   | "admin"
   | "main_lead"
-  | "subadmin";
+  | "subadmin"
+  | "external_agent";
 
 /** User type used in the app (mapped from API result); includes token for authenticated requests */
 export type AuthUser = {

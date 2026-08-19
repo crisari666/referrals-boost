@@ -6,6 +6,7 @@ import * as authService from "@/services/authService";
 import * as profileService from "@/services/profileService";
 import {
   USER_LEVEL_ADMIN,
+  USER_LEVEL_EXTERNAL_AGENT,
   USER_LEVEL_MAIN_LEAD,
   USER_LEVEL_SUBADMIN,
 } from "@/constants/user-level";
@@ -35,6 +36,9 @@ function deriveUserRole(
   }
   if (api.level === USER_LEVEL_SUBADMIN) {
     return "subadmin";
+  }
+  if (api.level === USER_LEVEL_EXTERNAL_AGENT) {
+    return "external_agent";
   }
   if (api.physical) {
     return "asesor_fisico";
