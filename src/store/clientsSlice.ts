@@ -13,6 +13,7 @@ import type {
   UpdateMsCustomerPayload,
   VendorCustomerStep,
   CustomerMetaLeadMappedFieldsResponse,
+  CustomerMetadataResponse,
 } from "@/services/clientsService.types";
 import type { EditClientFormState } from '@/features/Clients/EditClientModal';
 import { COUNTRY_CODES, DEFAULT_COUNTRY, splitStoredPhone } from '@/lib/country-codes';
@@ -160,6 +161,39 @@ export const fetchCustomerMetaLeadMappedFields = createAsyncThunk<
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
         : i18n.t("clients.metaLeadLoadFailed");
+    return rejectWithValue(message);
+  }
+});
+
+export const fetchCustomerMetadata = createAsyncThunk<
+  CustomerMetadataResponse,
+  string,
+  { rejectValue: string }
+>("clients/fetchCustomerMetadata", async (customerId, { rejectWithValue }) => {
+  try {
+    return await clientsService.getCustomerMetadata(customerId);
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : i18n.t("clients.captureLoadFailed");
+    return rejectWithValue(message);
+  }
+});
+
+export const saveCustomerMetadata = createAsyncThunk<
+  CustomerMetadataResponse,
+  { customerId: string; values: Record<string, string> },
+  { rejectValue: string }
+>("clients/saveCustomerMetadata", async ({ customerId, values }, { rejectWithValue }) => {
+  try {
+    return await clientsService.putCustomerMetadata(customerId, { values });
+  } catch (err: unknown) {
+    toast.error(i18n.t("clients.captureSaveFailed"));
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : i18n.t("clients.captureSaveFailed");
     return rejectWithValue(message);
   }
 });
@@ -372,6 +406,11 @@ export interface ClientsState {
   metaLeadMappedFieldsCustomerId: string | null;
   metaLeadMappedFieldsStatus: "idle" | "loading" | "succeeded" | "failed";
   metaLeadMappedFieldsError: string | null;
+  customerMetadata: CustomerMetadataResponse | null;
+  customerMetadataCustomerId: string | null;
+  customerMetadataStatus: "idle" | "loading" | "succeeded" | "failed";
+  customerMetadataError: string | null;
+  customerMetadataSaving: boolean;
 }
 
 const initialState: ClientsState = {
@@ -405,6 +444,11 @@ const initialState: ClientsState = {
   metaLeadMappedFieldsCustomerId: null,
   metaLeadMappedFieldsStatus: "idle",
   metaLeadMappedFieldsError: null,
+  customerMetadata: null,
+  customerMetadataCustomerId: null,
+  customerMetadataStatus: "idle",
+  customerMetadataError: null,
+  customerMetadataSaving: false,
 };
 
 const clientsSlice = createSlice({
@@ -471,6 +515,11 @@ const clientsSlice = createSlice({
       state.metaLeadMappedFieldsCustomerId = null;
       state.metaLeadMappedFieldsStatus = "idle";
       state.metaLeadMappedFieldsError = null;
+      state.customerMetadata = null;
+      state.customerMetadataCustomerId = null;
+      state.customerMetadataStatus = "idle";
+      state.customerMetadataError = null;
+      state.customerMetadataSaving = false;
     },
     openVendorCustomerEditModal(state) {
       const c = state.vendorCreationDetail?.customer;
@@ -613,6 +662,35 @@ const clientsSlice = createSlice({
         state.metaLeadMappedFields = null;
         state.metaLeadMappedFieldsError =
           action.payload ?? action.error.message ?? i18n.t("clients.metaLeadLoadFailed");
+      })
+      .addCase(fetchCustomerMetadata.pending, (state, action) => {
+        state.customerMetadataStatus = "loading";
+        state.customerMetadataCustomerId = action.meta.arg;
+        state.customerMetadata = null;
+        state.customerMetadataError = null;
+      })
+      .addCase(fetchCustomerMetadata.fulfilled, (state, action) => {
+        state.customerMetadataStatus = "succeeded";
+        state.customerMetadata = action.payload;
+      })
+      .addCase(fetchCustomerMetadata.rejected, (state, action) => {
+        state.customerMetadataStatus = "failed";
+        state.customerMetadata = null;
+        state.customerMetadataError =
+          action.payload ?? action.error.message ?? i18n.t("clients.captureLoadFailed");
+      })
+      .addCase(saveCustomerMetadata.pending, (state) => {
+        state.customerMetadataSaving = true;
+      })
+      .addCase(saveCustomerMetadata.fulfilled, (state, action) => {
+        state.customerMetadataSaving = false;
+        state.customerMetadataStatus = "succeeded";
+        state.customerMetadataCustomerId = action.meta.arg.customerId;
+        state.customerMetadata = action.payload;
+        state.customerMetadataError = null;
+      })
+      .addCase(saveCustomerMetadata.rejected, (state) => {
+        state.customerMetadataSaving = false;
       });
   },
 });

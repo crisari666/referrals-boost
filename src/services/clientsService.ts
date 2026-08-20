@@ -15,6 +15,8 @@ import type {
   CustomerEventItem,
   CustomerEventListResponse,
   CustomerMetaLeadMappedFieldsResponse,
+  CustomerMetadataResponse,
+  UpsertCustomerMetadataPayload,
   CreationDetailCustomer,
   CreationDetailNote,
   CustomerByCreator,
@@ -311,6 +313,31 @@ export async function getCustomerMetaLeadMappedFields(
   return http.get('', {
     url: customersMsUrl(
       `customer/${encodeURIComponent(customerId)}/meta-lead-mapped-fields`
+    ),
+    ...withCustomersMsAuth(),
+  });
+}
+
+/** `GET customer/:customerId/metadata` — Stage 3 qualification fields. */
+export async function getCustomerMetadata(
+  customerId: string
+): Promise<CustomerMetadataResponse> {
+  return http.get('', {
+    url: customersMsUrl(
+      `customer/${encodeURIComponent(customerId)}/metadata`
+    ),
+    ...withCustomersMsAuth(),
+  });
+}
+
+/** `PUT customer/:customerId/metadata` — upsert Stage 3 values. */
+export async function putCustomerMetadata(
+  customerId: string,
+  body: UpsertCustomerMetadataPayload
+): Promise<CustomerMetadataResponse> {
+  return http.put('', body, {
+    url: customersMsUrl(
+      `customer/${encodeURIComponent(customerId)}/metadata`
     ),
     ...withCustomersMsAuth(),
   });
