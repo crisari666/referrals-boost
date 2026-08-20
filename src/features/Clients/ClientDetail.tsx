@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { Client } from '@/features/Clients/types/client.type';
-import { useEffect, useMemo, useLayoutEffect } from 'react';
+import { useEffect, useMemo, useLayoutEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
   clearVendorCreationDetail,
@@ -16,8 +16,11 @@ import { ClientDetailNotesSection } from './client-detail-notes-section';
 import { ClientDetailDownPaymentsSection } from './client-detail-down-payments-section';
 import { ClientDetailTimelineSection } from './client-detail-timeline-section';
 import { ClientDetailMetaLeadFieldsSection } from './client-detail-meta-lead-fields-section';
+import { ClientDetailCaptureSection } from './client-detail-capture-section';
+import { ClientDetailTabsBar } from './client-detail-tabs-bar';
+import { ClientDetailTabSwipe } from './client-detail-tab-swipe';
 import { EditClientModal } from './EditClientModal';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 
 const ClientDetail = () => {
   const { t } = useTranslation();
@@ -37,6 +40,20 @@ const ClientDetail = () => {
   }, [id, detailForRoute]);
 
   const loading = Boolean(id) && vendorCreationDetailStatus === 'loading';
+
+  const tabValues = useMemo(() => {
+    if (isPhysical) {
+      return ['meta', 'capture', 'notes', 'payments', 'timeline'] as const;
+    }
+    return ['notes', 'capture', 'timeline'] as const;
+  }, [isPhysical]);
+
+  const defaultTab = isPhysical ? 'meta' : 'notes';
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
+
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab, id]);
 
   useLayoutEffect(() => {
     if (!id) {
@@ -85,8 +102,6 @@ const ClientDetail = () => {
     .slice(0, 2)
     .join('');
 
-  const defaultTab = isPhysical ? 'meta' : 'notes';
-
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-4">
       <ClientDetailHeader customerId={id} isPhysical={isPhysical} />
@@ -97,41 +112,60 @@ const ClientDetail = () => {
         isPhysical={isPhysical}
       />
 
-      <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1 p-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <ClientDetailTabsBar>
           {isPhysical ? (
-            <TabsTrigger value="meta" className="cursor-pointer flex-1 min-w-[7rem]">
+            <TabsTrigger value="meta" className="cursor-pointer shrink-0 min-w-[7rem]">
               {t('clients.metaLeadTitle')}
             </TabsTrigger>
           ) : null}
-          <TabsTrigger value="notes" className="cursor-pointer flex-1 min-w-[7rem]">
-            {t('clients.notesTitle')}
+          {!isPhysical ? (
+            <TabsTrigger value="notes" className="cursor-pointer shrink-0 min-w-[7rem]">
+              {t('clients.notesTitle')}
+            </TabsTrigger>
+          ) : null}
+          <TabsTrigger value="capture" className="cursor-pointer shrink-0 min-w-[7rem]">
+            {t('clients.captureTitle')}
           </TabsTrigger>
           {isPhysical ? (
-            <TabsTrigger value="payments" className="cursor-pointer flex-1 min-w-[7rem]">
+            <TabsTrigger value="notes" className="cursor-pointer shrink-0 min-w-[7rem]">
+              {t('clients.notesTitle')}
+            </TabsTrigger>
+          ) : null}
+          {isPhysical ? (
+            <TabsTrigger value="payments" className="cursor-pointer shrink-0 min-w-[7rem]">
               {t('downPayments.title')}
             </TabsTrigger>
           ) : null}
-          <TabsTrigger value="timeline" className="cursor-pointer flex-1 min-w-[7rem]">
+          <TabsTrigger value="timeline" className="cursor-pointer shrink-0 min-w-[7rem]">
             {t('clients.timelineApiTitle')}
           </TabsTrigger>
-        </TabsList>
-        {isPhysical ? (
-          <TabsContent value="meta" className="mt-3">
-            <ClientDetailMetaLeadFieldsSection />
+        </ClientDetailTabsBar>
+        <ClientDetailTabSwipe
+          tabValues={tabValues}
+          activeValue={activeTab}
+          onValueChange={setActiveTab}
+        >
+          {isPhysical ? (
+            <TabsContent value="meta" className="mt-3">
+              <ClientDetailMetaLeadFieldsSection />
+            </TabsContent>
+          ) : null}
+          <TabsContent value="capture" className="mt-3">
+            <ClientDetailCaptureSection />
           </TabsContent>
-        ) : null}
-        <TabsContent value="notes" className="mt-3">
-          <ClientDetailNotesSection />
-        </TabsContent>
-        {isPhysical ? (
-          <TabsContent value="payments" className="mt-3">
-            <ClientDetailDownPaymentsSection />
+          <TabsContent value="notes" className="mt-3">
+            <ClientDetailNotesSection />
           </TabsContent>
-        ) : null}
-        <TabsContent value="timeline" className="mt-3">
-          <ClientDetailTimelineSection />
-        </TabsContent>
+          {isPhysical ? (
+            <TabsContent value="payments" className="mt-3">
+              <ClientDetailDownPaymentsSection />
+            </TabsContent>
+          ) : null}
+          <TabsContent value="timeline" className="mt-3">
+            <ClientDetailTimelineSection />
+          </TabsContent>
+        </ClientDetailTabSwipe>
       </Tabs>
 
       <EditClientModal />
