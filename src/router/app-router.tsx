@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
 import Layout from '@/components/Layout';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -21,6 +21,18 @@ import { TrainingSessionsPage } from '@/features/training-sessions/pages/trainin
 import { LotStockHubPage } from '@/features/lot-stock/pages/lot-stock-hub-page';
 import { LotStockPage } from '@/features/lot-stock/pages/lot-stock-page';
 import { StockLayoutRoute } from '@/features/lot-stock/pages/stock-layout-route';
+import {
+  BuyerOrderDetailPage,
+  BuyerOrdersPage,
+  BuyerProtectedRoute,
+  PurchaseCuentaStep,
+  PurchaseDatosStep,
+  PurchaseExitoStep,
+  PurchaseLegalStep,
+  PurchasePagoStep,
+  PurchaseResumenStep,
+  PurchaseWizardLayout,
+} from '@/features/lot-purchase';
 
 const Protected = ({ children }: { children: ReactNode }) => (
   <ProtectedRoute>
@@ -50,6 +62,36 @@ const AppRouter = () => (
         <StockLayoutRoute>
           <LotStockPage />
         </StockLayoutRoute>
+      }
+    />
+    <Route path='/tienda' element={<Navigate to='/stock' replace />} />
+    <Route
+      path='/tienda/:projectId'
+      element={<Navigate to='/stock/:projectId' replace />}
+    />
+    <Route path='/comprar/:projectId/:lotId' element={<PurchaseWizardLayout />}>
+      <Route index element={<Navigate to='resumen' replace />} />
+      <Route path='resumen' element={<PurchaseResumenStep />} />
+      <Route path='cuenta' element={<PurchaseCuentaStep />} />
+      <Route path='datos' element={<PurchaseDatosStep />} />
+      <Route path='legal' element={<PurchaseLegalStep />} />
+      <Route path='pago' element={<PurchasePagoStep />} />
+      <Route path='exito' element={<PurchaseExitoStep />} />
+    </Route>
+    <Route
+      path='/mis-compras'
+      element={
+        <BuyerProtectedRoute>
+          <BuyerOrdersPage />
+        </BuyerProtectedRoute>
+      }
+    />
+    <Route
+      path='/mis-compras/:orderId'
+      element={
+        <BuyerProtectedRoute>
+          <BuyerOrderDetailPage />
+        </BuyerProtectedRoute>
       }
     />
     <Route path='/' element={<Protected><Index /></Protected>} />

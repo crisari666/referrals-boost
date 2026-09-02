@@ -14,6 +14,9 @@ import twilioVoiceReducer from "./twilioVoiceSlice";
 import signupCampaignReducer from "./signupCampaignSlice";
 import trainingSessionsReducer from "@/features/training-sessions/store/training-sessions-slice";
 import lotStockReducer from "@/features/lot-stock/store/lot-stock-slice";
+import buyerAuthReducer from "@/features/lot-purchase/store/buyer-auth-slice";
+import purchaseDraftReducer from "@/features/lot-purchase/store/purchase-draft-slice";
+import purchaseOrdersReducer from "@/features/lot-purchase/store/purchase-orders-slice";
 
 export const store = configureStore({
   reducer: {
@@ -31,6 +34,9 @@ export const store = configureStore({
     signupCampaign: signupCampaignReducer,
     trainingSessions: trainingSessionsReducer,
     lotStock: lotStockReducer,
+    buyerAuth: buyerAuthReducer,
+    purchaseDraft: purchaseDraftReducer,
+    purchaseOrders: purchaseOrdersReducer,
   },
 });
 
