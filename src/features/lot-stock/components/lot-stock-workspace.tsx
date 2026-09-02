@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { ArrowLeft, Columns3, Grid2x2, LayoutGrid, Map as MapIcon, Search } from 'lucide-react';
+import { ArrowLeft, Columns3, Grid2x2, LayoutGrid, Lock, Map as MapIcon, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,15 +51,27 @@ import {
 } from '@/features/lot-stock/types/lot-stock.types';
 import { getIntlLocaleTag } from '@/i18n/intl-locale';
 import { cn } from '@/lib/utils';
+import { startPurchaseDraft } from '@/features/lot-purchase/store/purchase-draft-slice';
 
 type LotStockWorkspaceProps = {
   projectId: string;
   embedded?: boolean;
 };
 
-export function LotStockWorkspace({ projectId, embedded = false }: LotStockWorkspaceProps) {
+function resolveBuyBlockedKey(status: ProjectLotStatus): string {
+  if (status === 'sold') return 'lotPurchase.buyBlockedSold';
+  if (status === 'hold') return 'lotPurchase.buyBlockedHold';
+  if (status === 'locked') return 'lotPurchase.buyBlockedLocked';
+  return 'lotPurchase.buyUnavailable';
+}
+
+export function LotStockWorkspace({
+  projectId,
+  embedded = false,
+}: LotStockWorkspaceProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const { projectTitle, lots, summary, isLoading, error, holdLoading, holdError } =
     useAppSelector(selectLotStock);
@@ -79,6 +91,7 @@ export function LotStockWorkspace({ projectId, embedded = false }: LotStockWorks
   const [prefs, setPrefs] = useState<LotStockPrefs>(readLotStockPrefs);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
+  const [didApplyLotQuery, setDidApplyLotQuery] = useState(false);
   const intlLocale = getIntlLocaleTag();
   const kindSummary = kind === 'lot' ? summary.lot : summary.commercial;
   const stageOptions = useMemo(
@@ -102,6 +115,7 @@ export function LotStockWorkspace({ projectId, embedded = false }: LotStockWorks
     [visibleLots, prefs.rowsPerColumn],
   );
   const selectedKey = selectedLot ? lotStockKey(selectedLot) : null;
+  const lotQueryId = searchParams.get('lot')?.trim() || '';
 
   useEffect(() => {
     void dispatch(fetchLotStock(projectId));
@@ -122,9 +136,34 @@ export function LotStockWorkspace({ projectId, embedded = false }: LotStockWorks
   }, [lots]);
 
   useEffect(() => {
+    setDidApplyLotQuery(false);
+  }, [projectId, lotQueryId]);
+
+  useEffect(() => {
+    if (didApplyLotQuery || !lotQueryId || lots.length === 0) return;
+    const match = lots.find((lot) => lot.id === lotQueryId);
+    if (!match) {
+      setDidApplyLotQuery(true);
+      return;
+    }
+    setSelectedLot(match);
+    setKind(match.kind);
+    setPrefs((current) => {
+      if (current.viewMode === 'map') return current;
+      const next = { ...current, viewMode: 'map' as const };
+      writeLotStockPrefs(next);
+      writeLotStockViewHash('map');
+      return next;
+    });
+    setDidApplyLotQuery(true);
+  }, [didApplyLotQuery, lotQueryId, lots]);
+
+  useEffect(() => {
     setPageIndex(0);
-    setSelectedLot(null);
-  }, [kind, statusFilter, stageFilter, search, prefs.rowsPerColumn]);
+    if (!lotQueryId) {
+      setSelectedLot(null);
+    }
+  }, [kind, statusFilter, stageFilter, search, prefs.rowsPerColumn, lotQueryId]);
 
   useEffect(() => {
     setStageFilter('all');
@@ -198,7 +237,26 @@ export function LotStockWorkspace({ projectId, embedded = false }: LotStockWorks
   const canUnhold =
     Boolean(canHold && selectedLot && selectedLot.status === 'hold' && selectedLot.heldByUserId === authUser?.id);
 
+  const handleBuySelected = (): void => {
+    if (!selectedLot?.id || selectedLot.status !== 'available') return;
+    dispatch(
+      startPurchaseDraft({
+        projectId,
+        projectTitle: projectTitle || '',
+        lotId: selectedLot.id,
+        lotNumber: selectedLot.number,
+        lotArea: selectedLot.area,
+        price: selectedLot.price,
+        stageName: selectedLot.stageName || '',
+      }),
+    );
+    navigate(`/comprar/${projectId}/${selectedLot.id}/resumen`);
+  };
+
   const isMap = prefs.viewMode === 'map';
+  const showBuyCta = !canHold;
+  const isBuyAvailable =
+    showBuyCta && selectedLot?.status === 'available' && Boolean(selectedLot?.id);
 
   return (
     <div
@@ -472,6 +530,24 @@ export function LotStockWorkspace({ projectId, embedded = false }: LotStockWorks
                 {t('lotStock.unhold')}
               </button>
             ) : null}
+            {showBuyCta ? (
+              <button
+                type="button"
+                disabled={!isBuyAvailable}
+                onClick={handleBuySelected}
+                className={cn(
+                  'mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-opacity duration-200',
+                  isBuyAvailable
+                    ? 'cursor-pointer bg-primary text-primary-foreground hover:opacity-90'
+                    : 'cursor-not-allowed bg-muted text-muted-foreground',
+                )}
+              >
+                {!isBuyAvailable ? <Lock className="h-3.5 w-3.5" /> : null}
+                {isBuyAvailable
+                  ? t('lotPurchase.buyCtaFromStock')
+                  : t(resolveBuyBlockedKey(selectedLot.status))}
+              </button>
+            ) : null}
             {holdError ? <p className="mt-1 text-xs text-destructive">{holdError}</p> : null}
           </div>
         ) : null}
@@ -515,6 +591,8 @@ export function LotStockWorkspace({ projectId, embedded = false }: LotStockWorks
               onCloseSelected={() => setSelectedLot(null)}
               onHold={() => void handleHoldSelected()}
               onUnhold={() => void handleUnholdSelected()}
+              onBuyLot={showBuyCta ? handleBuySelected : undefined}
+              buyLabelKey="lotPurchase.buyCtaFromStock"
             />
           )
         ) : null}
