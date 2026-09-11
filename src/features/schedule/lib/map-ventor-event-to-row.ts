@@ -40,5 +40,7 @@ export function mapVentorEventToVisitRow(
     status: ev.status,
     note: ev.note,
     googleMeetUrl: ev.googleMeetUrl,
+    recordingDriveFileId: ev.recordingDriveFileId,
+    transcriptDriveDocId: ev.transcriptDriveDocId,
   };
 }

@@ -35,6 +35,13 @@ export type VentorScheduleEventApi = {
   note?: string;
   googleMeetUrl?: string;
   googleCalendarEventId?: string;
+  customerEmail?: string;
+  ventorEmail?: string;
+  meetSpaceId?: string;
+  organizerEmail?: string;
+  meetSubscriptionStatus?: string;
+  recordingDriveFileId?: string;
+  transcriptDriveDocId?: string;
   status: VentorScheduleStatusApi;
   createdAt?: string;
   updatedAt?: string;
@@ -47,9 +54,8 @@ export type CreateVentorSchedulePayload = {
   time: string;
   eventType: VentorScheduleEventTypeApi;
   note?: string;
-  googleMeetUrl?: string;
-  googleCalendarEventId?: string;
-  organizerEmail?: string;
+  customerEmail?: string;
+  ventorEmail?: string;
 };
 
 export async function listVentorScheduleByCustomer(
@@ -147,6 +153,22 @@ export async function syncVentorMeetCall(
     ...withCustomersMsAuth(),
     url: customersMsUrl(
       `ventor-schedule/${encodeURIComponent(eventId)}/meet-sync`
+    ),
+  });
+}
+
+export type RefreshVentorMeetArtifactsResult = {
+  schedule: VentorScheduleEventApi;
+  callLog: unknown;
+};
+
+export async function refreshVentorMeetArtifacts(
+  eventId: string
+): Promise<RefreshVentorMeetArtifactsResult> {
+  return http.post("", {}, {
+    ...withCustomersMsAuth(),
+    url: customersMsUrl(
+      `ventor-schedule/${encodeURIComponent(eventId)}/meet-artifacts/refresh`
     ),
   });
 }

@@ -19,6 +19,8 @@ export interface ScheduleVisitRow {
   status: VentorScheduleStatusApi;
   note?: string;
   googleMeetUrl?: string;
+  recordingDriveFileId?: string;
+  transcriptDriveDocId?: string;
 }
 
 export type { VentorScheduleEventTypeApi as ScheduleEventType } from "@/services/scheduleService";
