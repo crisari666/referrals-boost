@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,8 +18,6 @@ import { toast } from "sonner";
 import type { VentorScheduleEventTypeApi } from "@/services/scheduleService";
 import { VENTOR_SCHEDULE_TYPE_LABEL_KEYS } from "@/features/schedule/lib/schedule.constants";
 import { useTranslation } from "react-i18next";
-import { requestGoogleCalendarAccessToken } from "@/lib/google/request-calendar-access-token";
-import { createGoogleMeetEvent } from "@/lib/google/create-google-meet-event";
 
 interface ScheduleDialogProps {
   clientId?: string;
@@ -34,13 +32,13 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
   const creating = useAppSelector((s) => s.schedule.creating);
   const authUser = useAppSelector((s) => s.auth.user);
   const [open, setOpen] = useState(false);
-  const [creatingMeet, setCreatingMeet] = useState(false);
 
   const [selectedClient, setSelectedClient] = useState(clientId ?? "");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("10:00");
   const [type, setType] = useState<VentorScheduleEventTypeApi>("office");
   const [notes, setNotes] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
 
   const eventTypes = useMemo(
     (): { value: VentorScheduleEventTypeApi; label: string; Icon: LucideIcon }[] => [
@@ -56,6 +54,14 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
   const project = client
     ? projects.find((p) => p.id === client.projectInterest)
     : null;
+  const clientEmail = client?.email?.trim() ?? "";
+
+  useEffect(() => {
+    if (!clientEmail) {
+      return;
+    }
+    setCustomerEmail((prev) => (prev.trim() ? prev : clientEmail));
+  }, [clientEmail, selectedClient]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,33 +69,20 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
       toast.error(t("schedule.requiredFields"));
       return;
     }
-    let googleMeetUrl: string | undefined;
-    let googleCalendarEventId: string | undefined;
     if (type === "virtual") {
-      setCreatingMeet(true);
-      try {
-        const accessToken = await requestGoogleCalendarAccessToken();
-        const meet = await createGoogleMeetEvent({
-          accessToken,
-          summary: t("schedule.dialogTitle") + (client?.name ? `: ${client.name}` : ""),
-          dateYmd: date,
-          timeHm: time,
-          description: notes.trim() || undefined,
-        });
-        googleMeetUrl = meet.googleMeetUrl;
-        googleCalendarEventId = meet.googleCalendarEventId;
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error && err.message
-            ? err.message
-            : t("schedule.googleMeetCreateFailed");
-        toast.error(message || t("schedule.googleSignInRequired"));
-        setCreatingMeet(false);
+      const email = customerEmail.trim() || clientEmail;
+      if (!email || !email.includes("@")) {
+        toast.error(t("schedule.customerEmailRequired"));
         return;
       }
-      setCreatingMeet(false);
+      if (!authUser?.email?.trim()) {
+        toast.error(t("schedule.ventorEmailRequired"));
+        return;
+      }
     }
 
+    const resolvedCustomerEmail =
+      customerEmail.trim().toLowerCase() || clientEmail.toLowerCase();
     const resultAction = await dispatch(
       createVentorScheduleEventRequest({
         customerId: selectedClient,
@@ -97,10 +90,13 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
         time,
         eventType: type,
         ...(notes.trim() ? { note: notes.trim() } : {}),
-        ...(googleMeetUrl ? { googleMeetUrl } : {}),
-        ...(googleCalendarEventId ? { googleCalendarEventId } : {}),
-        ...(googleMeetUrl && authUser?.email?.trim()
-          ? { organizerEmail: authUser.email.trim() }
+        ...(type === "virtual"
+          ? {
+              ...(resolvedCustomerEmail
+                ? { customerEmail: resolvedCustomerEmail }
+                : {}),
+              ventorEmail: authUser!.email.trim().toLowerCase(),
+            }
           : {}),
       })
     );
@@ -122,9 +118,9 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
     setTime("10:00");
     setType("office");
     setNotes("");
+    const nextClient = clients.find((c) => c.id === (clientId ?? ""));
+    setCustomerEmail(nextClient?.email?.trim() ?? "");
   };
-
-  const isSubmitting = creating || creatingMeet;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -149,7 +145,13 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
               </label>
               <select
                 value={selectedClient}
-                onChange={(e) => setSelectedClient(e.target.value)}
+                onChange={(e) => {
+                  const nextId = e.target.value;
+                  setSelectedClient(nextId);
+                  const nextEmail =
+                    clients.find((c) => c.id === nextId)?.email?.trim() ?? "";
+                  setCustomerEmail(nextEmail);
+                }}
                 className="form-input cursor-pointer"
                 required
               >
@@ -193,6 +195,25 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
             </div>
           </div>
 
+          {type === "virtual" ? (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                {t("schedule.customerEmailLabel")}
+              </label>
+              <input
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder={t("schedule.customerEmailPlaceholder")}
+                className="form-input"
+                required
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("schedule.customerEmailHint")}
+              </p>
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
@@ -233,8 +254,8 @@ const ScheduleDialog = ({ clientId, trigger }: ScheduleDialogProps) => {
             />
           </div>
 
-          <Button type="submit" className="w-full cursor-pointer" disabled={isSubmitting}>
-            {isSubmitting ? t("common.saving") : t("schedule.confirmVisit")}
+          <Button type="submit" className="w-full cursor-pointer" disabled={creating}>
+            {creating ? t("common.saving") : t("schedule.confirmVisit")}
           </Button>
         </form>
       </DialogContent>
