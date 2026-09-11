@@ -139,6 +139,23 @@ export const patchVentorScheduleOnLandAgentRequest = createAsyncThunk<
   }
 );
 
+export const refreshVentorMeetArtifactsRequest = createAsyncThunk<
+  VentorScheduleEventApi,
+  string,
+  { rejectValue: string }
+>("schedule/refreshMeetArtifacts", async (eventId, { rejectWithValue }) => {
+  try {
+    const result = await scheduleService.refreshVentorMeetArtifacts(eventId);
+    return result.schedule;
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "No se pudieron obtener los archivos de Meet.";
+    return rejectWithValue(message);
+  }
+});
+
 const scheduleSlice = createSlice({
   name: "schedule",
   initialState,
@@ -220,7 +237,11 @@ const scheduleSlice = createSlice({
           const id = action.meta.arg.eventId;
           state.patchingById[id] = false;
         }
-      );
+      )
+      .addCase(refreshVentorMeetArtifactsRequest.fulfilled, (state, action) => {
+        replaceEventInAllCachedDays(state, action.payload);
+        upsertEventInDayCache(state, action.payload);
+      });
   },
 });
 

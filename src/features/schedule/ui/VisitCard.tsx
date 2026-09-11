@@ -4,7 +4,10 @@ import {
   VENTOR_SCHEDULE_TYPE_LABEL_KEYS,
 } from "@/features/schedule/lib/schedule.constants";
 import { AssignOnLandAgentDialog } from "@/features/schedule/ui/assign-on-land-agent-dialog";
-import { patchVentorScheduleStatusRequest } from "@/features/schedule/store/scheduleSlice";
+import {
+  patchVentorScheduleStatusRequest,
+  refreshVentorMeetArtifactsRequest,
+} from "@/features/schedule/store/scheduleSlice";
 import {
   Select,
   SelectContent,
@@ -12,13 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store";
 import type { ScheduleVisitRow } from "@/types/schedule";
 import type { VentorScheduleEventTypeApi, VentorScheduleStatusApi } from "@/services/scheduleService";
-import * as scheduleService from "@/services/scheduleService";
 import {
   Building2,
   Clock,
+  FileText,
   MapPin,
   MonitorSmartphone,
   Phone,
@@ -28,8 +32,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { requestGoogleCalendarAccessToken } from "@/lib/google/request-calendar-access-token";
-import { fetchMeetConferenceSync } from "@/lib/google/fetch-meet-conference-sync";
+import { useState } from "react";
 
 function formatAssigneeUserId(userId: string): string {
   const trimmed = userId.trim();
@@ -63,27 +66,6 @@ function EventTypeIcon({ type }: { type: VentorScheduleEventTypeApi }) {
   }
 }
 
-async function syncMeetAfterDone(visit: ScheduleVisitRow): Promise<void> {
-  const meetUrl = visit.googleMeetUrl?.trim();
-  if (!meetUrl || visit.eventType !== "virtual") {
-    return;
-  }
-  const accessToken = await requestGoogleCalendarAccessToken();
-  const sync = await fetchMeetConferenceSync({
-    accessToken,
-    googleMeetUrl: meetUrl,
-  });
-  await scheduleService.syncVentorMeetCall(visit.id, {
-    attendance: sync.attendance,
-    conferenceRecordName: sync.conferenceRecordName,
-    durationSeconds: sync.durationSeconds,
-    transcript: sync.transcript,
-    text: sync.text,
-    utterances: sync.utterances,
-    endedAt: sync.endedAt,
-  });
-}
-
 const VisitCard = ({
   visit,
   showScheduleAssignee = false,
@@ -94,8 +76,10 @@ const VisitCard = ({
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const patching = useAppSelector((s) => s.schedule.patchingById[visit.id] ?? false);
+  const [refreshingArtifacts, setRefreshingArtifacts] = useState(false);
   const isOnLandPending =
     visit.eventType === "on_land" && visit.status === "pending";
+  const isVirtual = visit.eventType === "virtual" && Boolean(visit.googleMeetUrl?.trim());
 
   const onStatusChange = async (value: string) => {
     const status = value as VentorScheduleStatusApi;
@@ -104,24 +88,18 @@ const VisitCard = ({
     );
     if (patchVentorScheduleStatusRequest.rejected.match(res)) {
       toast.error(res.payload ?? t("schedule.updateFailed"));
+    }
+  };
+
+  const onFetchMeetArtifacts = async () => {
+    setRefreshingArtifacts(true);
+    const res = await dispatch(refreshVentorMeetArtifactsRequest(visit.id));
+    setRefreshingArtifacts(false);
+    if (refreshVentorMeetArtifactsRequest.rejected.match(res)) {
+      toast.error(res.payload ?? t("schedule.fetchMeetArtifactsFailed"));
       return;
     }
-    if (
-      status === "done" &&
-      visit.eventType === "virtual" &&
-      visit.googleMeetUrl?.trim()
-    ) {
-      try {
-        await syncMeetAfterDone(visit);
-        toast.success(t("schedule.meetSyncSuccess"));
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error && err.message
-            ? err.message
-            : t("schedule.meetSyncFailed");
-        toast.error(message || t("schedule.meetSyncFailed"));
-      }
-    }
+    toast.success(t("schedule.fetchMeetArtifactsSuccess"));
   };
 
   const statusKeys = Object.keys(VENTOR_SCHEDULE_STATUS_LABEL_KEYS) as VentorScheduleStatusApi[];
@@ -220,6 +198,35 @@ const VisitCard = ({
           <Video className="w-3.5 h-3.5 shrink-0" />
           {t("schedule.joinMeet")}
         </a>
+      ) : null}
+
+      {isVirtual ? (
+        <div className="mt-3 space-y-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs cursor-pointer"
+            disabled={refreshingArtifacts || patching}
+            onClick={() => void onFetchMeetArtifacts()}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            {refreshingArtifacts
+              ? t("common.saving")
+              : t("schedule.fetchMeetArtifacts")}
+          </Button>
+          {visit.recordingDriveFileId ? (
+            <p className="text-[11px] text-muted-foreground break-all">
+              {t("schedule.meetArtifactsRecordingId")}: {visit.recordingDriveFileId}
+            </p>
+          ) : null}
+          {visit.transcriptDriveDocId ? (
+            <p className="text-[11px] text-muted-foreground break-all">
+              {t("schedule.meetArtifactsTranscriptDocId")}:{" "}
+              {visit.transcriptDriveDocId}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {visit.note ? (
