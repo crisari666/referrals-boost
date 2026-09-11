@@ -24,6 +24,7 @@ export function useLoginPage() {
   const { isLoading, error, isAuthenticated } = useAppSelector((s) => s.auth);
   const scopesEnsuredForLoginRef = useRef(false);
   const wasAuthenticatedOnMountRef = useRef(isAuthenticated);
+  const lastLoginMethodRef = useRef<"password" | "google" | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -31,6 +32,11 @@ export function useLoginPage() {
     }
     const alreadyWasIn = wasAuthenticatedOnMountRef.current;
     if (alreadyWasIn) {
+      navigate("/", { replace: true });
+      return;
+    }
+    const loginMethod = lastLoginMethodRef.current;
+    if (loginMethod !== "google") {
       navigate("/", { replace: true });
       return;
     }
@@ -71,6 +77,7 @@ export function useLoginPage() {
   const handleSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
+      lastLoginMethodRef.current = "password";
       const value = userOrEmail.trim();
       dispatch(
         loginUser({
@@ -87,6 +94,7 @@ export function useLoginPage() {
 
   const handleGoogleCredential = useCallback(
     (idToken: string) => {
+      lastLoginMethodRef.current = "google";
       void dispatch(
         loginWithGoogle({
           idToken,
