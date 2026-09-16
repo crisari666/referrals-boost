@@ -16,6 +16,7 @@ import {
   buildConflictFieldErrors,
   getHttpErrorMessage,
 } from '@/lib/parse-api-error';
+import { toLocalYmd } from '@/lib/to-local-ymd';
 
 const apiStatusToClient: Record<number, ClientStatus> = {
   0: 'nuevo',
@@ -46,11 +47,13 @@ export function mapApiCustomerToClient(c: clientsService.CustomerByCreator): Cli
     whatsapp: c.whatsapp ?? '',
     projectInterest: lastProjectId,
     status: apiStatusToClient[c.status] ?? 'nuevo',
-    createdAt: c.createdAt?.split('T')[0] ?? '',
+    createdAt: c.createdAt ? toLocalYmd(c.createdAt) : '',
     ...(c.lastUpdate != null && String(c.lastUpdate).trim() !== ''
-      ? { lastUpdate: new Date(c.lastUpdate).toISOString().slice(0, 10) }
+      ? { lastUpdate: toLocalYmd(c.lastUpdate) }
       : {}),
-    assignedDate: c.assignedDate?.split('T')[0] ?? undefined,
+    assignedDate: c.assignedDate?.trim()
+      ? toLocalYmd(c.assignedDate)
+      : undefined,
     notes: [],
     interactions: [],
     ...(c.customerStepId != null && String(c.customerStepId).trim() !== ''
@@ -76,7 +79,7 @@ export function mapCreationCustomerToClient(
     whatsapp: c.whatsapp ?? '',
     projectInterest: lastProyect,
     status: apiStatusToClient[c.status] ?? 'nuevo',
-    createdAt: c.createdAt?.split('T')[0] ?? '',
+    createdAt: c.createdAt ? toLocalYmd(c.createdAt) : '',
     notes: [],
     interactions: [],
     ...(c.customerStepId != null && String(c.customerStepId).trim() !== ''
@@ -203,7 +206,7 @@ export function useClient() {
     }
 
     try {
-      const dateStr = new Date().toISOString().split('T')[0];
+      const dateStr = toLocalYmd(new Date());
       const interestProyect: clientsService.InterestProyectItem[] | undefined =
         result.data.projectInterest?.trim()
           ? [{ proyect: result.data.projectInterest.trim(), date: dateStr }]

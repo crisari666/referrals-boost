@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { Client, ClientStatus } from '@/features/Clients/types/client.type';
 import * as clientsService from "@/services/clientsService";
 import type { CustomerMineListSort } from "@/services/clientsService";
+import { toLocalYmd } from "@/lib/to-local-ymd";
 import type {
   CreationDetailCustomer,
   CustomerEventItem,
@@ -283,7 +284,7 @@ export const submitVendorCustomerEdit = createAsyncThunk<
       ? [
           {
             projectId: parsed.data.projectInterest.trim(),
-            date: new Date().toISOString().slice(0, 10),
+            date: toLocalYmd(new Date()),
           },
         ]
       : [],
@@ -717,7 +718,7 @@ export const {
 } = clientsSlice.actions;
 
 function toYmd(value: Date): string {
-  return value.toISOString().slice(0, 10);
+  return toLocalYmd(value);
 }
 
 function resolveSelectedDate(kind: ClientsDateFilterKind, customDate: string): string | null {
