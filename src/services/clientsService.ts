@@ -14,6 +14,7 @@ import type {
   CreateCustomerEventPayload,
   CustomerEventItem,
   CustomerEventListResponse,
+  CustomerMineEventsSummaryResponse,
   CustomerMetaLeadMappedFieldsResponse,
   CustomerMetadataResponse,
   UpsertCustomerMetadataPayload,
@@ -436,6 +437,22 @@ export async function createCustomerEvent(
       url: customersMsUrl(`customer/${encodeURIComponent(customerId)}/events`),
       ...withCustomersMsAuth(),
     }
+  );
+}
+
+/**
+ * Distinct customers per event type for the given mine-list customer ids.
+ */
+export async function summarizeMineEvents(
+  customerIds: string[],
+): Promise<CustomerMineEventsSummaryResponse> {
+  return http.post<CustomerMineEventsSummaryResponse>(
+    "",
+    { customerIds },
+    {
+      url: customersMsUrl("customer/mine/events-summary"),
+      ...withCustomersMsAuth(),
+    },
   );
 }
 

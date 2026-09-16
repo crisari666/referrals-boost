@@ -9,6 +9,7 @@ import { toLocalYmd } from "@/lib/to-local-ymd";
 import type {
   CreationDetailCustomer,
   CustomerEventItem,
+  CustomerMineEventTypeCount,
   CreationDetailNote,
   CustomerCreationDetailPayload,
   UpdateMsCustomerPayload,
@@ -360,6 +361,23 @@ export const addCustomerEventRequest = createAsyncThunk<
   }
 });
 
+export const fetchMineEventsSummaryRequest = createAsyncThunk<
+  CustomerMineEventTypeCount[],
+  string[],
+  { rejectValue: string }
+>("clients/fetchMineEventsSummaryRequest", async (customerIds, { rejectWithValue }) => {
+  try {
+    const response = await clientsService.summarizeMineEvents(customerIds);
+    return response.items ?? [];
+  } catch (err: unknown) {
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : i18n.t("clients.statsEventsLoadFailed");
+    return rejectWithValue(message);
+  }
+});
+
 export const fetchVendorScheduleByCustomer = createAsyncThunk<
   VentorScheduleEventApi[],
   string,
@@ -399,6 +417,9 @@ export interface ClientsState {
   customerEventsError: string | null;
   createEventLoading: boolean;
   createEventError: string | null;
+  mineEventsSummary: CustomerMineEventTypeCount[];
+  mineEventsSummaryStatus: "idle" | "loading" | "succeeded" | "failed";
+  mineEventsSummaryError: string | null;
   vendorScheduleEvents: VentorScheduleEventApi[];
   vendorScheduleEventsCustomerId: string | null;
   vendorScheduleEventsStatus: "idle" | "loading" | "succeeded" | "failed";
@@ -437,6 +458,9 @@ const initialState: ClientsState = {
   customerEventsError: null,
   createEventLoading: false,
   createEventError: null,
+  mineEventsSummary: [],
+  mineEventsSummaryStatus: "idle",
+  mineEventsSummaryError: null,
   vendorScheduleEvents: [],
   vendorScheduleEventsCustomerId: null,
   vendorScheduleEventsStatus: "idle",
@@ -615,6 +639,20 @@ const clientsSlice = createSlice({
         state.createEventLoading = false;
         state.createEventError =
           action.payload ?? action.error.message ?? i18n.t("clients.storeEventCreateFailed");
+      })
+      .addCase(fetchMineEventsSummaryRequest.pending, (state) => {
+        state.mineEventsSummaryStatus = "loading";
+        state.mineEventsSummaryError = null;
+      })
+      .addCase(fetchMineEventsSummaryRequest.fulfilled, (state, action) => {
+        state.mineEventsSummary = action.payload;
+        state.mineEventsSummaryStatus = "succeeded";
+        state.mineEventsSummaryError = null;
+      })
+      .addCase(fetchMineEventsSummaryRequest.rejected, (state, action) => {
+        state.mineEventsSummaryStatus = "failed";
+        state.mineEventsSummaryError =
+          action.payload ?? i18n.t("clients.statsEventsLoadFailed");
       })
       .addCase(submitVendorCustomerEdit.pending, (state) => {
         state.vendorCustomerEdit.submitting = true;

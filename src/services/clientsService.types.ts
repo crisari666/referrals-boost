@@ -245,7 +245,8 @@ export type CustomerEventType =
   | 'CALL_CRM'
   | 'CUSTOM_SENT_LAND'
   | 'CUSTOMER_CANCELLED_VISIT_LAND'
-  | 'CUSTOMER_VISIT_LAND';
+  | 'CUSTOMER_VISIT_LAND'
+  | 'CUSTOMER_ON_LAND_AGENT_ASSIGNED';
 
 export type CustomerEventItem = {
   id: string;
@@ -265,6 +266,15 @@ export type CustomerEventListResponse = {
   total: number;
   limit: number;
   skip: number;
+};
+
+export type CustomerMineEventTypeCount = {
+  eventType: CustomerEventType;
+  count: number;
+};
+
+export type CustomerMineEventsSummaryResponse = {
+  items: CustomerMineEventTypeCount[];
 };
 
 export type CreateCustomerEventPayload = {
