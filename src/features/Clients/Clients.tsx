@@ -5,6 +5,7 @@ import { useClient } from './use-client';
 import { ClientsListPanel } from './clients-list-panel';
 import { ClientsStepFilter } from './clients-step-filter';
 import { ClientsDateFilter } from './clients-date-filter';
+import { ClientsStatsReport } from './clients-stats-report';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { setSearch } from '@/store/clientsSlice';
 
@@ -34,13 +35,16 @@ const Clients = () => {
             {t('clients.totalCount', { count: clientList.length })}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowModal(true)}
-          className="w-10 h-10 gradient-commission rounded-xl flex items-center justify-center shadow-md cursor-pointer"
-        >
-          <Plus className="w-5 h-5 text-primary-foreground" />
-        </button>
+        <div className="flex items-center gap-2">
+          <ClientsStatsReport />
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="w-10 h-10 gradient-commission rounded-xl flex items-center justify-center shadow-md cursor-pointer"
+          >
+            <Plus className="w-5 h-5 text-primary-foreground" />
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-3">
