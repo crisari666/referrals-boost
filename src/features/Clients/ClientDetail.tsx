@@ -16,6 +16,7 @@ import { ClientDetailNotesSection } from './client-detail-notes-section';
 import { ClientDetailDownPaymentsSection } from './client-detail-down-payments-section';
 import { ClientDetailTimelineSection } from './client-detail-timeline-section';
 import { ClientDetailMetaLeadFieldsSection } from './client-detail-meta-lead-fields-section';
+import { ClientDetailLeadQualificationSection } from './client-detail-lead-qualification-section';
 import { ClientDetailCaptureSection } from './client-detail-capture-section';
 import { ClientDetailTabsBar } from './client-detail-tabs-bar';
 import { ClientDetailTabSwipe } from './client-detail-tab-swipe';
@@ -148,7 +149,10 @@ const ClientDetail = () => {
         >
           {isPhysical ? (
             <TabsContent value="meta" className="mt-3">
-              <ClientDetailMetaLeadFieldsSection />
+              <div className="space-y-3">
+                <ClientDetailLeadQualificationSection />
+                <ClientDetailMetaLeadFieldsSection />
+              </div>
             </TabsContent>
           ) : null}
           <TabsContent value="capture" className="mt-3">

@@ -5,7 +5,9 @@ const BASE_URL = import.meta.env.VITE_BASE_URL ?? "";
 
 console.log("BASE_URL", BASE_URL);
 
-const httpClient = axios.create();
+const httpClient = axios.create({
+  headers: { "ngrok-skip-browser-warning": "true" },
+});
 
 function shouldSkipAuthHeader(url: string): boolean {
   if (/signin/i.test(url) || /\/login(\/|$)/i.test(url)) return true;

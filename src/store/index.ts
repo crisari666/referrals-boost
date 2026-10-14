@@ -14,6 +14,7 @@ import twilioVoiceReducer from "./twilioVoiceSlice";
 import signupCampaignReducer from "./signupCampaignSlice";
 import trainingSessionsReducer from "@/features/training-sessions/store/training-sessions-slice";
 import lotStockReducer from "@/features/lot-stock/store/lot-stock-slice";
+import leadConversationReducer from "@/features/Clients/store/lead-conversation-slice";
 
 export const store = configureStore({
   reducer: {
@@ -31,6 +32,7 @@ export const store = configureStore({
     signupCampaign: signupCampaignReducer,
     trainingSessions: trainingSessionsReducer,
     lotStock: lotStockReducer,
+    leadConversation: leadConversationReducer,
   },
 });
 
