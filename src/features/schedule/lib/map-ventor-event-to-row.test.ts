@@ -22,6 +22,17 @@ describe('mapVentorEventToVisitRow', () => {
     expect(actual.timeHm).toBe('16:30');
   });
 
+  it('converts lead call true UTC 23:30Z (6:30pm Bogota) to 18:30 not 23:30', () => {
+    const ev: VentorScheduleEventApi = {
+      ...baseEvent,
+      eventType: 'call',
+      scheduledAt: '2026-10-15T23:30:00.000Z',
+    };
+    const actual = mapVentorEventToVisitRow(ev, []);
+    expect(actual.dateYmd).toBe('2026-10-15');
+    expect(actual.timeHm).toBe('18:30');
+  });
+
   it('keeps visit/office wall-clock-as-Z time unchanged', () => {
     const ev: VentorScheduleEventApi = {
       ...baseEvent,
