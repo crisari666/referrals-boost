@@ -130,6 +130,23 @@ export async function patchVentorScheduleOnLandAgent(
   );
 }
 
+/** Relate a lead call event to an existing Customer (`PATCH .../customer`). */
+export async function patchVentorScheduleCustomer(
+  eventId: string,
+  customerId: string
+): Promise<VentorScheduleEventApi> {
+  return http.patch<VentorScheduleEventApi>(
+    "",
+    { customerId },
+    {
+      ...withCustomersMsAuth(),
+      url: customersMsUrl(
+        `ventor-schedule/${encodeURIComponent(eventId)}/customer`
+      ),
+    }
+  );
+}
+
 export type SyncVentorMeetCallPayload = {
   attendance: "attended" | "no_answer";
   conferenceRecordName?: string;

@@ -143,6 +143,28 @@ export const patchVentorScheduleOnLandAgentRequest = createAsyncThunk<
   }
 );
 
+export const patchVentorScheduleCustomerRequest = createAsyncThunk<
+  VentorScheduleEventApi,
+  { eventId: string; customerId: string },
+  { rejectValue: string }
+>(
+  "schedule/patchCustomer",
+  async ({ eventId, customerId }, { rejectWithValue }) => {
+    try {
+      return await scheduleService.patchVentorScheduleCustomer(
+        eventId,
+        customerId
+      );
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: string }).message)
+          : "No se pudo relacionar el cliente.";
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const refreshVentorMeetArtifactsRequest = createAsyncThunk<
   VentorScheduleEventApi,
   string,
@@ -235,6 +257,17 @@ const scheduleSlice = createSlice({
           replaceEventInAllCachedDays(state, action.payload);
         }
       )
+      .addCase(patchVentorScheduleCustomerRequest.pending, (state, action) => {
+        state.patchingById[action.meta.arg.eventId] = true;
+      })
+      .addCase(patchVentorScheduleCustomerRequest.fulfilled, (state, action) => {
+        state.patchingById[action.payload.id] = false;
+        replaceEventInAllCachedDays(state, action.payload);
+      })
+      .addCase(patchVentorScheduleCustomerRequest.rejected, (state, action) => {
+        const id = action.meta.arg.eventId;
+        state.patchingById[id] = false;
+      })
       .addCase(
         patchVentorScheduleOnLandAgentRequest.rejected,
         (state, action) => {

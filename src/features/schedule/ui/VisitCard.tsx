@@ -4,6 +4,7 @@ import {
   VENTOR_SCHEDULE_TYPE_LABEL_KEYS,
 } from "@/features/schedule/lib/schedule.constants";
 import { AssignOnLandAgentDialog } from "@/features/schedule/ui/assign-on-land-agent-dialog";
+import { LinkCallCustomerDialog } from "@/features/schedule/ui/link-call-customer-dialog";
 import {
   patchVentorScheduleStatusRequest,
   refreshVentorMeetArtifactsRequest,
@@ -26,6 +27,7 @@ import {
   MapPin,
   MonitorSmartphone,
   Phone,
+  UserRound,
   Video,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -79,6 +81,7 @@ const VisitCard = ({
   const [refreshingArtifacts, setRefreshingArtifacts] = useState(false);
   const isOnLandPending =
     visit.eventType === "on_land" && visit.status === "pending";
+  const isLeadCall = visit.eventType === "call";
   const isVirtual = visit.eventType === "virtual" && Boolean(visit.googleMeetUrl?.trim());
 
   const onStatusChange = async (value: string) => {
@@ -174,10 +177,17 @@ const VisitCard = ({
               disabled={patching}
             />
           ) : null}
+          {isLeadCall ? (
+            <LinkCallCustomerDialog
+              eventId={visit.id}
+              currentCustomerId={visit.customerId}
+              disabled={patching}
+            />
+          ) : null}
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+      <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
         <span className="flex items-center gap-1">
           <Clock className="w-3.5 h-3.5 shrink-0" />
           {visit.timeHm}
@@ -186,6 +196,15 @@ const VisitCard = ({
           <MapPin className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">{t(VENTOR_SCHEDULE_TYPE_LABEL_KEYS[visit.eventType])}</span>
         </span>
+        {isLeadCall ? (
+          <Link
+            to={`/clients/${visit.customerId}`}
+            className="inline-flex items-center gap-1 font-medium text-primary hover:underline cursor-pointer"
+          >
+            <UserRound className="w-3.5 h-3.5 shrink-0" />
+            {t("schedule.viewClient")}
+          </Link>
+        ) : null}
       </div>
 
       {visit.googleMeetUrl ? (
