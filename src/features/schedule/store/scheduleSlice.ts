@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { scheduleEventDayKey } from "@/features/schedule/lib/bogota-schedule-time";
 import * as scheduleService from "@/services/scheduleService";
 import type {
   CreateVentorSchedulePayload,
@@ -8,7 +9,10 @@ import type {
 } from "@/services/scheduleService";
 
 export interface ScheduleState {
-  /** Events keyed by UTC calendar day `YYYY-MM-DD` (from `scheduledAt` ISO). */
+  /**
+   * Events keyed by calendar day `YYYY-MM-DD`.
+   * Visit/virtual: UTC ISO date prefix. Lead `call`: America/Bogota day.
+   */
   byDay: Record<string, VentorScheduleEventApi[]>;
   dayLoading: Record<string, boolean>;
   dayError: Record<string, string | undefined>;
@@ -28,7 +32,7 @@ function upsertEventInDayCache(
   state: ScheduleState,
   event: VentorScheduleEventApi
 ): void {
-  const ymd = event.scheduledAt.slice(0, 10);
+  const ymd = scheduleEventDayKey(event);
   const prev = state.byDay[ymd] ?? [];
   const idx = prev.findIndex((e) => e.id === event.id);
   const next =

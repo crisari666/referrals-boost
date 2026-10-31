@@ -27,11 +27,24 @@ export function formatDetailDate(iso: string): string {
 }
 
 /**
- * Formats ventor schedule `scheduledAt` using the ISO clock fields as stored
- * (no local timezone shift). Matches schedule agenda display.
+ * Formats ventor schedule `scheduledAt`.
+ * - `call` (lead AI): true UTC → display America/Bogota
+ * - visit/virtual/on_land: ISO clock fields as stored (Date.UTC wall clock)
  */
-export function formatScheduledAtExact(iso: string): string {
+export function formatScheduledAtExact(
+  iso: string,
+  eventType?: string,
+): string {
   if (!iso) return '';
+  if (eventType === 'call') {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleString(getIntlLocaleTag(), {
+      dateStyle: 'short',
+      timeStyle: 'short',
+      timeZone: 'America/Bogota',
+    });
+  }
   const [datePart = '', timeAndZone = ''] = iso.split('T');
   const timeHm = timeAndZone.slice(0, 5);
   if (

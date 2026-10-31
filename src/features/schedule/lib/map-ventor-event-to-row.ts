@@ -1,12 +1,14 @@
 import type { Project } from '@/features/Projects/types/project.type';
 import type { VentorScheduleEventApi } from "@/services/scheduleService";
 import type { ScheduleVisitRow } from "@/types/schedule";
+import { formatBogotaDateYmd, formatBogotaTimeHm } from "./bogota-schedule-time";
 
 type ScheduledAtParts = {
   dateYmd: string;
   timeHm: string;
 };
 
+/** Visit/virtual contract: wall clock stored as UTC Date.UTC (ISO clock = display clock). */
 function extractScheduledAtParts(isoDateTime: string): ScheduledAtParts {
   const [datePart = "", timeAndZone = ""] = isoDateTime.split("T");
   const timePart = timeAndZone.slice(0, 5);
@@ -18,11 +20,21 @@ function extractScheduledAtParts(isoDateTime: string): ScheduledAtParts {
   };
 }
 
+function resolveScheduledAtParts(ev: VentorScheduleEventApi): ScheduledAtParts {
+  if (ev.eventType === "call") {
+    return {
+      dateYmd: formatBogotaDateYmd(ev.scheduledAt),
+      timeHm: formatBogotaTimeHm(ev.scheduledAt),
+    };
+  }
+  return extractScheduledAtParts(ev.scheduledAt);
+}
+
 export function mapVentorEventToVisitRow(
   ev: VentorScheduleEventApi,
   projects: Project[]
 ): ScheduleVisitRow {
-  const { dateYmd, timeHm } = extractScheduledAtParts(ev.scheduledAt);
+  const { dateYmd, timeHm } = resolveScheduledAtParts(ev);
   const lastPid = ev.customer?.lastProjectId?.trim();
   const projectName =
     (lastPid && projects.find((p) => p.id === lastPid)?.title) ??

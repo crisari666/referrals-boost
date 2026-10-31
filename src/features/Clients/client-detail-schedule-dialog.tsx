@@ -130,7 +130,7 @@ export function ClientDetailScheduleDialog({
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs font-medium text-foreground">
-                      {formatScheduledAtExact(ev.scheduledAt)}
+                      {formatScheduledAtExact(ev.scheduledAt, ev.eventType)}
                     </span>
                     <span
                       className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md ${statusBadgeClass(ev.status)}`}
