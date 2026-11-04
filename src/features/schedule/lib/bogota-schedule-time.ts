@@ -1,4 +1,4 @@
-/** Lead AI `call` events store true UTC; display/bucket in America/Bogota. */
+/** All `call` events store true UTC; display/bucket in America/Bogota. */
 export const BOGOTA_TIME_ZONE = 'America/Bogota' as const;
 
 const bogotaYmdFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -16,7 +16,7 @@ const bogotaHourFormatter = new Intl.DateTimeFormat('en-GB', {
 });
 
 /**
- * Bogota calendar day `YYYY-MM-DD` for a true-UTC ISO instant (lead `call` events).
+ * Bogota calendar day `YYYY-MM-DD` for a true-UTC ISO instant (`call` events).
  */
 export function formatBogotaDateYmd(iso: string): string {
   const date = new Date(iso);
@@ -25,7 +25,7 @@ export function formatBogotaDateYmd(iso: string): string {
 }
 
 /**
- * Bogota wall-clock `HH:mm` for a true-UTC ISO instant (lead `call` events).
+ * Bogota wall-clock `HH:mm` for a true-UTC ISO instant (`call` events).
  */
 export function formatBogotaTimeHm(iso: string): string {
   const date = new Date(iso);

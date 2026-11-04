@@ -20,6 +20,7 @@ function extractScheduledAtParts(isoDateTime: string): ScheduledAtParts {
   };
 }
 
+/** `call` events: true UTC instant → America/Bogota wall for display. */
 function resolveScheduledAtParts(ev: VentorScheduleEventApi): ScheduledAtParts {
   if (ev.eventType === "call") {
     return {

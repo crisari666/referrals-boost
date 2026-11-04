@@ -28,7 +28,7 @@ export function formatDetailDate(iso: string): string {
 
 /**
  * Formats ventor schedule `scheduledAt`.
- * - `call` (lead AI): true UTC → display America/Bogota
+ * - `call`: true UTC → display America/Bogota
  * - visit/virtual/on_land: ISO clock fields as stored (Date.UTC wall clock)
  */
 export function formatScheduledAtExact(

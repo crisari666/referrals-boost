@@ -11,7 +11,7 @@ const baseEvent = {
 };
 
 describe('mapVentorEventToVisitRow', () => {
-  it('converts lead call true UTC 21:30Z to Bogota 16:30', () => {
+  it('converts call true UTC 21:30Z to Bogota 16:30', () => {
     const ev: VentorScheduleEventApi = {
       ...baseEvent,
       eventType: 'call',
@@ -22,7 +22,18 @@ describe('mapVentorEventToVisitRow', () => {
     expect(actual.timeHm).toBe('16:30');
   });
 
-  it('converts lead call true UTC 23:30Z (6:30pm Bogota) to 18:30 not 23:30', () => {
+  it('converts call true UTC 14:30Z (9:30am Bogota) to 09:30', () => {
+    const ev: VentorScheduleEventApi = {
+      ...baseEvent,
+      eventType: 'call',
+      scheduledAt: '2026-10-15T14:30:00.000Z',
+    };
+    const actual = mapVentorEventToVisitRow(ev, []);
+    expect(actual.dateYmd).toBe('2026-10-15');
+    expect(actual.timeHm).toBe('09:30');
+  });
+
+  it('converts call true UTC 23:30Z (6:30pm Bogota) to 18:30 not 23:30', () => {
     const ev: VentorScheduleEventApi = {
       ...baseEvent,
       eventType: 'call',

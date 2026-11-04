@@ -6,13 +6,19 @@ import {
 } from './bogota-schedule-time';
 
 describe('bogota-schedule-time', () => {
-  it('maps true-UTC lead call 21:30Z to Bogota 16:30 on the same calendar day', () => {
+  it('maps true-UTC call 21:30Z to Bogota 16:30 on the same calendar day', () => {
     const iso = '2026-10-31T21:30:00.000Z';
     expect(formatBogotaDateYmd(iso)).toBe('2026-10-31');
     expect(formatBogotaTimeHm(iso)).toBe('16:30');
     expect(scheduleEventDayKey({ scheduledAt: iso, eventType: 'call' })).toBe(
       '2026-10-31',
     );
+  });
+
+  it('maps true-UTC call 14:30Z to Bogota 09:30', () => {
+    const iso = '2026-10-15T14:30:00.000Z';
+    expect(formatBogotaDateYmd(iso)).toBe('2026-10-15');
+    expect(formatBogotaTimeHm(iso)).toBe('09:30');
   });
 
   it('buckets a late Bogota night call on the Bogota day not the next UTC day', () => {
