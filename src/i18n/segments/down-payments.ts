@@ -23,11 +23,15 @@ export const downPaymentsSegment = {
     pending: 'Pendiente',
     completed: 'Completada',
     empty: 'No hay separaciones para este cliente.',
-    completedBanner: 'Separación completada para este proyecto. No se pueden agregar más abonos.',
-    onePerProjectHint:
-      'Solo una separación por proyecto. Después solo se registran abonos hasta completar el valor.',
+    completedBanner:
+      'Separación completada para este lote. No se pueden agregar más abonos.',
+    onePerLotHint:
+      'Una separación por lote. Puedes registrar varios lotes del mismo proyecto.',
     pendingFeesOnlyHint:
-      'Ya existe una separación para este proyecto. Registra abonos hasta completar el valor.',
+      'Este lote ya tiene separación. Registra abonos hasta completar el valor, o crea otra separación con un lote distinto.',
+    duplicateLotError: 'Ya existe una separación para este lote en el proyecto.',
+    addAnotherLotHint: 'Completa el formulario para registrar otro lote.',
+    projectLotsSummary: 'Separaciones en este proyecto',
     fees: 'Abonos',
     viewContract: 'Ver contrato',
     viewEvidence: 'Ver comprobante',
@@ -57,11 +61,14 @@ export const downPaymentsSegment = {
     completed: 'Completed',
     empty: 'No down payments for this client.',
     completedBanner:
-      'Down payment completed for this project. No more installments can be added.',
-    onePerProjectHint:
-      'Only one down payment per project. After that, only installments until the total is reached.',
+      'Down payment completed for this lot. No more installments can be added.',
+    onePerLotHint:
+      'One down payment per lot. You can register multiple lots in the same project.',
     pendingFeesOnlyHint:
-      'A down payment already exists for this project. Add installments until the total is complete.',
+      'This lot already has a down payment. Add installments until complete, or create another down payment for a different lot.',
+    duplicateLotError: 'A down payment already exists for this lot in the project.',
+    addAnotherLotHint: 'Fill the form to register another lot.',
+    projectLotsSummary: 'Down payments in this project',
     fees: 'Installments',
     viewContract: 'View contract',
     viewEvidence: 'View receipt',

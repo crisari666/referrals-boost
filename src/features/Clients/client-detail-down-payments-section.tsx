@@ -96,10 +96,18 @@ export function ClientDetailDownPaymentsSection() {
     setExpectedValue(String(selectedProject.separation ?? 0));
   }, [selectedProject?.id]);
 
-  const activeForProject = useMemo(
-    () => (projectId ? items.find((d) => d.projectId === projectId) ?? null : null),
+  const downPaymentsForProject = useMemo(
+    () => (projectId ? items.filter((d) => d.projectId === projectId) : []),
     [items, projectId],
   );
+
+  const trimmedLotNumber = lotNumber.trim();
+  const isDuplicateLot = useMemo(() => {
+    if (!trimmedLotNumber) return false;
+    return downPaymentsForProject.some(
+      (d) => d.lotNumber.trim().toLowerCase() === trimmedLotNumber.toLowerCase(),
+    );
+  }, [downPaymentsForProject, trimmedLotNumber]);
 
   const feeTarget = useMemo(
     () => items.find((d) => d.id === feeTargetId) ?? null,
@@ -107,14 +115,13 @@ export function ClientDetailDownPaymentsSection() {
   );
 
   useEffect(() => {
-    if (activeForProject && activeForProject.remaining > 0) {
-      setFeeTargetId(activeForProject.id);
-      return;
-    }
-    if (activeForProject && activeForProject.remaining <= 0) {
+    if (
+      feeTargetId &&
+      !items.some((d) => d.id === feeTargetId && d.remaining > 0)
+    ) {
       setFeeTargetId(null);
     }
-  }, [activeForProject?.id, activeForProject?.remaining]);
+  }, [feeTargetId, items]);
 
   if (!isPhysical || !customerId) return null;
 
@@ -126,7 +133,15 @@ export function ClientDetailDownPaymentsSection() {
   };
 
   const handleCreate = async () => {
-    if (!selectedProject || !contractFile || !lotNumber || !expectedValue || !firstPaymentValue || !datePayment) {
+    if (
+      !selectedProject ||
+      !contractFile ||
+      !trimmedLotNumber ||
+      !expectedValue ||
+      !firstPaymentValue ||
+      !datePayment ||
+      isDuplicateLot
+    ) {
       return;
     }
     const result = await dispatch(
@@ -134,7 +149,7 @@ export function ClientDetailDownPaymentsSection() {
         body: {
           customerId,
           projectId: selectedProject.id,
-          lotNumber: lotNumber.trim(),
+          lotNumber: trimmedLotNumber,
           expectedValue: Number(expectedValue),
           firstPaymentValue: Number(firstPaymentValue),
           datePayment: `${datePayment}T12:00:00.000Z`,
@@ -191,6 +206,10 @@ export function ClientDetailDownPaymentsSection() {
     }
   };
 
+  const listItems = projectId
+    ? items.filter((d) => d.projectId === projectId)
+    : items;
+
   return (
     <section className="rounded-xl border bg-card p-4 space-y-4">
       <div className="flex items-center gap-2">
@@ -213,18 +232,23 @@ export function ClientDetailDownPaymentsSection() {
           </SelectContent>
         </Select>
         {projectId ? (
+          <p className="text-xs text-muted-foreground">{t('downPayments.onePerLotHint')}</p>
+        ) : null}
+        {downPaymentsForProject.length > 0 ? (
           <p className="text-xs text-muted-foreground">
-            {activeForProject
-              ? activeForProject.status === 'completed'
-                ? t('downPayments.completedBanner')
-                : t('downPayments.pendingFeesOnlyHint')
-              : t('downPayments.onePerProjectHint')}
+            {t('downPayments.projectLotsSummary')}:{' '}
+            {downPaymentsForProject.map((d) => d.lotNumber).join(', ')}
           </p>
         ) : null}
       </div>
-      {projectId && !activeForProject ? (
+      {projectId ? (
         <div className="space-y-3 border-t pt-3">
           <h3 className="text-sm font-medium">{t('downPayments.createTitle')}</h3>
+          {downPaymentsForProject.length > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {t('downPayments.addAnotherLotHint')}
+            </p>
+          ) : null}
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1">
               <Label>{t('downPayments.expectedValue')}</Label>
@@ -245,8 +269,23 @@ export function ClientDetailDownPaymentsSection() {
               />
             </div>
             <div className="space-y-1">
-              <Label>{t('downPayments.lotNumber')}</Label>
-              <Input value={lotNumber} onChange={(e) => setLotNumber(e.target.value)} />
+              <Label htmlFor="down-payment-lot">{t('downPayments.lotNumber')}</Label>
+              <Input
+                id="down-payment-lot"
+                value={lotNumber}
+                onChange={(e) => setLotNumber(e.target.value)}
+                aria-invalid={isDuplicateLot}
+                aria-describedby={isDuplicateLot ? 'down-payment-lot-error' : undefined}
+              />
+              {isDuplicateLot ? (
+                <p
+                  id="down-payment-lot-error"
+                  role="alert"
+                  className="text-xs text-destructive"
+                >
+                  {t('downPayments.duplicateLotError')}
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -306,7 +345,7 @@ export function ClientDetailDownPaymentsSection() {
           <Button
             type="button"
             onClick={() => void handleCreate()}
-            disabled={isSaving || !contractFile}
+            disabled={isSaving || !contractFile || isDuplicateLot || !trimmedLotNumber}
             className="cursor-pointer"
           >
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : t('downPayments.submitCreate')}
@@ -395,16 +434,13 @@ export function ClientDetailDownPaymentsSection() {
           </div>
         </div>
       ) : null}
-      {activeForProject && activeForProject.remaining <= 0 ? (
-        <p className="text-sm text-emerald-700">{t('downPayments.completedBanner')}</p>
-      ) : null}
       <div className="border-t pt-3 space-y-2">
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        ) : items.length === 0 ? (
+        ) : listItems.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('downPayments.empty')}</p>
         ) : (
-          items.map((dp) => {
+          listItems.map((dp) => {
             const projectTitle =
               dp.projectName ?? projects.find((p) => p.id === dp.projectId)?.title ?? dp.projectId;
             const canAddFee = dp.remaining > 0;
@@ -423,6 +459,11 @@ export function ClientDetailDownPaymentsSection() {
                         ? t('downPayments.pending')
                         : t('downPayments.completed')}
                     </p>
+                    {dp.remaining <= 0 ? (
+                      <p className="text-xs text-emerald-700 mt-1">
+                        {t('downPayments.completedBanner')}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {canAddFee ? (
