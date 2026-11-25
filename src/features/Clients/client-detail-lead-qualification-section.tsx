@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarClock, MessageCircle, Sparkles } from 'lucide-react';
+import { CalendarClock, ClipboardList, Flame, MessageCircle, Snowflake, Sparkles, Sun } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type { LeadConversationStatus } from '@/services/leadConversationService.types';
+import type { LeadConversationStatus, LeadTemperature } from '@/services/leadConversationService.types';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { fetchLeadConversationSummary } from './store/lead-conversation-slice';
 import { LeadConversationChatSheet } from './lead-conversation-chat-sheet';
@@ -23,6 +24,12 @@ const PRIORITY_LABEL_KEYS: Record<number, string> = {
   3: 'clients.leadPriorityHigh',
   2: 'clients.leadPriorityMedium',
   1: 'clients.leadPriorityLow',
+};
+
+const TEMPERATURE_CONFIG: Record<LeadTemperature, { labelKey: string; Icon: LucideIcon; className: string }> = {
+  hot: { labelKey: 'clients.leadTemperatureHot', Icon: Flame, className: 'bg-destructive/10 text-destructive' },
+  warm: { labelKey: 'clients.leadTemperatureWarm', Icon: Sun, className: 'bg-primary/10 text-primary' },
+  cold: { labelKey: 'clients.leadTemperatureCold', Icon: Snowflake, className: 'bg-muted text-muted-foreground' },
 };
 
 const SCHEDULED_CALL_ITEM_KEY = 'fechaLlamada';
@@ -65,6 +72,32 @@ function ScheduledCallCallout({ isoDate }: { isoDate: string }) {
         <p className="text-sm font-semibold text-foreground first-letter:uppercase">
           <time dateTime={isoDate}>{callDateFormatter.format(new Date(isoDate))}</time>
         </p>
+      </div>
+    </div>
+  );
+}
+
+function TemperatureBadge({ temperature }: { temperature: LeadTemperature }) {
+  const { t } = useTranslation();
+  const config = TEMPERATURE_CONFIG[temperature];
+  if (!config) return null;
+  const { Icon, labelKey, className } = config;
+  return (
+    <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium', className)}>
+      <Icon className="w-3 h-3" aria-hidden />
+      {t(labelKey)}
+    </span>
+  );
+}
+
+function AdvisorBriefCallout({ brief }: { brief: string }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-5 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+      <ClipboardList className="w-5 h-5 text-primary shrink-0 mt-0.5" aria-hidden />
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-muted-foreground">{t('clients.leadAdvisorBrief')}</p>
+        <p className="text-sm text-foreground mt-0.5 whitespace-pre-line break-words">{brief}</p>
       </div>
     </div>
   );
@@ -146,10 +179,18 @@ export function ClientDetailLeadQualificationSection() {
               {t(priorityKey)}
             </span>
           ) : null}
+          {summary.temperature ? <TemperatureBadge temperature={summary.temperature} /> : null}
         </div>
       </div>
-      <LeadScoreMeter score={summary.score} maxScore={summary.maxScore} answers={summary.answers} isMuted={isDisqualified} />
+      <LeadScoreMeter
+        score={summary.score}
+        maxScore={summary.maxScore}
+        answers={summary.answers}
+        isMuted={isDisqualified}
+        scoreSegments={summary.scoreSegments}
+      />
       {scheduledCallAt ? <ScheduledCallCallout isoDate={scheduledCallAt} /> : null}
+      {summary.advisorBrief ? <AdvisorBriefCallout brief={summary.advisorBrief} /> : null}
       {detailItems.length > 0 ? (
         <dl className="mt-5 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
           {detailItems.map((item) => (
